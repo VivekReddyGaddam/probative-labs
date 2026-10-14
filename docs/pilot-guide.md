@@ -36,12 +36,6 @@ probative --version
 probative demo --open               # optional: a 1-minute run on simulated data
 ```
 
-Until the package is published on PyPI, install from GitHub instead:
-
-```bash
-pip install "probative-labs @ git+https://github.com/VivekReddyGaddam/probative-labs"
-```
-
 ## 2. Export your tickets
 
 Export incidents or requests from about **six months before the first team got the AI until today**. Use CSV.

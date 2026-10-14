@@ -30,11 +30,7 @@ Probative Labs answers four questions for every AI program, the same way every t
 Probative Labs needs Python 3.12 or newer.
 
 ```bash
-# with uv (recommended)
-uv tool install git+https://github.com/VivekReddyGaddam/probative-labs
-# or with pip
-pip install "probative-labs @ git+https://github.com/VivekReddyGaddam/probative-labs"
-
+pip install probative-labs          # or: uv tool install probative-labs
 probative demo --open
 ```
 
