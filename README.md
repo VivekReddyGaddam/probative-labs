@@ -51,7 +51,7 @@ probative analyze --open          # evidence pack: HTML, Markdown and JSON
 
 You need two files:
 
-- **Work units:** a ticket export with ID, assignment group, opened and resolved timestamps, and ideally time worked, category, reopen count and survey score. ServiceNow list exports work as-is.
+- **Work units:** a ticket export with ID, assignment group, opened and resolved timestamps, and ideally time worked, category, reopen count and survey score. Exports from ServiceNow, Jira Service Management, Zendesk, Freshservice, BMC Helix and Ivanti work as-is with a built-in preset (`probative presets`); anything else needs a short column mapping.
 - **Exposure:** which team got the AI on which date. A spreadsheet is fine; `probative plan waves` writes one for you.
 
 Virtual-agent sessions are optional and enable verified deflection. See [docs/data-model.md](docs/data-model.md) and [docs/configuration.md](docs/configuration.md).

@@ -22,7 +22,30 @@ One data model covers every function: a **work unit** done by a **team**, possib
 | `requester_id`, `assignee_id` | string | recommended | Pseudonymized at ingest; used for deflection matching and minimum group size |
 | `short_description` | string | | Used only for rule-based typing, then dropped |
 
-### ServiceNow preset (`mapping_preset: servicenow`)
+### Platform presets
+
+Set `data.mapping_preset` to read a platform's export without writing a mapping. Run `probative presets` to list them.
+
+| Preset | Platform and export | Column names checked against |
+| --- | --- | --- |
+| `servicenow` | ServiceNow incident or request list export, or the Table API | ServiceNow field names |
+| `jira_service_management` | Jira Service Management, issue search › Export › CSV (all fields) | Typical exports: check yours |
+| `zendesk` | Zendesk ticket CSV export (Admin Center › Account › Tools › Reports) | Zendesk's documented export columns |
+| `freshservice` | Freshservice ticket export (CSV) | Typical exports: check yours |
+| `bmc_helix` | BMC Helix ITSM incidents (HPD:Help Desk field names, or report exports) | Typical field names: check yours |
+| `ivanti` | Ivanti Neurons for ITSM incidents (business object field names, or grid exports) | Ivanti's Incident business object reference |
+| `canonical` | Files already using the column names above | — |
+
+Each field can list several candidate column names, and the first one present wins. Matching ignores case and extra spaces, so `Created At` matches `Created at`. If a required column is missing, the error names every column it looked for.
+
+Notes by platform:
+
+- **Jira Service Management** has no assignment group. The team comes from `Custom field (Team)`, else `Team`, else the first `Component/s` value. Map your own team field if you route work differently. `Time Spent` is read as seconds.
+- **Zendesk** exports carry no agent time, so measure resolution time (`primary_metric: resolution_hours`) or add a staffing file. `Satisfaction Score` becomes 1 for good, 0 for bad and missing otherwise. `Group stations` minus one gives reassignments.
+- **Freshservice** `Time Tracked` is read as hours and minutes (`HH:MM`).
+- **BMC Helix and Ivanti** exports have no agent time by default. The requester is read from `Person ID` (Helix) or `ProfileLink_RecID` (Ivanti) where present.
+
+The ServiceNow preset in detail:
 
 | Canonical | ServiceNow field | Transform |
 | --- | --- | --- |
@@ -37,16 +60,20 @@ One data model covers every function: a **work unit** done by a **team**, possib
 | `csat` | `u_csat` | (custom field: map your survey score) |
 | others | same name | |
 
-Override any entry in `data.mapping`, for example:
+Override any entry in `data.mapping`, with a single column name or a list of candidates:
 
 ```yaml
 data:
+  mapping_preset: jira_service_management
   mapping:
-    csat: survey_score
+    team_id: "Custom field (Support team)"
+    csat: ["Custom field (Satisfaction)", "Satisfaction"]
     effort_hours: {source: work_minutes, transform: minutes_to_hours}
 ```
 
-Available transforms are `datetime`, `number`, `bool`, `positive_bool`, `duration_hours`, `seconds_to_hours`, `minutes_to_hours` and `string`.
+Available transforms are `datetime`, `number`, `bool`, `positive_bool`, `duration_hours` (seconds, `HH:MM:SS`, `HH:MM` or `1 Day 2 Hours`), `seconds_to_hours`, `minutes_to_hours`, `minus_one`, `satisfaction_good_bad` and `string`.
+
+To try a preset without real data, `probative simulate data --format zendesk` writes a simulated export in that platform's format, and `probative demo --format zendesk` runs the whole analysis on it.
 
 ## Exposure (required)
 

@@ -17,10 +17,12 @@ from probative import schema as S
 from probative.config import ProjectConfig
 from probative.guardrails import GuardrailSpec
 from probative.ingest import Pseudonymizer, apply_mapping, check_work_units, read_tables, resolve_mapping
+from probative.ingest.mapping import PRESET_INFO, PRESETS
 from probative.pipeline import AnalysisError, analyze
 from probative.playbooks import get_playbook
 from probative.report import write_pack
 from probative.rollout import NoiseModel, lock_registration, noise_from_units, plan_waves, power_table
+from probative.simulate import EXPORT_FORMATS
 
 app = typer.Typer(
     help="Probative Labs: measure what AI actually changed, with graded, reproducible evidence.",
@@ -68,15 +70,22 @@ def demo(
     reopen_effect: Annotated[float, typer.Option(help="Planted change in reopen probability (try 0.03).")] = 0.0,
     reps: Annotated[int, typer.Option(help="Bootstrap draws.")] = 199,
     seed: Annotated[int, typer.Option()] = 7,
+    fmt: Annotated[
+        str, typer.Option("--format", help="Export format to simulate: " + ", ".join(EXPORT_FORMATS) + ".")
+    ] = "servicenow",
     open_report: Annotated[bool, typer.Option("--open", help="Open the HTML evidence pack.")] = False,
 ) -> None:
     """Simulate a service desk with a known AI effect and measure it end to end."""
     from probative.simulate import SimSpec, demo_config, generate
 
+    if fmt not in EXPORT_FORMATS:
+        typer.secho(f"Unknown format {fmt!r}. Choose from: {', '.join(EXPORT_FORMATS)}", fg="red")
+        raise typer.Exit(2)
+
     typer.secho(f"Simulating a 40-team service desk (planted effect {effect:+.0%}) in {directory}/", bold=True)
     sim = generate(SimSpec(effort_effect=effect, reopen_effect=reopen_effect, seed=seed))
-    sim.write(directory / "data")
-    raw = demo_config("data", sim.truth)
+    sim.write(directory / "data", fmt)
+    raw = demo_config("data", sim.truth, fmt)
     raw["analysis"]["bootstrap_reps"] = reps
     cfg_path = directory / "probative.yaml"
     cfg_path.write_text(yaml.safe_dump(raw, sort_keys=False))
@@ -93,12 +102,18 @@ def demo(
     t = sim.truth
     typer.echo("")
     typer.secho(result["headline"], bold=True)
-    typer.echo(
-        f"\nPlanted truth: {t['effort_att_hours_per_ticket']:+.3f} h per ticket "
-        f"({t['effort_relative']:+.1%} after the learning curve). "
-        f"Estimate: {result['primary']['estimate']:+.3f} h "
-        f"[{result['primary']['ci_low']:+.3f}, {result['primary']['ci_high']:+.3f}]."
-    )
+    p = result["primary"]
+    if p["metric"] == "effort_hours":
+        truth = (
+            f"{t['effort_att_hours_per_ticket']:+.3f} h per ticket "
+            f"({t['effort_relative']:+.1%} after the learning curve)"
+        )
+    else:
+        truth = (
+            f"{t['resolution_att_hours_per_ticket']:+.3f} h of resolution time per ticket "
+            f"({fmt} exports carry no agent time)"
+        )
+    typer.echo(f"\nPlanted truth: {truth}. Estimate: {p['estimate']:+.3f} h [{p['ci_low']:+.3f}, {p['ci_high']:+.3f}].")
     typer.echo(f"\nEvidence pack: {paths['html']}\nMarkdown:      {paths['markdown']}\nResults JSON:  {paths['json']}")
     if open_report:
         webbrowser.open(paths["html"].resolve().as_uri())
@@ -126,7 +141,7 @@ playbook: service_desk
 
 data:
   work_units: data/incidents.csv      # CSV or Parquet; a list of files is fine
-  mapping_preset: {preset}             # canonical | servicenow
+  mapping_preset: {preset}             # see `probative presets`
   mapping: {{}}                          # override: canonical_field: source_column
   exposure: data/rollout.csv          # team_id, start_date[, end_date, kind, randomized]
   self_service: null                  # optional: virtual agent sessions
@@ -162,9 +177,12 @@ claimed: []                           # vendor or dashboard estimates, shown bes
 @app.command()
 def init(
     directory: Annotated[Path, typer.Argument()] = Path("."),
-    preset: Annotated[str, typer.Option(help="Field mapping preset: servicenow or canonical.")] = "servicenow",
+    preset: Annotated[str, typer.Option(help="Field mapping preset: " + ", ".join(PRESETS) + ".")] = "servicenow",
 ) -> None:
     """Write a starter probative.yaml."""
+    if preset not in PRESETS:
+        typer.secho(f"Unknown preset {preset!r}. Choose from: {', '.join(PRESETS)}", fg="red")
+        raise typer.Exit(2)
     path = directory / "probative.yaml"
     if path.exists():
         typer.secho(f"{path} already exists; not overwriting.", fg="yellow")
@@ -184,8 +202,11 @@ def simulate(
     weeks: Annotated[int, typer.Option()] = 78,
     deflection: Annotated[bool, typer.Option()] = True,
     seed: Annotated[int, typer.Option()] = 7,
+    fmt: Annotated[str, typer.Option("--format", help="Ticket export format: " + ", ".join(EXPORT_FORMATS) + ".")] = (
+        "servicenow"
+    ),
 ) -> None:
-    """Write synthetic ServiceNow-style exports with a planted effect."""
+    """Write synthetic exports (ServiceNow, Jira, Zendesk, ...) with a planted effect."""
     from probative.simulate import SimSpec, generate
 
     waves = (int(weeks * 0.56), int(weeks * 0.67), int(weeks * 0.77))
@@ -201,9 +222,18 @@ def simulate(
             seed=seed,
         )
     )
-    paths = sim.write(out)
+    paths = sim.write(out, fmt)
     for k, p in paths.items():
         typer.echo(f"{k:9s} {p}")
+
+
+@app.command()
+def presets() -> None:
+    """List the built-in field mappings for platform exports."""
+    for name, info in PRESET_INFO.items():
+        note = "" if info["basis"] == "documented" else "  (typical export: check your column names)"
+        typer.echo(f"{name:26s} {info['label']}{note}")
+    typer.echo("\nUse one with `probative init --preset NAME` or `data.mapping_preset` in probative.yaml.")
 
 
 @app.command()

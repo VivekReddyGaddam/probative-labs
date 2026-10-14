@@ -50,8 +50,18 @@ class Range(BaseModel):
 
 
 class MappingEntry(BaseModel):
-    source: str
+    """A source column (or several candidate names, first match wins) and an optional transform."""
+
+    source: str | list[str]
     transform: str | None = None
+
+    @property
+    def candidates(self) -> list[str]:
+        return [self.source] if isinstance(self.source, str) else list(self.source)
+
+    @property
+    def label(self) -> str:
+        return " or ".join(repr(c) for c in self.candidates)
 
 
 class ProgramConfig(BaseModel):
@@ -76,7 +86,9 @@ class HypothesisConfig(BaseModel):
 
 class DataConfig(BaseModel):
     work_units: list[Path]
-    mapping_preset: Literal["canonical", "servicenow"] = "canonical"
+    mapping_preset: Literal[
+        "canonical", "servicenow", "jira_service_management", "zendesk", "freshservice", "bmc_helix", "ivanti"
+    ] = "canonical"
     mapping: dict[str, str | MappingEntry] = Field(default_factory=dict)
     exposure: Path
     self_service: Path | None = None

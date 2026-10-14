@@ -174,7 +174,8 @@ class SimData:
     teams: pd.DataFrame
     truth: dict
 
-    def write(self, out_dir: str | Path) -> dict[str, Path]:
+    def write(self, out_dir: str | Path, fmt: str = "servicenow") -> dict[str, Path]:
+        """Write the files a customer would export, with tickets in ``fmt`` (see EXPORT_FORMATS)."""
         out = Path(out_dir)
         out.mkdir(parents=True, exist_ok=True)
         paths = {
@@ -184,12 +185,146 @@ class SimData:
             "teams": out / "teams.csv",
             "truth": out / "truth.json",
         }
-        self.tickets.to_csv(paths["tickets"], index=False)
+        export_tickets(self.tickets, fmt).to_csv(paths["tickets"], index=False)
         self.rollout.to_csv(paths["rollout"], index=False)
-        self.sessions.to_csv(paths["sessions"], index=False)
+        sessions = self.sessions.copy()
+        sessions["requester_id"] = _requester(sessions["requester_id"], fmt)
+        sessions.to_csv(paths["sessions"], index=False)
         self.teams.to_csv(paths["teams"], index=False)
-        paths["truth"].write_text(json.dumps(self.truth, indent=2, default=str))
+        paths["truth"].write_text(json.dumps({**self.truth, "export_format": fmt}, indent=2, default=str))
         return paths
+
+
+EXPORT_FORMATS = ("servicenow", "jira_service_management", "zendesk", "freshservice", "bmc_helix", "ivanti")
+
+# Platforms whose exports carry agent time worked; for the others the demo measures resolution time.
+HAS_EFFORT = {"servicenow", "jira_service_management", "freshservice"}
+
+
+def _requester(ids: pd.Series, fmt: str) -> pd.Series:
+    """Requester identifiers as each platform exports them (emails for Freshservice)."""
+    if fmt == "freshservice":
+        return ids.astype("string").str.lower() + "@example.com"
+    return ids
+
+
+def _reformat_dates(col: pd.Series, fmt: str) -> pd.Series:
+    ts = pd.to_datetime(col.replace("", None), errors="coerce")
+    if fmt == "jira_service_management":
+        out = ts.dt.strftime("%d/%b/%y %I:%M %p")
+    elif fmt == "ivanti":
+        out = ts.dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+    else:
+        out = ts.dt.strftime("%Y-%m-%d %H:%M:%S")
+    return out.where(ts.notna(), "")
+
+
+def export_tickets(tickets: pd.DataFrame, fmt: str) -> pd.DataFrame:
+    """Re-express ServiceNow-style simulated tickets as another platform's CSV export."""
+    if fmt == "servicenow":
+        return tickets
+    if fmt not in EXPORT_FORMATS:
+        raise ValueError(f"unknown export format {fmt!r}; choose from {EXPORT_FORMATS}")
+    t = tickets.copy()
+    for c in ("opened_at", "resolved_at", "closed_at"):
+        t[c] = _reformat_dates(t[c], fmt)
+    t["caller_id"] = _requester(t["caller_id"], fmt)
+    seconds = pd.to_numeric(t["time_worked"], errors="coerce")
+    number = t["number"].str.replace("INC", "", regex=False).str.lstrip("0")
+    csat = pd.to_numeric(t["u_csat"], errors="coerce")
+    if fmt == "jira_service_management":
+        return pd.DataFrame(
+            {
+                "Summary": t["short_description"],
+                "Issue key": "ITSD-" + number,
+                "Issue Type": t["subcategory"],
+                "Status": t["state"],
+                "Priority": t["priority"],
+                "Assignee": t["assigned_to"],
+                "Reporter": t["caller_id"],
+                "Created": t["opened_at"],
+                "Resolved": t["resolved_at"],
+                "Time Spent": seconds.round().astype("Int64"),
+                "Custom field (Team)": t["assignment_group"],
+                "Custom field (Request Type)": t["category"],
+                "Custom field (Satisfaction)": csat,
+            }
+        )
+    if fmt == "zendesk":
+        rating = np.where(csat >= 4, "good", np.where(csat <= 2, "bad", np.where(csat.notna(), "offered", "unoffered")))
+        return pd.DataFrame(
+            {
+                "ID": number,
+                "Requester ID": t["caller_id"],
+                "Assignee": t["assigned_to"],
+                "Group": t["assignment_group"],
+                "Subject": t["short_description"],
+                "Status": t["state"],
+                "Priority": t["priority"],
+                "Via": t["contact_type"],
+                "Ticket type": t["category"],
+                "Created at": t["opened_at"],
+                "Solved at": t["resolved_at"],
+                "Satisfaction Score": rating,
+                "Group stations": pd.to_numeric(t["reassignment_count"], errors="coerce") + 1,
+                "Reopens": t["reopen_count"],
+            }
+        )
+    if fmt == "freshservice":
+        hhmm = seconds.map(lambda v: "" if pd.isna(v) else f"{int(v // 3600):02d}:{int(v % 3600 // 60):02d}")
+        return pd.DataFrame(
+            {
+                "Ticket Id": number,
+                "Subject": t["short_description"],
+                "Status": t["state"],
+                "Priority": t["priority"],
+                "Source": t["contact_type"],
+                "Agent": t["assigned_to"],
+                "Group": t["assignment_group"],
+                "Created Date": t["opened_at"],
+                "Resolved Date": t["resolved_at"],
+                "Closed Date": t["closed_at"],
+                "Time Tracked": hhmm,
+                "Category": t["category"],
+                "Sub-Category": t["subcategory"],
+                "Requester Email": t["caller_id"],
+            }
+        )
+    if fmt == "bmc_helix":
+        return pd.DataFrame(
+            {
+                "Incident Number": t["number"],
+                "Assigned Group": t["assignment_group"],
+                "Operational Categorization Tier 1": t["category"],
+                "Operational Categorization Tier 2": t["subcategory"],
+                "Priority": t["priority"],
+                "Reported Source": t["contact_type"],
+                "Reported Date": t["opened_at"],
+                "Last Resolved Date": t["resolved_at"],
+                "Closed Date": t["closed_at"],
+                "Person ID": t["caller_id"],
+                "Assignee Login ID": t["assigned_to"],
+                "Status": t["state"],
+                "Description": t["short_description"],
+            }
+        )
+    return pd.DataFrame(
+        {  # ivanti
+            "IncidentNumber": number,
+            "OwnerTeam": t["assignment_group"],
+            "Category": t["category"],
+            "SubCategory": t["subcategory"],
+            "Priority": t["priority"],
+            "Source": t["contact_type"],
+            "CreatedDateTime": t["opened_at"],
+            "ResolvedDateTime": t["resolved_at"],
+            "ClosedDateTime": t["closed_at"],
+            "ProfileLink_RecID": t["caller_id"],
+            "Owner": t["assigned_to"],
+            "Status": t["state"],
+            "Subject": t["short_description"],
+        }
+    )
 
 
 def _fmt(ts: pd.Series) -> pd.Series:
@@ -415,12 +550,12 @@ def generate(spec: SimSpec | None = None) -> SimData:
     return SimData(tickets=tickets, rollout=rollout, sessions=sessions, teams=teams, truth=truth)
 
 
-def demo_config(data_dir: str = "data", truth: dict | None = None) -> dict:
+def demo_config(data_dir: str = "data", truth: dict | None = None, fmt: str = "servicenow") -> dict:
     """A complete project configuration for simulated data, as a YAML-ready dict."""
     window = (truth or {}).get("window", {})
     return {
         "program": {
-            "id": "now-assist-itsm",
+            "id": "ai-agent-assist",
             "name": "AI agent assist (simulated)",
             "vendor": "Example vendor",
             "tool": "Agent assist + virtual agent",
@@ -431,13 +566,13 @@ def demo_config(data_dir: str = "data", truth: dict | None = None) -> dict:
         "hypothesis": {
             "statement": "AI summaries and resolution suggestions cut agent hours per ticket by at least 10% "
             "without lowering quality; the virtual agent deflects password resets and simple requests.",
-            "primary_metric": "effort_hours",
+            "primary_metric": "effort_hours" if fmt in HAS_EFFORT else "resolution_hours",
             "expected_effect": -0.10,
         },
         "playbook": "service_desk",
         "data": {
             "work_units": f"{data_dir}/incidents.csv",
-            "mapping_preset": "servicenow",
+            "mapping_preset": fmt,
             "exposure": f"{data_dir}/rollout.csv",
             "self_service": f"{data_dir}/virtual_agent.csv",
             "teams": f"{data_dir}/teams.csv",

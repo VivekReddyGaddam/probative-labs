@@ -26,7 +26,7 @@ One file per AI program. Relative paths resolve against the file's folder. `prob
 | Key | Meaning |
 | --- | --- |
 | `work_units` | A file, or a list of files (CSV or Parquet) |
-| `mapping_preset` | `servicenow` or `canonical` |
+| `mapping_preset` | `servicenow`, `jira_service_management`, `zendesk`, `freshservice`, `bmc_helix`, `ivanti` or `canonical` (see [data-model.md](data-model.md#platform-presets)) |
 | `mapping` | Per-field overrides: `canonical: source` or `{source, transform}` |
 | `exposure` | Rollout file |
 | `self_service`, `self_service_mapping` | Optional virtual-agent sessions |

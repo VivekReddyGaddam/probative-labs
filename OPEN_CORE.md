@@ -14,7 +14,7 @@ The commercial product, Probative Labs Cloud, sells what enterprises pay for onc
 | Capability | Open source (this repo) | Probative Labs Cloud |
 | --- | --- | --- |
 | Measurement method, evidence-grade definitions, validation suite | ✓ | ✓ |
-| File import (CSV, Parquet) with field mapping and ServiceNow preset | ✓ | ✓ |
+| File import (CSV, Parquet) with field mapping and presets for ServiceNow, Jira Service Management, Zendesk, Freshservice, BMC Helix and Ivanti exports | ✓ | ✓ |
 | Data health monitor | ✓ | ✓ |
 | Pseudonymization at ingest, minimum group size | ✓ | ✓ |
 | Rule-based work typing, category drift check, mix adjustment | ✓ | ✓ |
@@ -24,7 +24,7 @@ The commercial product, Probative Labs Cloud, sells what enterprises pay for onc
 | Value and ROI ranges, capacity vs cash, payback | ✓ | ✓ |
 | Rollout designer: power calculator, wave planner, pre-registration | ✓ (CLI) | ✓ (guided UI) |
 | Evidence pack (HTML, Markdown, JSON) and method appendix | ✓ | ✓ (branded PDF) |
-| Live, read-only connectors (ServiceNow first; then Jira Service Management, Zendesk, GitHub…) | | ✓ |
+| Live, read-only connectors: ServiceNow, Jira Service Management, Zendesk, Freshservice, BMC Helix, Ivanti | | ✓ |
 | Hosted, multi-tenant app with program registry and portfolio view | | ✓ |
 | Cost ledger: contract, seat and model-usage import, allocation rules | | ✓ |
 | Unit values with finance sign-off and change history | | ✓ |
