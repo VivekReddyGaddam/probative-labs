@@ -6,10 +6,10 @@ This repository is the open-source measurement engine. v1 covers the IT service 
 
 ```
 $ probative demo
-Now Assist for ITSM (simulated) changed agent hours per ticket by -0.11 h per ticket (-12%; 95% range
--0.13 to -0.09 h, -13% to -10%). Evidence grade B. Guardrails: all pass. Cash ROI 5% to 77% (P10 to P90).
+AI agent assist (simulated) changed agent hours per ticket by -0.11 h per ticket (-12%; 95% range -0.13
+to -0.09 h, -14% to -11%). Evidence grade B. Guardrails: all pass. Cash ROI 7% to 79% (P10 to P90).
 
-Planted truth: -0.111 h per ticket (-12.3% after the learning curve). Estimate: -0.110 h [-0.127, -0.095].
+Planted truth: -0.111 h per ticket (-12.3% after the learning curve). Estimate: -0.110 h [-0.126, -0.093].
 ```
 
 ## Why
@@ -57,6 +57,10 @@ You need two files:
 Virtual-agent sessions are optional and enable verified deflection. See [docs/data-model.md](docs/data-model.md) and [docs/configuration.md](docs/configuration.md).
 
 ## What you get: the evidence pack
+
+![The top of a sample evidence pack: effect, evidence grade, guardrails and ROI ranges](docs/images/evidence-pack.png)
+
+Open the [full sample evidence pack](https://vivekreddygaddam.github.io/probative-labs/sample/evidence-pack.html) (simulated data) or its [Markdown version](docs/sample/evidence-pack.md). Make your own with `probative demo --open`.
 
 One pack per program, in the twelve sections a finance or audit reviewer expects:
 

@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Evidence pack · AI agent assist (simulated)</title>
+<style>
+:root {
+  --bg: #f7f6f2; --surface: #ffffff; --ink: #1b1c1e; --muted: #5c6066; --line: #e3e0d8;
+  --accent: #1d5c48; --accent-soft: #e2eee8;
+  --good: #1b6b41; --good-soft: #e0f1e6; --warn: #7d5300; --warn-soft: #faefd6;
+  --bad: #9a2a2a; --bad-soft: #f7e0e0; --neutral-soft: #ecebe6;
+  --chart-line: #1d5c48; --chart-band: rgba(29, 92, 72, 0.16); --chart-pre: #7b8088; --chart-grid: #e8e5de;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121314; --surface: #1a1c1e; --ink: #ecebe7; --muted: #a3a7ad; --line: #2c2f33;
+    --accent: #7fc8aa; --accent-soft: #1f322b;
+    --good: #7fd3a0; --good-soft: #1b3125; --warn: #f0c46a; --warn-soft: #362c17;
+    --bad: #f0a0a0; --bad-soft: #3a2020; --neutral-soft: #26292c;
+    --chart-line: #7fc8aa; --chart-band: rgba(127, 200, 170, 0.18); --chart-pre: #8d9299; --chart-grid: #2a2d31;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121314; --surface: #1a1c1e; --ink: #ecebe7; --muted: #a3a7ad; --line: #2c2f33;
+  --accent: #7fc8aa; --accent-soft: #1f322b;
+  --good: #7fd3a0; --good-soft: #1b3125; --warn: #f0c46a; --warn-soft: #362c17;
+  --bad: #f0a0a0; --bad-soft: #3a2020; --neutral-soft: #26292c;
+  --chart-line: #7fc8aa; --chart-band: rgba(127, 200, 170, 0.18); --chart-pre: #8d9299; --chart-grid: #2a2d31;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 var(--sans); }
+main { max-width: 980px; margin: 0 auto; padding: 32px 16px 64px; }
+h1, h2, h3 { font-family: var(--serif); font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; }
+h1 { font-size: 2rem; margin: 0.2rem 0 0.4rem; }
+h2 { font-size: 1.35rem; margin: 2.4rem 0 0.8rem; padding-top: 1.2rem; border-top: 1px solid var(--line); }
+h2 .num { color: var(--muted); font-family: var(--sans); font-size: 0.9rem; font-weight: 600; margin-right: 0.5rem; }
+p { margin: 0.5rem 0 0.9rem; }
+.eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; font-weight: 600; color: var(--accent); }
+.meta { color: var(--muted); font-size: 0.9rem; }
+header { display: flex; gap: 24px; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; }
+.grade { flex: none; width: 96px; height: 96px; border-radius: 16px; background: var(--accent-soft); color: var(--accent);
+  display: grid; place-items: center; text-align: center; }
+.grade b { font-family: var(--serif); font-size: 2.6rem; line-height: 1; display: block; }
+.grade small { font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.grade.g-D, .grade.g-insufficient { background: var(--warn-soft); color: var(--warn); }
+.grade.g-insufficient b { font-size: 1.1rem; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin: 24px 0 8px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+.tile .k { font-size: 0.78rem; color: var(--muted); }
+.tile .v { font-family: var(--serif); font-size: 1.45rem; margin-top: 2px; }
+.tile .s { font-size: 0.8rem; color: var(--muted); }
+.headline { font-size: 1.08rem; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--accent);
+  border-radius: 10px; padding: 14px 18px; margin: 18px 0; }
+.rec { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+.rec b { font-family: var(--serif); font-size: 1.1rem; }
+.table-wrap { overflow-x: auto; margin: 0.6rem 0 1rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; background: var(--neutral-soft); }
+tr:last-child td { border-bottom: 0; }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.chip { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: 0.76rem; font-weight: 600; white-space: nowrap; }
+.chip-pass { background: var(--good-soft); color: var(--good); }
+.chip-watch { background: var(--warn-soft); color: var(--warn); }
+.chip-breach, .chip-fail { background: var(--bad-soft); color: var(--bad); }
+.chip-unavailable, .chip-not_run { background: var(--neutral-soft); color: var(--muted); }
+.callout { border-radius: 10px; padding: 12px 16px; margin: 12px 0; }
+.callout.bad { background: var(--bad-soft); color: var(--bad); }
+.callout.warn { background: var(--warn-soft); color: var(--warn); }
+.callout.info { background: var(--accent-soft); color: var(--ink); }
+ul { padding-left: 1.2rem; }
+li { margin: 0.25rem 0; }
+code, .mono { font-family: var(--mono); font-size: 0.82rem; }
+figure { margin: 0.6rem 0 1rem; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+figcaption { color: var(--muted); font-size: 0.82rem; margin-top: 6px; }
+.tl-chart { width: 100%; height: auto; display: block; }
+.tl-chart .grid { stroke: var(--chart-grid); stroke-width: 1; }
+.tl-chart .zero { stroke: var(--muted); stroke-width: 1; }
+.tl-chart .rollout { stroke: var(--muted); stroke-dasharray: 4 4; }
+.tl-chart .band { fill: var(--chart-band); }
+.tl-chart .line { fill: none; stroke: var(--chart-line); stroke-width: 2; }
+.tl-chart circle.post { fill: var(--chart-line); }
+.tl-chart circle.pre { fill: var(--chart-pre); }
+.tl-chart .whisker { stroke: var(--chart-pre); stroke-width: 1.5; }
+.tl-chart text { fill: var(--muted); font: 11px var(--sans); }
+.tl-chart .axis { font-size: 12px; }
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; margin-top: 12px; }
+details summary { cursor: pointer; font-weight: 600; }
+details h3 { font-size: 1.05rem; margin: 1.2rem 0 0.4rem; }
+footer { margin-top: 48px; color: var(--muted); font-size: 0.8rem; border-top: 1px solid var(--line); padding-top: 16px; }
+@media print {
+  body { background: #fff; color: #000; font-size: 11pt; }
+  main { max-width: none; padding: 0; }
+  .tile, .table-wrap, figure, details, .headline { break-inside: avoid; }
+  details { display: block; }
+  details > *:not(summary) { display: block; }
+}
+@media (max-width: 560px) { h1 { font-size: 1.6rem; } .grade { width: 76px; height: 76px; } .grade b { font-size: 2rem; } }
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div>
+    <div class="eyebrow">Evidence pack</div>
+    <h1>AI agent assist (simulated)</h1>
+    <div class="meta">IT service desk · 2025-01-06 to 2026-07-05 · 40 teams · 74,260 tickets · Owner: Head of IT Service Management</div>
+  </div>
+  <div class="grade g-B" title="Comparison-group design with diagnostics passed: counts toward measured ROI">
+    <div><b>B</b><small>Evidence grade</small></div>
+  </div>
+</header>
+
+<div class="tiles">
+  <div class="tile"><div class="k">Agent hours per ticket</div><div class="v">−12%</div>
+    <div class="s">−0.11 h · range −14% to −11%</div></div>
+  <div class="tile"><div class="k">Quality guardrails</div><div class="v">5 of 5 pass</div>
+    <div class="s">Speed only counts if quality held</div></div>
+  <div class="tile"><div class="k">Cash ROI (P10 to P90)</div><div class="v">7% to 79%</div>
+    <div class="s">Counted · middle 40%</div></div>
+  <div class="tile"><div class="k">Capacity ROI (P10 to P90)</div><div class="v">146% to 222%</div>
+    <div class="s">2,590 agent hours released</div></div>
+</div>
+
+<p class="headline">AI agent assist (simulated) changed agent hours per ticket by -0.11 h per ticket (-12%; 95% range -0.13 to -0.09 h, -14% to -11%). Evidence grade B. Guardrails: all pass. Cash ROI 7% to 79% (P10 to P90).</p>
+<div class="callout info rec"><b>Renew and expand</b><span>Cash ROI is positive even at the low end of the range.</span></div>
+
+<h2><span class="num">2</span>The question as registered</h2>
+<ul>
+  <li><b>Hypothesis:</b> AI summaries and resolution suggestions cut agent hours per ticket by at least 10% without lowering quality; the virtual agent deflects password resets and simple requests.</li>
+  <li><b>Primary metric:</b> effort_hours (expected −10%)</li>
+  <li><b>Registration:</b> Registered 2026-10-14T18:00:10+00:00 after go-live.</li>
+</ul>
+
+<h2><span class="num">3</span>Design</h2>
+<p><b>Staggered rollout (imputation difference-in-differences).</b></p>
+<ul>
+<li>30 teams adopted in 3 waves, with 10 teams never exposed in the window. Each wave is compared with teams that did not have the AI yet.</li><li>Rollout order was assigned by lottery, so waves are comparable by design.</li></ul>
+<p>Evidence grade <b>B</b>: Comparison-group design with diagnostics passed: counts toward measured ROI.</p>
+<ul><li>Randomized rollout, but the question was not registered before go-live, so capped at B.</li></ul>
+
+<h2><span class="num">4</span>Effects</h2>
+<p>Headline and mix-adjusted results side by side, per ticket. Negative means less time. The mix-adjusted view compares tickets only with tickets of the same type.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Metric</th><th>View</th><th class="n">Effect</th><th class="n">95% range</th><th class="n">Relative</th><th class="n">Total over AI tickets</th></tr></thead>
+<tbody>
+<tr><td>Agent hours per ticket</td><td>headline</td><td class="n">−0.03 h</td><td class="n">−0.05 to −0.01</td><td class="n">−3.3%</td><td class="n">−429 h</td></tr>
+<tr><td>Agent hours per ticket</td><td>mix-adjusted</td><td class="n">−0.11 h</td><td class="n">−0.13 to −0.09</td><td class="n">−12.2%</td><td class="n">−1,725 h</td></tr>
+<tr><td>Resolution time</td><td>headline</td><td class="n">+0.23 h</td><td class="n">−0.25 to +0.75</td><td class="n">+1.9%</td><td class="n">+3,651 h</td></tr>
+<tr><td>Resolution time</td><td>mix-adjusted</td><td class="n">−1.02 h</td><td class="n">−1.42 to −0.61</td><td class="n">−7.4%</td><td class="n">−16,001 h</td></tr>
+</tbody></table></div>
+
+<h3>Before and after, AI teams only</h3>
+<p class="meta">Descriptive: no comparison group, so not causal. It shows why the headline average can mislead.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Metric</th><th class="n">Before AI</th><th class="n">After AI</th><th class="n">Change</th></tr></thead>
+<tbody><tr><td>Headline mean resolution time (h)</td><td class="n">12.6</td><td class="n">12.7</td><td class="n">+1%</td></tr><tr><td>Mix-adjusted mean resolution time (h)</td><td class="n">12.6</td><td class="n">11.6</td><td class="n">−8%</td></tr><tr><td>Agent hours for the same work</td><td class="n">14,281.9</td><td class="n">12,460.5</td><td class="n">−13%</td></tr></tbody>
+</table></div>
+
+<h3>By work type</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>Work type</th><th class="n">AI tickets</th><th class="n">Effect (h)</th><th class="n">Range</th><th class="n">Relative</th></tr></thead>
+<tbody><tr><td>Software / Application Error</td><td class="n">2,680</td><td class="n">−0.230</td><td class="n">−0.294 to −0.163</td><td class="n">−15%</td></tr><tr><td>Software / Installation</td><td class="n">2,394</td><td class="n">−0.075</td><td class="n">−0.105 to −0.039</td><td class="n">−10%</td></tr><tr><td>Hardware / Laptop</td><td class="n">2,190</td><td class="n">−0.126</td><td class="n">−0.219 to −0.043</td><td class="n">−9%</td></tr><tr><td>Account Access / Permissions</td><td class="n">2,027</td><td class="n">−0.056</td><td class="n">−0.085 to −0.032</td><td class="n">−11%</td></tr><tr><td>Software / Email</td><td class="n">1,840</td><td class="n">−0.051</td><td class="n">−0.082 to −0.021</td><td class="n">−8%</td></tr><tr><td>Account Access / Password Reset</td><td class="n">1,708</td><td class="n">−0.045</td><td class="n">−0.059 to −0.031</td><td class="n">−18%</td></tr><tr><td>Network / Connectivity</td><td class="n">1,465</td><td class="n">−0.117</td><td class="n">−0.201 to −0.040</td><td class="n">−10%</td></tr><tr><td>Inquiry / Help / General</td><td class="n">1,391</td><td class="n">−0.070</td><td class="n">−0.090 to −0.050</td><td class="n">−17%</td></tr></tbody>
+</table></div>
+<p class="meta">AI was recorded on 77% of AI teams' tickets after rollout. Usage explains effects; it is never counted as value.</p>
+<h2><span class="num">5</span>Effect over time</h2>
+<figure><svg class="tl-chart" viewBox="0 0 720 300" role="img" aria-labelledby="es-title es-desc" xmlns="http://www.w3.org/2000/svg"><title id="es-title">Effect by week since rollout</title><desc id="es-desc">Weekly effect estimates with 95% ranges. Weeks before rollout should hover around zero.</desc><line x1="64" x2="704" y1="235.5" y2="235.5" class="grid"/><text x="56" y="239.5" class="tick" text-anchor="end">-0.3</text><line x1="64" x2="704" y1="182.9" y2="182.9" class="grid"/><text x="56" y="186.9" class="tick" text-anchor="end">-0.2</text><line x1="64" x2="704" y1="130.3" y2="130.3" class="grid"/><text x="56" y="134.3" class="tick" text-anchor="end">-0.1</text><line x1="64" x2="704" y1="77.7" y2="77.7" class="grid"/><text x="56" y="81.7" class="tick" text-anchor="end">0</text><line x1="64" x2="704" y1="25.1" y2="25.1" class="grid"/><text x="56" y="29.1" class="tick" text-anchor="end">0.1</text><line x1="64" x2="704" y1="77.7" y2="77.7" class="zero"/><line x1="185.9" x2="185.9" y1="20" y2="256" class="rollout"/><text x="191.9" y="32" class="label">rollout</text><polygon points="193.5,70.7 208.8,70.8 224.0,78.8 239.2,94.9 254.5,80.1 269.7,104.1 285.0,119.7 300.2,131.9 315.4,106.6 330.7,142.2 345.9,141.1 361.1,101.0 376.4,114.0 391.6,86.7 406.9,135.9 422.1,99.4 437.3,66.1 452.6,104.7 467.8,119.0 483.0,114.5 498.3,49.1 513.5,96.2 528.8,128.4 544.0,105.6 559.2,104.3 574.5,105.1 589.7,79.3 605.0,52.2 620.2,73.2 635.4,87.3 650.7,149.6 665.9,87.6 681.1,147.8 696.4,100.4 696.4,209.3 681.1,227.6 665.9,207.9 650.7,239.7 635.4,180.7 620.2,167.6 605.0,172.6 589.7,217.4 574.5,176.9 559.2,168.0 544.0,189.7 528.8,207.3 513.5,167.7 498.3,131.1 483.0,183.7 467.8,187.7 452.6,167.3 437.3,151.0 422.1,157.6 406.9,196.6 391.6,151.1 376.4,178.8 361.1,151.6 345.9,188.8 330.7,193.2 315.4,176.3 300.2,182.6 285.0,169.1 269.7,166.5 254.5,132.6 239.2,144.1 224.0,141.4 208.8,135.8 193.5,126.1" class="band"/><polyline points="193.5,97.7 208.8,103.7 224.0,111.2 239.2,121.2 254.5,105.7 269.7,134.5 285.0,144.7 300.2,156.3 315.4,141.7 330.7,166.7 345.9,165.2 361.1,128.1 376.4,146.3 391.6,119.4 406.9,167.0 422.1,125.3 437.3,108.7 452.6,137.0 467.8,154.2 483.0,151.0 498.3,93.4 513.5,132.7 528.8,170.5 544.0,143.9 559.2,138.2 574.5,142.6 589.7,154.7 605.0,107.0 620.2,124.5 635.4,132.0 650.7,197.3 665.9,149.0 681.1,193.8 696.4,163.8" class="line"/><line x1="71.6" x2="71.6" y1="85.1" y2="36.3" class="whisker"/><circle cx="71.6" cy="60.2" r="3.2" class="pre"><title>Week -8: +0.0332 h</title></circle><line x1="86.9" x2="86.9" y1="100.5" y2="46.8" class="whisker"/><circle cx="86.9" cy="74.7" r="3.2" class="pre"><title>Week -7: +0.00563 h</title></circle><line x1="102.1" x2="102.1" y1="120.9" y2="77.1" class="whisker"/><circle cx="102.1" cy="98.4" r="3.2" class="pre"><title>Week -6: -0.0393 h</title></circle><line x1="117.3" x2="117.3" y1="112.0" y2="50.4" class="whisker"/><circle cx="117.3" cy="84.1" r="3.2" class="pre"><title>Week -5: -0.0121 h</title></circle><line x1="132.6" x2="132.6" y1="99.8" y2="53.6" class="whisker"/><circle cx="132.6" cy="77.4" r="3.2" class="pre"><title>Week -4: +0.000605 h</title></circle><line x1="147.8" x2="147.8" y1="129.8" y2="70.8" class="whisker"/><circle cx="147.8" cy="98.4" r="3.2" class="pre"><title>Week -3: -0.0394 h</title></circle><line x1="163.0" x2="163.0" y1="99.2" y2="45.3" class="whisker"/><circle cx="163.0" cy="71.4" r="3.2" class="pre"><title>Week -2: +0.0119 h</title></circle><line x1="178.3" x2="178.3" y1="124.0" y2="69.7" class="whisker"/><circle cx="178.3" cy="97.0" r="3.2" class="pre"><title>Week -1: -0.0367 h</title></circle><circle cx="193.5" cy="97.7" r="3.2" class="post"><title>Week 0: -0.038 h</title></circle><circle cx="208.8" cy="103.7" r="3.2" class="post"><title>Week 1: -0.0495 h</title></circle><circle cx="224.0" cy="111.2" r="3.2" class="post"><title>Week 2: -0.0636 h</title></circle><circle cx="239.2" cy="121.2" r="3.2" class="post"><title>Week 3: -0.0828 h</title></circle><circle cx="254.5" cy="105.7" r="3.2" class="post"><title>Week 4: -0.0532 h</title></circle><circle cx="269.7" cy="134.5" r="3.2" class="post"><title>Week 5: -0.108 h</title></circle><circle cx="285.0" cy="144.7" r="3.2" class="post"><title>Week 6: -0.127 h</title></circle><circle cx="300.2" cy="156.3" r="3.2" class="post"><title>Week 7: -0.15 h</title></circle><circle cx="315.4" cy="141.7" r="3.2" class="post"><title>Week 8: -0.122 h</title></circle><circle cx="330.7" cy="166.7" r="3.2" class="post"><title>Week 9: -0.169 h</title></circle><circle cx="345.9" cy="165.2" r="3.2" class="post"><title>Week 10: -0.166 h</title></circle><circle cx="361.1" cy="128.1" r="3.2" class="post"><title>Week 11: -0.0958 h</title></circle><circle cx="376.4" cy="146.3" r="3.2" class="post"><title>Week 12: -0.131 h</title></circle><circle cx="391.6" cy="119.4" r="3.2" class="post"><title>Week 13: -0.0794 h</title></circle><circle cx="406.9" cy="167.0" r="3.2" class="post"><title>Week 14: -0.17 h</title></circle><circle cx="422.1" cy="125.3" r="3.2" class="post"><title>Week 15: -0.0905 h</title></circle><circle cx="437.3" cy="108.7" r="3.2" class="post"><title>Week 16: -0.0589 h</title></circle><circle cx="452.6" cy="137.0" r="3.2" class="post"><title>Week 17: -0.113 h</title></circle><circle cx="467.8" cy="154.2" r="3.2" class="post"><title>Week 18: -0.145 h</title></circle><circle cx="483.0" cy="151.0" r="3.2" class="post"><title>Week 19: -0.139 h</title></circle><circle cx="498.3" cy="93.4" r="3.2" class="post"><title>Week 20: -0.0299 h</title></circle><circle cx="513.5" cy="132.7" r="3.2" class="post"><title>Week 21: -0.105 h</title></circle><circle cx="528.8" cy="170.5" r="3.2" class="post"><title>Week 22: -0.176 h</title></circle><circle cx="544.0" cy="143.9" r="3.2" class="post"><title>Week 23: -0.126 h</title></circle><circle cx="559.2" cy="138.2" r="3.2" class="post"><title>Week 24: -0.115 h</title></circle><circle cx="574.5" cy="142.6" r="3.2" class="post"><title>Week 25: -0.123 h</title></circle><circle cx="589.7" cy="154.7" r="3.2" class="post"><title>Week 26: -0.146 h</title></circle><circle cx="605.0" cy="107.0" r="3.2" class="post"><title>Week 27: -0.0557 h</title></circle><circle cx="620.2" cy="124.5" r="3.2" class="post"><title>Week 28: -0.0889 h</title></circle><circle cx="635.4" cy="132.0" r="3.2" class="post"><title>Week 29: -0.103 h</title></circle><circle cx="650.7" cy="197.3" r="3.2" class="post"><title>Week 30: -0.227 h</title></circle><circle cx="665.9" cy="149.0" r="3.2" class="post"><title>Week 31: -0.136 h</title></circle><circle cx="681.1" cy="193.8" r="3.2" class="post"><title>Week 32: -0.221 h</title></circle><circle cx="696.4" cy="163.8" r="3.2" class="post"><title>Week 33: -0.164 h</title></circle><text x="71.6" y="274" class="tick" text-anchor="middle">-8</text><text x="132.6" y="274" class="tick" text-anchor="middle">-4</text><text x="193.5" y="274" class="tick" text-anchor="middle">0</text><text x="254.5" y="274" class="tick" text-anchor="middle">4</text><text x="315.4" y="274" class="tick" text-anchor="middle">8</text><text x="376.4" y="274" class="tick" text-anchor="middle">12</text><text x="437.3" y="274" class="tick" text-anchor="middle">16</text><text x="498.3" y="274" class="tick" text-anchor="middle">20</text><text x="559.2" y="274" class="tick" text-anchor="middle">24</text><text x="620.2" y="274" class="tick" text-anchor="middle">28</text><text x="681.1" y="274" class="tick" text-anchor="middle">32</text><text x="384.0" y="294" class="axis" text-anchor="middle">Weeks since rollout</text><text x="14" y="138.0" class="axis" text-anchor="middle" transform="rotate(-90 14 138.0)">Effect (h)</text></svg><figcaption>Mix-adjusted agent hours per ticket by week since rollout, with 95% ranges. Grey points before rollout should sit near zero; the green line shows the learning curve after it.</figcaption></figure>
+
+<h2><span class="num">6</span>Quality guardrails</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Guardrail</th><th>Allowed</th><th>Status</th><th>Detail</th></tr></thead>
+<tbody><tr><td>Reopen rate</td><td>rise of at most 0.01 (share)</td><td><span class="chip chip-pass">Pass</span></td><td>Change +0.00188 (share) (range -0.00261 to +0.00664); within the limit.</td></tr><tr><td>Reassignments per ticket</td><td>rise of at most 0.1</td><td><span class="chip chip-pass">Pass</span></td><td>Change -0.00464 (range -0.0246 to +0.0162); within the limit.</td></tr><tr><td>Escalation rate</td><td>rise of at most 0.01 (share)</td><td><span class="chip chip-pass">Pass</span></td><td>Change -0.00104 (share) (range -0.00887 to +0.00589); within the limit.</td></tr><tr><td>Satisfaction score</td><td>fall of at most 0.1 pts</td><td><span class="chip chip-pass">Pass</span></td><td>Change +0.000737 pts (range -0.0451 to +0.0528); within the limit.</td></tr><tr><td>False deflection rate</td><td>at most 15%</td><td><span class="chip chip-pass">Pass</span></td><td>13.6% of resolved sessions came back as a ticket within 7 days (range 12.5% to 14.8%).</td></tr></tbody>
+</table></div>
+
+<h2><span class="num">7</span>Diagnostics</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Check</th><th>Result</th><th>Detail</th></tr></thead>
+<tbody><tr><td>Pre-trend test</td><td><span class="chip chip-pass">Pass</span></td><td>AI and comparison teams moved together before rollout (joint p = 0.38 over 8 weeks).</td></tr><tr><td>Placebo dates</td><td><span class="chip chip-pass">Pass</span></td><td>A fake rollout 8 weeks early shows no effect (-0.0109, range -0.0386 to +0.0147).</td></tr><tr><td>Placebo outcome: Share of tickets opened outside business hours</td><td><span class="chip chip-pass">Pass</span></td><td>A metric the AI cannot affect did not move (+0.0057).</td></tr><tr><td>Leave-one-team-out</td><td><span class="chip chip-pass">Pass</span></td><td>Dropping any one AI team keeps the estimate between -0.112 and -0.106.</td></tr><tr><td>Category drift</td><td><span class="chip chip-pass">Pass</span></td><td>No sign that the category taxonomy changed with the rollout.</td></tr><tr><td>Power</td><td><span class="chip chip-pass">Pass</span></td><td>With this data the smallest reliably detectable effect is ±0.0218 per unit of work (±2%).</td></tr></tbody>
+</table></div>
+
+<h2><span class="num">8</span>Value and ROI</h2>
+<p>Period: 7.8 months from first rollout. Ranges from 10,000 simulations combining the measured effect's uncertainty with the assumptions in section 10.</p>
+<div class="table-wrap"><table>
+<thead><tr><th></th><th class="n">Low (P10)</th><th class="n">Middle (P50)</th><th class="n">High (P90)</th></tr></thead>
+<tbody>
+<tr><td>Agent hours released</td><td class="n">2,343</td><td class="n">2,590</td><td class="n">2,849</td></tr>
+<tr><td>Capacity value</td><td class="n">$138,059</td><td class="n">$156,639</td><td class="n">$177,415</td></tr>
+<tr><td>Cash value</td><td class="n">$59,413</td><td class="n">$78,103</td><td class="n">$98,716</td></tr>
+<tr><td>Total cost</td><td class="n">$52,955</td><td class="n">$55,588</td><td class="n">$58,306</td></tr>
+<tr><td><b>Capacity ROI</b></td><td class="n">146%</td><td class="n">182%</td><td class="n">222%</td></tr>
+<tr><td><b>Cash ROI</b></td><td class="n">7%</td><td class="n">40%</td><td class="n">79%</td></tr>
+<tr><td>Cost per agent hour released</td><td class="n">$19</td><td class="n">$21</td><td class="n">$24</td></tr>
+</tbody></table></div>
+<p>Payback, middle case: 3.3 months on a cash basis; 1.1 months on a capacity basis.</p>
+<h3>Verified deflection</h3>
+<p>3,543 self-service resolutions: 3,061 verified, 482 false (13.6% came back within 7 days). 1,150 agent hours avoided. Counted: verified resolutions and a measurable fall in ticket volume for AI teams.</p>
+<h3>Costs for the period</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>Component</th><th>Description</th><th>Basis</th><th class="n">Low</th><th class="n">Most likely</th><th class="n">High</th></tr></thead>
+<tbody><tr><td>license</td><td>AI add-on licence uplift (illustrative)</td><td>annual</td><td class="n">$31,146</td><td class="n">$31,146</td><td class="n">$31,146</td></tr><tr><td>build_integration</td><td>Implementation partner (illustrative)</td><td>one_time</td><td class="n">$8,000</td><td class="n">$10,000</td><td class="n">$14,000</td></tr><tr><td>change_training</td><td>Agent training: 300 agents × 20 min × $60</td><td>one_time</td><td class="n">$6,000</td><td class="n">$6,000</td><td class="n">$6,000</td></tr><tr><td>human_oversight</td><td>Knowledge-base upkeep and AI review time</td><td>monthly</td><td class="n">$3,893</td><td class="n">$7,786</td><td class="n">$11,680</td></tr></tbody>
+</table></div>
+
+<h2><span class="num">9</span>Claimed versus proven</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Source</th><th class="n">Claimed hours</th><th class="n">Claimed value</th><th class="n">Measured hours (P10 to P90)</th><th>Note</th></tr></thead>
+<tbody><tr><td>Vendor value dashboard (illustrative)</td><td class="n">9,000</td><td class="n">n/a</td><td class="n">2,343 to 2,849</td><td>Usage × assumed minutes saved per summary</td></tr></tbody>
+</table></div>
+<p class="meta">Claimed figures are grade E: shown for comparison, never added to measured value.</p>
+
+<h2><span class="num">10</span>Assumptions</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Assumption</th><th class="n">Low</th><th class="n">Most likely</th><th class="n">High</th><th>Unit</th><th>Owner</th><th>Agreed</th></tr></thead>
+<tbody><tr><td>Loaded cost per agent hour</td><td class="n">52.00</td><td class="n">60.00</td><td class="n">70.00</td><td>USD</td><td>not recorded</td><td>not recorded</td></tr><tr><td>Share of freed hours provably redeployed (realization)</td><td class="n">0.30</td><td class="n">0.50</td><td class="n">0.70</td><td>share</td><td>not recorded</td><td>not recorded</td></tr><tr><td>Extra agent hours per false deflection</td><td class="n">0.25</td><td class="n">0.50</td><td class="n">1.00</td><td>h</td><td>not recorded</td><td>not recorded</td></tr></tbody>
+</table></div>
+
+<h2><span class="num">11</span>Data lineage</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>File</th><th class="n">Rows</th><th>Modified</th><th>SHA-256</th></tr></thead>
+<tbody><tr><td>incidents.csv</td><td class="n">74,477</td><td>2026-10-14T18:00:10+00:00</td><td class="mono">a5dd9e825b4798c2…</td></tr><tr><td>rollout.csv</td><td class="n">40</td><td>2026-10-14T18:00:10+00:00</td><td class="mono">dca626de90094161…</td></tr><tr><td>virtual_agent.csv</td><td class="n">4,741</td><td>2026-10-14T18:00:10+00:00</td><td class="mono">45589c60796fe765…</td></tr></tbody>
+</table></div>
+<ul>
+<li>Excluded, missing team_id: 74</li><li>Excluded, duplicate ID: 37</li><li>Excluded, resolved before opened: 106</li></ul>
+<p class="meta">Probative Labs 0.1.0 (git <span class="mono">cf4b33acef23</span>) · configuration <span class="mono">0d8ea8a3a418</span> · run 2026-10-14T18:00:11+00:00</p>
+
+<h2><span class="num">12</span>Recommendation</h2>
+<p><b>Renew and expand.</b> Cash ROI is positive even at the low end of the range.</p>
+<p class="meta">A rule-based suggestion from the evidence above. The decision belongs to the program owner and finance.</p>
+
+<details>
+<summary>Method appendix</summary>
+<h3>Estimator</h3>
+<p>Effects are estimated with the imputation estimator for staggered adoption (Borusyak, Jaravel and Spiess, Review of Economic Studies, 2024). Team and week effects are fitted by weighted least squares using only team-weeks without the AI (comparison teams, and AI teams before their rollout). For every team-week with the AI, the fitted model predicts the outcome it would have had without it; the effect is the observed minus the predicted outcome. Effects are averaged with weights equal to the number of tickets in each team-week, so the headline is an effect per ticket.</p><p>Because AI team-weeks are only ever compared with untreated data, the estimator avoids the bias of ordinary two-way fixed-effects regressions under staggered rollouts with effects that change over time. A single rollout date with a comparison group reduces to two-group difference-in-differences.</p><ul><li>Design: Staggered rollout (imputation difference-in-differences)</li><li>Teams analysed: 40 (30 with the AI, 10 without it in the window; 3 rollout wave(s))</li><li>Window: 2025-01-06 to 2026-07-05 (78 weeks)</li><li>Rollout weeks that start mid-week are dropped for the team concerned (partly exposed).</li></ul><h3>Uncertainty</h3>
+<p>Ranges come from a bootstrap that resamples whole teams (499 draws, seed 20261014), stratified by rollout wave so every draw keeps the design. Intervals are percentile intervals at the 95% level. Tickets within a team are not independent, so resampling teams, not tickets, gives honest uncertainty.</p><h3>Work typing and mix adjustment</h3>
+<p>Each ticket is typed from its category fields (and any custom rules). Types below the configured share of baseline volume are folded into &#39;Other&#39;. Mix-adjusted outcomes subtract each type&#39;s baseline mean (computed on untreated team-weeks only) before averaging, so the engine compares tickets only with tickets of the same type. The headline (unadjusted) estimate is always reported beside it.</p><p>The descriptive before/after table reweights each period&#39;s per-type means to the AI teams&#39; before-rollout mix; it has no comparison group and is not causal.</p><h3>Diagnostics</h3>
+<ul><li>Pre-trend: lead coefficients for the weeks before rollout are estimated on untreated team-weeks with team and week effects; their joint Wald test uses the bootstrap covariance. Fail if p &lt; 0.05.</li><li>Placebo dates: data after each team&#39;s real rollout is removed and the rollout is moved earlier; fail if the placebo range excludes zero.</li><li>Placebo outcomes: metrics the AI cannot affect (e.g. share of tickets opened after hours) are estimated with the same design; fail if the range excludes zero.</li><li>Leave-one-team-out: the estimate is recomputed dropping each AI team; fail if one team flips the sign of a significant effect or moves it by more than half.</li><li>Category drift: Jensen-Shannon distance of the category mix before and after rollout, AI teams versus comparison teams; fail if categories appear or vanish.</li><li>Power: minimum detectable effect = 2.80 × standard error (two-sided 5% test, 80% power).</li></ul><h3>Quality guardrails</h3>
+<p>Each guardrail is estimated with the same design (type-adjusted). Pass: the upper end of the harm range is below the threshold. Breach: the harm exceeds the threshold and its range excludes zero. Watch: otherwise. Any breach withholds the program&#39;s value. The false deflection rate is judged on its level (Wilson interval) against its threshold.</p><h3>Value and ROI</h3>
+<p>Capacity value = (agent hours saved + verified deflections × baseline hours for that type − false deflections × extra hours) × loaded hourly cost. Cash value = capacity value × realization share + documented realized savings. ROI = (value − total cost) ÷ total cost.</p><p>Hours saved enter through their team-bootstrap draws; each customer assumption enters as a triangular distribution (low, most likely, high). The simulation reports the 10th, 50th and 90th percentiles. Payback = one-time costs ÷ (monthly value − monthly recurring cost).</p><p>Deflection counts only when the evidence grade counts, no guardrail breached, and ticket volume per team fell measurably for AI teams.</p><h3>Evidence grades</h3>
+<ul><li>A: randomized holdout or randomized wave order, registered before go-live, diagnostics pass.</li><li>B: staggered rollout or comparison group with pre-trend and placebo tests passed.</li><li>C: valid but weaker (e.g. fewer than 12 teams; synthetic control and interrupted time series from v2): counts, flagged as weaker.</li><li>D: diagnostics failed: indicative only, never added to totals.</li><li>E: vendor estimates, surveys and self-reported time: shown as claimed, never added.</li></ul><h3>Data handling</h3>
+<ul><li>Person and record identifiers are replaced at ingest with keyed HMAC-SHA256 pseudonyms (requester_id, assignee_id, unit_id).</li><li>Free text is used only for work typing and dropped before analysis.</li><li>Teams with fewer people than the minimum group size are left out; results are team-level only.</li><li>Trailing weeks with too many unresolved records are dropped (right-censoring guard).</li><li>Exclusions: missing team_id: 74; duplicate ID: 37; resolved before opened: 106</li></ul><h3>Reproduce this result</h3>
+<p>Run `probative analyze -c probative.yaml` with the same data files, configuration and pseudonymization key. Results are deterministic given the seed.</p><ul><li>Probative Labs 0.1.0 (git cf4b33acef234115c42c51214c83721b5132dc89), Python 3.12.15, numpy 2.5.3, pandas 3.0.6</li><li>Configuration SHA-256: 0d8ea8a3a418a7e9270937da8eb33f9b0717cf15263356c6c6f99ab7e073b417</li><li>Registration SHA-256: f70b35f53a8885fd45526975cadce17af37b38418c41e58ce6491ddcd6ed4b27</li><li>incidents.csv: 74,477 rows, SHA-256 a5dd9e825b4798c2…</li><li>rollout.csv: 40 rows, SHA-256 dca626de90094161…</li><li>virtual_agent.csv: 4,741 rows, SHA-256 45589c60796fe765…</li></ul></details>
+
+<footer>Generated by Probative Labs, open-source AI impact measurement. Results are team-level only; no individual is scored. Method: docs/methodology.md.</footer>
+</main>
+</body>
+</html>
