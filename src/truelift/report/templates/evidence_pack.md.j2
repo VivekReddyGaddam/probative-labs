@@ -1,0 +1,186 @@
+{% set p = r.primary %}
+{% set v = r.value %}
+# Evidence pack: {{ r.program.name }}
+
+{{ r.playbook.title }} · {{ r.window.start }} to {{ r.window.end }} · evidence grade **{{ r.grade.grade }}** · TrueLift {{ r.lineage.code.truelift }}
+
+## 1. Headline
+
+{{ r.headline }}
+
+**Recommendation: {{ r.recommendation.action }}.** {{ r.recommendation.reason }}
+
+## 2. The question as registered
+
+- **Hypothesis:** {{ r.hypothesis.statement }}
+- **Primary metric:** {{ r.hypothesis.primary_metric }}{% if r.hypothesis.expected_effect is not none %} (expected {{ r.hypothesis.expected_effect | spct }}){% endif %}
+
+- **Registration:** {{ r.registration.summary }}
+{% for d in r.registration.deviations %}
+  - Deviation: {{ d }}
+{% endfor %}
+
+## 3. Design
+
+**{{ r.design.label }}.**
+{% for reason in r.design.reasons %}
+- {{ reason }}
+{% endfor %}
+{% for reason in r.design.stronger_unavailable %}
+- Why not stronger: {{ reason }}
+{% endfor %}
+
+Evidence grade **{{ r.grade.grade }}**: {{ GRADE_TEXT[r.grade.grade] }}.
+{% for reason in r.grade.reasons %}
+- {{ reason }}
+{% endfor %}
+
+{% if r.effects %}
+## 4. Effects
+
+Headline and mix-adjusted results side by side. Effects are per {{ r.playbook.unit }}; negative means less time.
+
+| Metric | View | Effect | {{ (r.lineage.bootstrap.level * 100) | int }}% range | Relative | Total over AI {{ r.playbook.units }} |
+| --- | --- | --- | --- | --- | --- |
+{% for e in r.effects %}
+| {{ e.metric_label }} | {{ e.view }} | {{ e.estimate | signed }} {{ e.unit }} | {{ e.ci_low | signed }} to {{ e.ci_high | signed }} | {{ e.relative | spct(1) }} | {{ e.total | signed(0) }} {{ e.unit }} |
+{% endfor %}
+
+{% if r.before_after %}
+Descriptive before/after for AI teams (no comparison group, not causal):
+
+| Metric | Before AI | After AI | Change |
+| --- | --- | --- | --- |
+{% for row in r.before_after %}
+| {{ row.metric }} | {{ row.before | num(1) }} | {{ row.after | num(1) }} | {{ row.change | spct }} |
+{% endfor %}
+{% endif %}
+
+{% if r.by_type %}
+By work type (agent hours per {{ r.playbook.unit }}, within type):
+
+| Work type | AI {{ r.playbook.units }} | Effect | Range | Relative |
+| --- | --- | --- | --- | --- |
+{% for t in r.by_type %}
+| {{ t.work_type }} | {{ t.after_units | num(0) }} | {{ t.estimate | signed(3) }} | {{ t.ci_low | signed(3) }} to {{ t.ci_high | signed(3) }} | {{ t.relative | spct }} |
+{% endfor %}
+{% endif %}
+
+{% if r.adoption %}
+AI was recorded on {{ r.adoption.share_touched | pct }} of AI teams' {{ r.playbook.units }} after rollout (usage is context, never value).
+{% endif %}
+
+## 5. Effect over time
+
+| Weeks since rollout | Effect | Range |
+| --- | --- | --- |
+{% for e in r.event_study %}
+| {{ e.event_time }} | {{ e.estimate | signed(3) }} | {{ e.ci_low | signed(3) }} to {{ e.ci_high | signed(3) }} |
+{% endfor %}
+
+## 6. Quality guardrails
+
+{% if r.blocked %}**A guardrail breached: value is withheld.**
+
+{% endif %}
+| Guardrail | Threshold | Status | Detail |
+| --- | --- | --- | --- |
+{% for g in r.guardrails %}
+| {{ g.label }} | {{ g.threshold }} | {{ STATUS_TEXT[g.status] }} | {{ g.detail }} |
+{% endfor %}
+
+## 7. Diagnostics
+
+| Check | Result | Detail |
+| --- | --- | --- |
+{% for c in r.diagnostics %}
+| {{ c.name }} | {{ STATUS_TEXT[c.status] }} | {{ c.detail }} |
+{% endfor %}
+
+## 8. Value and ROI
+
+{% if v %}
+Status: **{{ r.value_status }}**{% if r.value_status == "indicative" %} (shown for context; not added to measured totals){% elif r.value_status == "withheld" %} (a guardrail breached){% endif %}. Period: {{ v.months | num(1) }} months from first rollout. All values P10 / P50 / P90 from {{ v.simulations | num(0) }} simulations.
+
+| | P10 | P50 | P90 |
+| --- | --- | --- | --- |
+| Agent hours released | {{ v.hours.p10 | num(0) }} | {{ v.hours.p50 | num(0) }} | {{ v.hours.p90 | num(0) }} |
+| Capacity value | {{ v.capacity_value.p10 | money(currency) }} | {{ v.capacity_value.p50 | money(currency) }} | {{ v.capacity_value.p90 | money(currency) }} |
+| Cash value | {{ v.cash_value.p10 | money(currency) }} | {{ v.cash_value.p50 | money(currency) }} | {{ v.cash_value.p90 | money(currency) }} |
+| Total cost | {{ v.cost.p10 | money(currency) }} | {{ v.cost.p50 | money(currency) }} | {{ v.cost.p90 | money(currency) }} |
+| Capacity ROI | {{ v.roi_capacity.p10 | pct }} | {{ v.roi_capacity.p50 | pct }} | {{ v.roi_capacity.p90 | pct }} |
+| Cash ROI | {{ v.roi_cash.p10 | pct }} | {{ v.roi_cash.p50 | pct }} | {{ v.roi_cash.p90 | pct }} |
+| Cost per agent hour released | {{ v.cost_per_hour.p10 | money(currency) }} | {{ v.cost_per_hour.p50 | money(currency) }} | {{ v.cost_per_hour.p90 | money(currency) }} |
+
+Payback (cash basis, middle case): {{ v.payback_cash_months.p50 | months }}. Payback (capacity basis, middle case): {{ v.payback_capacity_months.p50 | months }}.
+{% for n in v.notes %}
+
+- {{ n }}
+{% endfor %}
+
+{% if r.deflection %}
+Deflection: {{ r.deflection.resolved | num(0) }} self-service resolutions, {{ r.deflection.verified | num(0) }} verified, {{ r.deflection.false | num(0) }} false ({{ r.deflection.false_rate | pct(1) }}); {{ r.deflection.hours_avoided | num(0) }} agent hours avoided. {{ r.deflection.reason }}
+{% endif %}
+
+{% if r.costs %}
+Costs for the period:
+
+| Component | Description | Basis | Low | Most likely | High |
+| --- | --- | --- | --- | --- | --- |
+{% for c in r.costs.lines %}
+| {{ c.component }} | {{ c.description }} | {{ c.basis }} | {{ c.low | money(currency) }} | {{ c.mid | money(currency) }} | {{ c.high | money(currency) }} |
+{% endfor %}
+{% endif %}
+{% else %}
+Value could not be computed. {% for n in r.notes %}{{ n }} {% endfor %}
+{% endif %}
+
+## 9. Claimed versus proven
+
+{% if r.claimed %}
+| Source | Claimed hours | Claimed value | Measured hours (P10 to P90) | Note |
+| --- | --- | --- | --- | --- |
+{% for c in r.claimed %}
+| {{ c.source }} | {{ c.hours_saved | num(0) }} | {{ c.value | money(currency) }} | {% if c.measured_hours %}{{ c.measured_hours.p10 | num(0) }} to {{ c.measured_hours.p90 | num(0) }}{% else %}n/a{% endif %} | {{ c.note or "" }} |
+{% endfor %}
+
+Claimed figures are grade E: shown for comparison, never added to measured value.
+{% else %}
+No vendor or dashboard estimate was supplied.
+{% endif %}
+
+## 10. Assumptions
+
+| Assumption | Low | Most likely | High | Unit | Owner | Agreed |
+| --- | --- | --- | --- | --- | --- | --- |
+{% for a in r.assumptions %}
+| {{ a.name }} | {{ a.low | num(2) }} | {{ a.mid | num(2) }} | {{ a.high | num(2) }} | {{ a.unit }} | {{ a.owner or "not recorded" }} | {{ a.date or "not recorded" }} |
+{% endfor %}
+{% endif %}
+
+## 11. Data lineage
+
+| File | Rows | Modified | SHA-256 |
+| --- | --- | --- | --- |
+{% for f in r.lineage.files %}
+| {{ f.path.split("/")[-1] }} | {{ f.rows | num(0) }} | {{ f.modified }} | `{{ f.sha256[:16] }}…` |
+{% endfor %}
+
+Exclusions:
+{% for k, n in r.lineage.exclusions.items() %}
+- {{ k }}: {{ n | num(0) }}
+{% else %}
+- none
+{% endfor %}
+
+{% for n in r.notes %}
+- Note: {{ n }}
+{% endfor %}
+
+Code: TrueLift {{ r.lineage.code.truelift }} (git {{ r.lineage.code.git or "n/a" }}). Configuration SHA-256 `{{ r.lineage.config_sha256[:16] }}…`. Run {{ r.lineage.run_at }}.
+
+## 12. Recommendation
+
+**{{ r.recommendation.action }}.** {{ r.recommendation.reason }}
+
+This is a rule-based suggestion from the evidence above; the decision belongs to the program owner and finance.

@@ -5,7 +5,21 @@ build/
 dist/
 wheels/
 *.egg-info
+.pytest_cache/
+.ruff_cache/
 
 # Virtual environments
 .venv
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Never commit real customer data or pseudonymization keys
 data/
+*.key
+.truelift/
+out/
+demo/
+
+# macOS
+.DS_Store
