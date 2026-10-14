@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Method · Probative Labs</title>
+<meta name="description" content="How Probative Labs estimates what would have happened without the AI: comparison designs, mix adjustment, diagnostics, evidence grades and ROI ranges.">
+<link rel="icon" href="/probative-labs/static/img/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/probative-labs/static/css/main.css">
+<script src="/probative-labs/static/js/app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="/probative-labs/"><img src="/probative-labs/static/img/logo.svg" alt="" width="28" height="28">Probative Labs</a>
+    <button class="btn btn-ghost btn-sm nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <nav class="site-nav" id="site-nav" data-nav aria-label="Main">
+      <a href="/probative-labs/method/" aria-current="page">Method</a>
+      <a href="/probative-labs/sample/evidence-pack.html">Sample evidence pack</a>
+      <a href="/probative-labs/open-source/" >Open source</a>
+      <a href="/probative-labs/pricing/" >Pricing</a>
+      <a href="/probative-labs/security/" >Security</a>
+      
+      <a class="btn btn-primary btn-sm" href="/probative-labs/pilot/">Book a pilot</a>
+    </nav>
+  </div>
+</header>
+<main id="content">
+
+
+<section class="hero">
+  <div class="wrap narrow">
+    <div class="eyebrow">Method</div>
+    <h1>What would have happened without the AI?</h1>
+    <p class="lead">That is the only question that turns AI usage into evidence. Probative Labs answers it with the strongest comparison your data allows, and says so plainly when no comparison is good enough.</p>
+  </div>
+</section>
+<section class="tight">
+  <div class="wrap narrow prose">
+    <h2>Comparison designs</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Design</th><th>When it is used</th><th>Grade</th></tr></thead>
+      <tbody>
+        <tr><td>Randomized wave order or holdout</td><td>Teams get the AI in waves assigned by lottery, registered before go-live</td><td>A</td></tr>
+        <tr><td>Staggered rollout</td><td>Teams got the AI on different dates</td><td>B</td></tr>
+        <tr><td>Two-group difference-in-differences</td><td>One group got the AI; comparable teams did not</td><td>B</td></tr>
+        <tr><td>Synthetic control, interrupted time series</td><td>One large unit, or everyone at once with long stable history (coming next)</td><td>C</td></tr>
+        <tr><td>None</td><td>Everyone at once, no holdout, no history</td><td>No number</td></tr>
+      </tbody>
+    </table></div>
+    <p>Staggered rollouts are estimated with the imputation estimator (Borusyak, Jaravel and Spiess, 2024). Each AI team-week is compared only with data that had no AI, which avoids the known bias of ordinary regressions when effects grow over time.</p>
+
+    <h2 id="mix">Mix adjustment</h2>
+    <p>Every ticket is typed by category. Effects are estimated within type and reported beside the headline number. When AI absorbs password resets, the average remaining ticket is harder. A headline average punishes the AI for its own success; the mix-adjusted effect does not.</p>
+
+    <h2>Uncertainty and diagnostics</h2>
+    <ul>
+      <li><b>Team-level ranges.</b> Tickets in a team are not independent, so uncertainty comes from resampling whole teams, with a small-sample correction.</li>
+      <li><b>Pre-trend test.</b> Were AI and comparison teams moving together before rollout?</li>
+      <li><b>Placebo dates.</b> A fake, earlier rollout should show no effect.</li>
+      <li><b>Placebo outcomes.</b> A metric the AI cannot touch should not move.</li>
+      <li><b>Leave-one-team-out.</b> No single team may drive the result.</li>
+      <li><b>Category drift.</b> A taxonomy change must not masquerade as an effect.</li>
+      <li><b>Power.</b> The smallest effect the data could detect, so "no effect found" is never confused with "no effect".</li>
+    </ul>
+    <p>A failed diagnostic moves the result to grade D: shown, never added to totals.</p>
+
+    <h2>Quality guardrails</h2>
+    <p>Reopen rate, reassignments, escalations, satisfaction and false deflection are estimated with the same design. If any breaches its agreed threshold, the program's value is withheld: faster but worse earns nothing.</p>
+
+    <h2>Value and ROI</h2>
+    <p>ROI = (value − total cost) ÷ total cost. It is always a range: the measured effect's uncertainty is combined with your finance team's assumptions (loaded hourly cost, realization share) in 10,000 simulations. Capacity ROI counts freed hours. Cash ROI counts only money that provably moved.</p>
+
+    <h2>Validated on known answers</h2>
+    <p>The engine is tested on simulated service desks with planted effects, including zero, using the same pipeline customers use. The results are published.</p>
+    <div class="cta-row">
+      <a class="btn" href="https://github.com/VivekReddyGaddam/probative-labs/blob/main/docs/methodology.md">Full methodology</a>
+      <a class="btn" href="https://github.com/VivekReddyGaddam/probative-labs/blob/main/docs/validation.md">Validation results</a>
+      <a class="btn btn-ghost" href="/probative-labs/sample/evidence-pack.html">Sample evidence pack</a>
+    </div>
+  </div>
+</section>
+
+</main>
+<footer class="site-footer">
+  <div class="wrap footer-grid">
+    <div>
+      <a class="brand" href="/probative-labs/"><img src="/probative-labs/static/img/logo.svg" alt="" width="28" height="28">Probative Labs</a>
+      <p class="muted small" style="margin-top:0.8rem;max-width:22rem">Neutral, graded evidence of what each AI investment changed. Probative Labs sells no AI and is not part of any platform it measures.</p>
+    </div>
+    <div>
+      <h4>Product</h4>
+      <ul>
+        <li><a href="/probative-labs/method/">Method</a></li>
+        <li><a href="/probative-labs/sample/evidence-pack.html">Sample evidence pack</a></li>
+        <li><a href="/probative-labs/pricing/">Pricing</a></li>
+        <li><a href="/probative-labs/pilot/">Book a pilot</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Open source</h4>
+      <ul>
+        <li><a href="https://github.com/VivekReddyGaddam/probative-labs">GitHub</a></li>
+        <li><a href="https://github.com/VivekReddyGaddam/probative-labs/blob/main/docs/methodology.md">Methodology</a></li>
+        <li><a href="https://github.com/VivekReddyGaddam/probative-labs/blob/main/docs/validation.md">Validation</a></li>
+        <li><a href="/probative-labs/open-source/">Open source and Cloud</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Company</h4>
+      <ul>
+        <li><a href="/probative-labs/security/">Security and privacy</a></li>
+        <li><a href="/probative-labs/privacy/">Privacy notice</a></li>
+        
+      </ul>
+    </div>
+  </div>
+  <div class="wrap"><p class="muted small" style="margin-top:2rem">© 2026 Probative Labs. The measurement engine is open source under the Apache License 2.0.</p></div>
+</footer>
+</body>
+</html>

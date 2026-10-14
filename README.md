@@ -4,6 +4,8 @@
 
 This repository is the open-source measurement engine. v1 covers the IT service desk.
 
+**[Website](https://vivekreddygaddam.github.io/probative-labs/)** · **[Sample evidence pack](https://vivekreddygaddam.github.io/probative-labs/sample/evidence-pack.html)** · **[Run a pilot on your own data](docs/pilot-guide.md)**
+
 ```
 $ probative demo
 AI agent assist (simulated) changed agent hours per ticket by -0.11 h per ticket (-12%; 95% range -0.13

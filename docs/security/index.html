@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Security and privacy · Probative Labs</title>
+<meta name="description" content="Probative Labs compares real work outcomes with what would have happened without the AI, checks that quality held, and turns the difference into an ROI range a CFO can defend.">
+<link rel="icon" href="/probative-labs/static/img/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/probative-labs/static/css/main.css">
+<script src="/probative-labs/static/js/app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="/probative-labs/"><img src="/probative-labs/static/img/logo.svg" alt="" width="28" height="28">Probative Labs</a>
+    <button class="btn btn-ghost btn-sm nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <nav class="site-nav" id="site-nav" data-nav aria-label="Main">
+      <a href="/probative-labs/method/" >Method</a>
+      <a href="/probative-labs/sample/evidence-pack.html">Sample evidence pack</a>
+      <a href="/probative-labs/open-source/" >Open source</a>
+      <a href="/probative-labs/pricing/" >Pricing</a>
+      <a href="/probative-labs/security/" aria-current="page">Security</a>
+      
+      <a class="btn btn-primary btn-sm" href="/probative-labs/pilot/">Book a pilot</a>
+    </nav>
+  </div>
+</header>
+<main id="content">
+
+
+<section class="hero">
+  <div class="wrap narrow">
+    <div class="eyebrow">Security and privacy</div>
+    <h1>Built to need as little of your data as possible.</h1>
+    <p class="lead">Probative Labs reads operational data such as tickets, cases and alerts. So it reads only what the analysis needs, runs where your data lives when required, and never judges individuals.</p>
+  </div>
+</section>
+<section class="tight">
+  <div class="wrap narrow prose">
+    <h2>Deployment options</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Option</th><th>For</th><th>Where the data lives</th></tr></thead>
+      <tbody>
+        <tr><td>Multi-tenant cloud</td><td>Mid-size and less regulated companies</td><td>Probative Labs' cloud, in a US or EU region you choose</td></tr>
+        <tr><td>Single-tenant cloud</td><td>Large enterprises</td><td>A dedicated, isolated environment</td></tr>
+        <tr><td>Customer-hosted</td><td>Banks, healthcare, government, sensitive functions</td><td>Your own AWS, Azure or Google Cloud account; nothing leaves unless you allow it</td></tr>
+      </tbody>
+    </table></div>
+
+    <h2>Data minimization</h2>
+    <ul>
+      <li><b>Read-only, least privilege.</b> Connectors use a service account limited to the fields Probative Labs needs. Probative Labs never writes back to your systems.</li>
+      <li><b>Metadata first.</b> Timestamps, categories, teams and outcomes. Free text is read only to type work, then dropped.</li>
+      <li><b>Pseudonymization at ingest.</b> Names and user IDs are replaced with keyed hashes before anything is stored, using a separate key per customer. Raw uploads are not kept.</li>
+      <li><b>Team-level results only.</b> Every result respects a configurable minimum group size. No screen shows an individual's productivity.</li>
+    </ul>
+
+    <h2>Employee relations and regulation</h2>
+    <ul>
+      <li><b>Works councils.</b> Probative Labs provides a standard description of its team-level design for consultations, for example under Section 87(1) no. 6 of Germany's Works Constitution Act.</li>
+      <li><b>GDPR.</b> Data processing agreement, an EU-region hosting option, and configurable retention with automatic deletion.</li>
+      <li><b>EU AI Act.</b> Probative Labs evaluates AI programs, not people. It does not recruit, score, rank or monitor individual workers.</li>
+      <li><b>AI inside Probative Labs.</b> Any AI used inside Probative Labs runs on model endpoints you approve. Your data is never used to train models.</li>
+    </ul>
+
+    <h2>Security program</h2>
+    <ul>
+      <li>TLS in transit and encrypted volumes at rest in hosted deployments; connector and single sign-on secrets encrypted in the database</li>
+      <li>Single sign-on (OpenID Connect), role-based access and a complete audit log</li>
+      <li>Strict browser security headers; no third-party scripts, trackers or analytics in the product</li>
+      <li>Independent penetration testing before general availability</li>
+      <li>Planned certifications, in order: SOC 2 Type II, ISO/IEC 27001, ISO/IEC 42001</li>
+    </ul>
+    <p class="muted">To report a vulnerability, use the private reporting channel on our <a href="https://github.com/VivekReddyGaddam/probative-labs/security">GitHub repository</a>.</p>
+  </div>
+</section>
+
+</main>
+<footer class="site-footer">
+  <div class="wrap footer-grid">
+    <div>
+      <a class="brand" href="/probative-labs/"><img src="/probative-labs/static/img/logo.svg" alt="" width="28" height="28">Probative Labs</a>
+      <p class="muted small" style="margin-top:0.8rem;max-width:22rem">Neutral, graded evidence of what each AI investment changed. Probative Labs sells no AI and is not part of any platform it measures.</p>
+    </div>
+    <div>
+      <h4>Product</h4>
+      <ul>
+        <li><a href="/probative-labs/method/">Method</a></li>
+        <li><a href="/probative-labs/sample/evidence-pack.html">Sample evidence pack</a></li>
+        <li><a href="/probative-labs/pricing/">Pricing</a></li>
+        <li><a href="/probative-labs/pilot/">Book a pilot</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Open source</h4>
+      <ul>
+        <li><a href="https://github.com/VivekReddyGaddam/probative-labs">GitHub</a></li>
+        <li><a href="https://github.com/VivekReddyGaddam/probative-labs/blob/main/docs/methodology.md">Methodology</a></li>
+        <li><a href="https://github.com/VivekReddyGaddam/probative-labs/blob/main/docs/validation.md">Validation</a></li>
+        <li><a href="/probative-labs/open-source/">Open source and Cloud</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Company</h4>
+      <ul>
+        <li><a href="/probative-labs/security/">Security and privacy</a></li>
+        <li><a href="/probative-labs/privacy/">Privacy notice</a></li>
+        
+      </ul>
+    </div>
+  </div>
+  <div class="wrap"><p class="muted small" style="margin-top:2rem">© 2026 Probative Labs. The measurement engine is open source under the Apache License 2.0.</p></div>
+</footer>
+</body>
+</html>
