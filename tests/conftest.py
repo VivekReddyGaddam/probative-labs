@@ -6,9 +6,9 @@ import numpy as np
 import pytest
 import yaml
 
-from truelift.config import ProjectConfig
-from truelift.engine.panel import Panel
-from truelift.simulate import SimSpec, demo_config, generate
+from probative.config import ProjectConfig
+from probative.engine.panel import Panel
+from probative.simulate import SimSpec, demo_config, generate
 
 
 def make_panel(
@@ -43,5 +43,5 @@ def small_project(tmp_path_factory) -> tuple[ProjectConfig, dict]:
     raw = demo_config("data", sim.truth)
     raw["analysis"]["bootstrap_reps"] = 99
     raw["analysis"]["min_teams"] = 8
-    (d / "truelift.yaml").write_text(yaml.safe_dump(raw, sort_keys=False))
-    return ProjectConfig.load(d / "truelift.yaml"), sim.truth
+    (d / "probative.yaml").write_text(yaml.safe_dump(raw, sort_keys=False))
+    return ProjectConfig.load(d / "probative.yaml"), sim.truth

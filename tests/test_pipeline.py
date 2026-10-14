@@ -5,12 +5,12 @@ import pytest
 import yaml
 from typer.testing import CliRunner
 
-from truelift.cli import app
-from truelift.config import ProjectConfig
-from truelift.pipeline import analyze
-from truelift.report import write_pack
-from truelift.rollout import check_registration, lock_registration
-from truelift.simulate import SimSpec, demo_config, generate
+from probative.cli import app
+from probative.config import ProjectConfig
+from probative.pipeline import analyze
+from probative.report import write_pack
+from probative.rollout import check_registration, lock_registration
+from probative.simulate import SimSpec, demo_config, generate
 
 
 def test_end_to_end_recovers_truth_and_writes_pack(small_project, tmp_path):
@@ -44,8 +44,8 @@ def test_guardrail_breach_withholds_value(tmp_path):
     sim.write(tmp_path / "data")
     raw = demo_config("data", sim.truth)
     raw["analysis"]["bootstrap_reps"] = 99
-    (tmp_path / "truelift.yaml").write_text(yaml.safe_dump(raw))
-    res = analyze(ProjectConfig.load(tmp_path / "truelift.yaml"), key_file=str(tmp_path / "k.key")).to_dict()
+    (tmp_path / "probative.yaml").write_text(yaml.safe_dump(raw))
+    res = analyze(ProjectConfig.load(tmp_path / "probative.yaml"), key_file=str(tmp_path / "k.key")).to_dict()
     reopen = next(g for g in res["guardrails"] if g["key"] == "reopen_rate")
     assert reopen["status"] == "breach"
     assert res["blocked"] and res["value_status"] == "withheld"
@@ -57,8 +57,8 @@ def test_no_comparison_means_no_number(tmp_path):
     sim.write(tmp_path / "data")
     raw = demo_config("data", sim.truth)
     raw["analysis"]["bootstrap_reps"] = 49
-    (tmp_path / "truelift.yaml").write_text(yaml.safe_dump(raw))
-    res = analyze(ProjectConfig.load(tmp_path / "truelift.yaml"), key_file=str(tmp_path / "k.key")).to_dict()
+    (tmp_path / "probative.yaml").write_text(yaml.safe_dump(raw))
+    res = analyze(ProjectConfig.load(tmp_path / "probative.yaml"), key_file=str(tmp_path / "k.key")).to_dict()
     assert res["grade"]["grade"] == "insufficient"
     assert res["value"] is None and res["headline"].startswith("No number")
     write_pack(res, tmp_path / "out")
@@ -67,7 +67,7 @@ def test_no_comparison_means_no_number(tmp_path):
 def test_registration_lock_and_deviation(small_project, tmp_path):
     cfg, _ = small_project
     path = tmp_path / "registration.yaml"
-    from truelift.cli import _guardrails
+    from probative.cli import _guardrails
 
     lock_registration(cfg, _guardrails(cfg), path)
     with pytest.raises(FileExistsError):
@@ -87,7 +87,7 @@ def test_registration_lock_and_deviation(small_project, tmp_path):
 def test_cli_init_health_and_plan(tmp_path):
     runner = CliRunner()
     r = runner.invoke(app, ["init", str(tmp_path)])
-    assert r.exit_code == 0 and (tmp_path / "truelift.yaml").exists()
+    assert r.exit_code == 0 and (tmp_path / "probative.yaml").exists()
     r = runner.invoke(app, ["simulate", str(tmp_path / "data"), "--teams", "16", "--weeks", "40"])
     assert r.exit_code == 0, r.output
     teams = tmp_path / "data" / "teams.csv"

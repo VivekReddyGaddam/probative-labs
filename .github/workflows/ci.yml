@@ -25,4 +25,4 @@ jobs:
       - run: uv run ruff format --check src tests
       - run: uv run pytest -q
       - name: Demo runs end to end
-        run: uv run truelift demo /tmp/truelift-demo --reps 99
+        run: uv run probative demo /tmp/probative-demo --reps 99

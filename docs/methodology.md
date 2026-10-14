@@ -1,10 +1,10 @@
 # Methodology
 
-TrueLift estimates the *counterfactual*: what would have happened to the same work without the AI. It uses the strongest comparison the data allows, and it states the uncertainty, the diagnostics and an evidence grade with every number. This document describes exactly what v0.1 of the open engine does. The code is the reference implementation; where this text and the code disagree, the code is a bug or this document is, and we want to know.
+Probative Labs estimates the *counterfactual*: what would have happened to the same work without the AI. It uses the strongest comparison the data allows, and it states the uncertainty, the diagnostics and an evidence grade with every number. This document describes exactly what v0.1 of the open engine does. The code is the reference implementation; where this text and the code disagree, the code is a bug or this document is, and we want to know.
 
 ## The five steps
 
-1. **Lock the question before results exist.** Hypothesis, primary metric, guardrails with thresholds, and the analysis window are written to a registration file with a timestamp and a SHA-256 hash (`truelift register`). Every analysis lists deviations from it.
+1. **Lock the question before results exist.** Hypothesis, primary metric, guardrails with thresholds, and the analysis window are written to a registration file with a timestamp and a SHA-256 hash (`probative register`). Every analysis lists deviations from it.
 2. **Compare like with like.** Every unit of work is typed, and effects are estimated within type (mix adjustment).
 3. **Compare against the right group.** A comparison-group design estimates what would have happened anyway.
 4. **Check quality.** Speed that comes with more reopens, escalations or unhappy users does not count as value.
@@ -18,17 +18,17 @@ A team's **rollout week** is the first full week after its exposure start date. 
 
 ## Comparison designs in v0.1
 
-| Design | When TrueLift uses it | Evidence grade |
+| Design | When Probative Labs uses it | Evidence grade |
 | --- | --- | --- |
 | Staggered rollout | Teams got the AI on different dates (with or without a never-exposed group) | A if the wave order was randomized and pre-registered; otherwise B |
 | Two-group difference-in-differences | One group got the AI on one date; comparable teams did not | A if randomized and pre-registered; otherwise B |
 | None | Everyone got the AI on the same date with no holdout, or too few teams | No number |
 
-Synthetic control, interrupted time series, randomized holdout analysis and matched comparison are on the roadmap. Until they ship, TrueLift reports no number rather than a weaker one dressed up.
+Synthetic control, interrupted time series, randomized holdout analysis and matched comparison are on the roadmap. Until they ship, Probative Labs reports no number rather than a weaker one dressed up.
 
 ## Estimator
 
-TrueLift uses the **imputation estimator** of Borusyak, Jaravel and Spiess (2024, *Review of Economic Studies*):
+Probative Labs uses the **imputation estimator** of Borusyak, Jaravel and Spiess (2024, *Review of Economic Studies*):
 
 1. Fit `y(team, week) = α(team) + λ(week)` by weighted least squares, weights = units of work in the cell, using **only cells without the AI**: comparison teams, plus AI teams before their rollout.
 2. For each cell with the AI, impute the untreated outcome `ŷ0 = α̂(team) + λ̂(week)`.
@@ -44,7 +44,7 @@ The fixed effects are fitted by alternating projections, which handles unbalance
 
 Each unit of work gets a type, from rules first, then from category fields. Types under 1% of baseline volume are folded into "Other", so the list stays stable.
 
-For each metric, TrueLift computes each type's **baseline mean** on untreated cells only. It then analyzes the residual `y − mean(type)` plus the overall baseline mean. The causal engine therefore compares password resets with password resets, whatever share of the work they make up.
+For each metric, Probative Labs computes each type's **baseline mean** on untreated cells only. It then analyzes the residual `y − mean(type)` plus the overall baseline mean. The causal engine therefore compares password resets with password resets, whatever share of the work they make up.
 
 Both views are reported:
 
@@ -147,7 +147,7 @@ Every result records:
 - the bootstrap seed and draws;
 - every exclusion, with a reason and a count.
 
-Given the same files, configuration and pseudonymization key, `truelift analyze` reproduces the result exactly.
+Given the same files, configuration and pseudonymization key, `probative analyze` reproduces the result exactly.
 
 ## Validation
 

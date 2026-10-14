@@ -17,7 +17,7 @@ wheels/
 # Never commit real customer data or pseudonymization keys
 data/
 *.key
-.truelift/
+.probative/
 out/
 demo/
 

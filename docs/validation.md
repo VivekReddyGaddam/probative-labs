@@ -5,12 +5,12 @@ A causal claim that turns out wrong destroys trust in the method, so the engine 
 Reproduce these numbers with:
 
 ```bash
-truelift validate --runs 30 --reps 199 --effects=-0.15,-0.05,0
+probative validate --runs 30 --reps 199 --effects=-0.15,-0.05,0
 ```
 
 ## The test scenario
 
-Every simulated dataset (`truelift.simulate`) has:
+Every simulated dataset (`probative.simulate`) has:
 
 - **30 teams over 60 weeks,** with a randomized rollout in three waves at weeks 30, 36 and 42. A quarter of the teams never get the AI.
 - **Team differences.** Teams differ in volume, speed and ticket mix, and the AI's effect is proportional to each team's own speed and ticket types. That makes effects heterogeneous: slower teams save more hours.
@@ -21,7 +21,7 @@ Every simulated dataset (`truelift.simulate`) has:
 
 "Truth" is the planted expected change in agent hours per ticket for the tickets the AI teams handled.
 
-## Results (TrueLift 0.1.0, 30 datasets per planted effect)
+## Results (Probative Labs 0.1.0, 30 datasets per planted effect)
 
 | Planted effect | Mean truth (h per ticket) | Bias | RMSE | 95% range covers truth | Effect declared (range excludes zero) | Pre-trend test passes | Placebo dates pass | Graded A to C |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |

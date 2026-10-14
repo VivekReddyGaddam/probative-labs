@@ -1,11 +1,11 @@
 import pandas as pd
 import pytest
 
-from truelift import schema as S
-from truelift.config import MappingEntry
-from truelift.ingest import MappingError, Pseudonymizer, apply_mapping, check_work_units, resolve_mapping
-from truelift.ingest.health import censored_tail
-from truelift.ingest.mapping import _duration_hours
+from probative import schema as S
+from probative.config import MappingEntry
+from probative.ingest import MappingError, Pseudonymizer, apply_mapping, check_work_units, resolve_mapping
+from probative.ingest.health import censored_tail
+from probative.ingest.mapping import _duration_hours
 
 
 def test_servicenow_preset_maps_and_types():

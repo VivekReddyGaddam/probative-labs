@@ -60,7 +60,7 @@ One row per team that received the program. Teams that are not listed, or that h
 | `kind` | | `wave`, `licence`, `feature_switch` or `holdout` |
 | `randomized` | | `true` if assignment was by lottery (needed for grade A) |
 
-`truelift plan waves` writes this file.
+`probative plan waves` writes this file.
 
 ## Self-service sessions (optional)
 

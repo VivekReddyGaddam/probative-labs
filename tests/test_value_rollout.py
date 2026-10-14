@@ -4,11 +4,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from truelift import schema as S
-from truelift.config import CostLine, Range, ValueConfig
-from truelift.guardrails import GuardrailSpec, evaluate_level, wilson
-from truelift.rollout import NoiseModel, plan_waves, simulate_power
-from truelift.value import period_costs, simulate_roi, verified_deflections
+from probative import schema as S
+from probative.config import CostLine, Range, ValueConfig
+from probative.guardrails import GuardrailSpec, evaluate_level, wilson
+from probative.rollout import NoiseModel, plan_waves, simulate_power
+from probative.value import period_costs, simulate_roi, verified_deflections
 
 
 def test_range_coercion_and_validation():

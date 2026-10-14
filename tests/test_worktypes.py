@@ -1,9 +1,9 @@
 import pandas as pd
 import pytest
 
-from truelift import schema as S
-from truelift.config import TypeRule, TypingConfig
-from truelift.worktypes import assign_work_types, before_after_table, category_drift, mix_adjusted_mean, residualize
+from probative import schema as S
+from probative.config import TypeRule, TypingConfig
+from probative.worktypes import assign_work_types, before_after_table, category_drift, mix_adjusted_mean, residualize
 
 
 def test_rules_then_fields_then_folding():

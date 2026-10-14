@@ -1,11 +1,11 @@
 import numpy as np
 import pytest
 
+from probative.engine.design import choose_design, evidence_grade
+from probative.engine.diagnostics import Check, leave_one_team_out, placebo_date_check, placebo_panel, pretrend_check
+from probative.engine.fe import demean_twoway, fit_twoway
+from probative.engine.imputation import EstimationError, TeamBootstrap, estimate, fit
 from tests.conftest import make_panel
-from truelift.engine.design import choose_design, evidence_grade
-from truelift.engine.diagnostics import Check, leave_one_team_out, placebo_date_check, placebo_panel, pretrend_check
-from truelift.engine.fe import demean_twoway, fit_twoway
-from truelift.engine.imputation import EstimationError, TeamBootstrap, estimate, fit
 
 
 def test_fit_twoway_recovers_additive_model():

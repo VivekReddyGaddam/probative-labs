@@ -9,7 +9,7 @@ Every result carries a grade that says how much the design behind it can be trus
 | **C** | A valid design that is weaker: fewer than 12 teams in v0.1, and synthetic control or interrupted time series once they ship | Counts, flagged as weaker |
 | **D** | Any falsification diagnostic failed (pre-trend, placebo dates, placebo outcomes, leave-one-team-out, category drift) | Shown as indicative, never added to totals |
 | **E** | Vendor estimates, dashboards, surveys, self-reported time saved | Shown as claimed, never added to totals |
-| **No number** | No valid comparison: everyone got the AI at once with no holdout, or too few teams | TrueLift says so instead of producing a figure |
+| **No number** | No valid comparison: everyone got the AI at once with no holdout, or too few teams | Probative Labs says so instead of producing a figure |
 
 ## How a grade is assigned
 
@@ -24,6 +24,6 @@ A randomized rollout that was registered after go-live, or analysed differently 
 
 Most programs can move up a grade by design, not by more data:
 
-- **B to A:** before the next expansion, use `truelift plan waves` to assign teams to waves by lottery, then run `truelift register` before the first wave starts.
+- **B to A:** before the next expansion, use `probative plan waves` to assign teams to waves by lottery, then run `probative register` before the first wave starts.
 - **No number to B:** keep a share of teams (`--holdout 0.2`) without the AI for a fixed period.
-- **C to B:** plan enough teams to reach the target power with `truelift plan power`.
+- **C to B:** plan enough teams to reach the target power with `probative plan power`.

@@ -1,8 +1,8 @@
-# What is open source and what is TrueLift Cloud
+# What is open source and what is Probative Labs Cloud
 
-TrueLift's credibility rests on its method. A measurement vendor that grades other vendors' AI cannot ask customers to trust a black box. So the method, and the engine that implements it, are open: any data scientist, auditor or skeptical CFO can read the code, rerun an analysis and get the same answer.
+Probative Labs' credibility rests on its method. A measurement vendor that grades other vendors' AI cannot ask customers to trust a black box. So the method, and the engine that implements it, are open: any data scientist, auditor or skeptical CFO can read the code, rerun an analysis and get the same answer.
 
-The commercial product, TrueLift Cloud, sells what enterprises pay for once they trust the method:
+The commercial product, Probative Labs Cloud, sells what enterprises pay for once they trust the method:
 
 - not having to build and maintain connectors;
 - running measurement across dozens of AI programs at once;
@@ -11,7 +11,7 @@ The commercial product, TrueLift Cloud, sells what enterprises pay for once they
 
 ## The split
 
-| Capability | Open source (this repo) | TrueLift Cloud |
+| Capability | Open source (this repo) | Probative Labs Cloud |
 | --- | --- | --- |
 | Measurement method, evidence-grade definitions, validation suite | ✓ | ✓ |
 | File import (CSV, Parquet) with field mapping and ServiceNow preset | ✓ | ✓ |
@@ -37,7 +37,7 @@ The commercial product, TrueLift Cloud, sells what enterprises pay for once they
 
 ## Principles
 
-1. **Every number TrueLift Cloud shows can be reproduced with the open engine.** Cloud results record the engine version, data hashes and configuration, and Cloud never runs a private fork of the method.
+1. **Every number Probative Labs Cloud shows can be reproduced with the open engine.** Cloud results record the engine version, data hashes and configuration, and Cloud never runs a private fork of the method.
 2. **Method improvements land in open source first.** That includes new designs, diagnostics and grade definitions. The paid product competes on integration, scale and service, not on hidden statistics.
 3. **No feature removal.** Something released as open source stays open source.
 4. **Pricing is per measured program, never a share of the savings found.** A share of the savings would reward finding value, which is the opposite of neutral measurement.
@@ -45,5 +45,5 @@ The commercial product, TrueLift Cloud, sells what enterprises pay for once they
 ## Licensing
 
 - This repository: Apache License 2.0.
-- TrueLift Cloud: proprietary.
-- "TrueLift" name and logo: trademarks. Forks are welcome under a different name.
+- Probative Labs Cloud: proprietary.
+- "Probative Labs" name and logo: trademarks. Forks are welcome under a different name.

@@ -1,6 +1,6 @@
-# Configuration reference (`truelift.yaml`)
+# Configuration reference (`probative.yaml`)
 
-One file per AI program. Relative paths resolve against the file's folder. `truelift init` writes a commented starter file.
+One file per AI program. Relative paths resolve against the file's folder. `probative init` writes a commented starter file.
 
 ## `program`
 
