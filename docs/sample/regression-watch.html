@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Regression watch · AI agent assist (simulated)</title>
+<style>
+:root {
+  --bg: #f7f6f2; --surface: #ffffff; --ink: #1b1c1e; --muted: #5c6066; --line: #e3e0d8;
+  --accent: #1d5c48; --accent-soft: #e2eee8;
+  --good: #1b6b41; --good-soft: #e0f1e6; --warn: #7d5300; --warn-soft: #faefd6;
+  --bad: #9a2a2a; --bad-soft: #f7e0e0; --neutral-soft: #ecebe6;
+  --chart-line: #1d5c48; --chart-band: rgba(29, 92, 72, 0.16); --chart-pre: #7b8088; --chart-grid: #e8e5de;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121314; --surface: #1a1c1e; --ink: #ecebe7; --muted: #a3a7ad; --line: #2c2f33;
+    --accent: #7fc8aa; --accent-soft: #1f322b;
+    --good: #7fd3a0; --good-soft: #1b3125; --warn: #f0c46a; --warn-soft: #362c17;
+    --bad: #f0a0a0; --bad-soft: #3a2020; --neutral-soft: #26292c;
+    --chart-line: #7fc8aa; --chart-band: rgba(127, 200, 170, 0.18); --chart-pre: #8d9299; --chart-grid: #2a2d31;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121314; --surface: #1a1c1e; --ink: #ecebe7; --muted: #a3a7ad; --line: #2c2f33;
+  --accent: #7fc8aa; --accent-soft: #1f322b;
+  --good: #7fd3a0; --good-soft: #1b3125; --warn: #f0c46a; --warn-soft: #362c17;
+  --bad: #f0a0a0; --bad-soft: #3a2020; --neutral-soft: #26292c;
+  --chart-line: #7fc8aa; --chart-band: rgba(127, 200, 170, 0.18); --chart-pre: #8d9299; --chart-grid: #2a2d31;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 var(--sans); }
+main { max-width: 980px; margin: 0 auto; padding: 32px 16px 64px; }
+h1, h2, h3 { font-family: var(--serif); font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; }
+h1 { font-size: 2rem; margin: 0.2rem 0 0.4rem; }
+h2 { font-size: 1.35rem; margin: 2.4rem 0 0.8rem; padding-top: 1.2rem; border-top: 1px solid var(--line); }
+h2 .num { color: var(--muted); font-family: var(--sans); font-size: 0.9rem; font-weight: 600; margin-right: 0.5rem; }
+p { margin: 0.5rem 0 0.9rem; }
+.eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; font-weight: 600; color: var(--accent); }
+.meta { color: var(--muted); font-size: 0.9rem; }
+header { display: flex; gap: 24px; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; }
+header > div:first-child { flex: 1 1 320px; min-width: 0; }
+.grade { flex: none; width: 96px; height: 96px; border-radius: 16px; background: var(--accent-soft); color: var(--accent);
+  display: grid; place-items: center; text-align: center; }
+.grade b { font-family: var(--serif); font-size: 2.6rem; line-height: 1; display: block; }
+.grade small { font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.grade.g-D, .grade.g-insufficient { background: var(--warn-soft); color: var(--warn); }
+.grade.g-insufficient b { font-size: 1.1rem; }
+.grade.c-medium { background: var(--warn-soft); color: var(--warn); }
+.grade.c-low { background: var(--bad-soft); color: var(--bad); }
+.grade.word b { font-size: 1.25rem; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin: 24px 0 8px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+.tile .k { font-size: 0.78rem; color: var(--muted); }
+.tile .v { font-family: var(--serif); font-size: 1.45rem; margin-top: 2px; }
+.tile .s { font-size: 0.8rem; color: var(--muted); }
+.headline { font-size: 1.08rem; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--accent);
+  border-radius: 10px; padding: 14px 18px; margin: 18px 0; }
+.rec { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+.rec b { font-family: var(--serif); font-size: 1.1rem; }
+.table-wrap { overflow-x: auto; margin: 0.6rem 0 1rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; background: var(--neutral-soft); }
+tr:last-child td { border-bottom: 0; }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.chip { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: 0.76rem; font-weight: 600; white-space: nowrap; }
+.chip-pass { background: var(--good-soft); color: var(--good); }
+.chip-watch { background: var(--warn-soft); color: var(--warn); }
+.chip-breach, .chip-fail { background: var(--bad-soft); color: var(--bad); }
+.chip-unavailable, .chip-not_run { background: var(--neutral-soft); color: var(--muted); }
+.callout { border-radius: 10px; padding: 12px 16px; margin: 12px 0; }
+.callout.bad { background: var(--bad-soft); color: var(--bad); }
+.callout.warn { background: var(--warn-soft); color: var(--warn); }
+.callout.info { background: var(--accent-soft); color: var(--ink); }
+ul { padding-left: 1.2rem; }
+li { margin: 0.25rem 0; }
+code, .mono { font-family: var(--mono); font-size: 0.82rem; }
+figure { margin: 0.6rem 0 1rem; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+figcaption { color: var(--muted); font-size: 0.82rem; margin-top: 6px; }
+.tl-chart { width: 100%; height: auto; display: block; }
+.tl-chart .grid { stroke: var(--chart-grid); stroke-width: 1; }
+.tl-chart .zero { stroke: var(--muted); stroke-width: 1; }
+.tl-chart .rollout { stroke: var(--muted); stroke-dasharray: 4 4; }
+.tl-chart .band { fill: var(--chart-band); }
+.tl-chart .bar { fill: var(--chart-line); opacity: 0.85; }
+.tl-chart .line { fill: none; stroke: var(--chart-line); stroke-width: 2; }
+.tl-chart circle.post { fill: var(--chart-line); }
+.tl-chart circle.pre { fill: var(--chart-pre); }
+.tl-chart .whisker { stroke: var(--chart-pre); stroke-width: 1.5; }
+.tl-chart text { fill: var(--muted); font: 11px var(--sans); }
+.tl-chart .axis { font-size: 12px; }
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; margin-top: 12px; }
+details summary { cursor: pointer; font-weight: 600; }
+details h3 { font-size: 1.05rem; margin: 1.2rem 0 0.4rem; }
+footer { margin-top: 48px; color: var(--muted); font-size: 0.8rem; border-top: 1px solid var(--line); padding-top: 16px; }
+@media print {
+  body { background: #fff; color: #000; font-size: 11pt; }
+  main { max-width: none; padding: 0; }
+  .tile, .table-wrap, figure, details, .headline { break-inside: avoid; }
+  details { display: block; }
+  details > *:not(summary) { display: block; }
+}
+@media (max-width: 560px) { h1 { font-size: 1.6rem; } .grade { width: 76px; height: 76px; } .grade b { font-size: 2rem; } }</style>
+</head>
+<body>
+<main>
+<header>
+  <div>
+    <div class="eyebrow">Regression watch</div>
+    <h1>AI agent assist (simulated)</h1>
+    <div class="meta">Weeks 2025-11-10 to 2026-06-22 · latest 4 weeks compared with the 12 before · Example vendor</div>
+  </div>
+  <div class="grade word c-low" title="Status">
+    <div><b>Regression</b><small>Status</small></div>
+  </div>
+</header>
+
+<p class="headline">Regression: in the last 4 weeks, 23% of the AI&#39;s claimed resolutions did not hold, against 13% in the 12 weeks before (+10 pts, 95% range +6 pts to +14 pts). Most likely change: the week of 2026-05-25.</p>
+
+<h2><span class="num">1</span>Latest weeks against the weeks before</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Measure</th><th class="n">Before</th><th class="n">Latest</th><th class="n">Change</th><th class="n">95% range</th><th>Status</th></tr></thead>
+<tbody><tr><td>Claimed resolutions that did not hold</td><td class="n">13.1%</td><td class="n">23.1%</td><td class="n">+10.0%</td><td class="n">+6.0% to +13.5%</td><td><span class="chip chip-breach">Regression</span></td></tr><tr><td>Conversations the AI resolved</td><td class="n">74.1%</td><td class="n">76.0%</td><td class="n">+1.9%</td><td class="n">−1.5% to +5.5%</td><td><span class="chip chip-pass">Stable</span></td></tr><tr><td>Conversations per week</td><td class="n">194</td><td class="n">210</td><td class="n">+17</td><td class="n"></td><td><span class="chip chip-unavailable">For context</span></td></tr></tbody>
+</table></div>
+<p class="meta">A regression needs a worsening of at least 2 points that the range does not include zero for. Shares that did not hold are measured against your agents' resolutions in the same weeks, so a busy or quiet week cannot pose as a change in the AI.</p>
+
+<h2><span class="num">2</span>Known vendor releases</h2>
+<p>Four weeks before the release against up to four weeks after, with a 95% range.</p><div class="table-wrap"><table>
+<thead><tr><th>Release</th><th>Date</th><th class="n">Before</th><th class="n">After</th><th class="n">Change</th><th class="n">Range</th><th>Status</th></tr></thead>
+<tbody><tr><td>Model update (illustrative)</td><td>2026-05-25</td><td class="n">12.6%</td><td class="n">22.3%</td><td class="n">+9.8%</td><td class="n">+5.6% to +14.4%</td><td><span class="chip chip-breach">Regression</span></td></tr></tbody>
+</table></div>
+
+<h2><span class="num">3</span>Week by week</h2>
+<figure><svg class="tl-chart" viewBox="0 0 720 260" role="img" aria-labelledby="bars-title" xmlns="http://www.w3.org/2000/svg"><title id="bars-title">Claimed resolutions that did not hold, by week</title><line x1="56" x2="704" y1="212.0" y2="212.0" class="grid"/><text x="48" y="216.0" class="tick" text-anchor="end">0%</text><line x1="56" x2="704" y1="180.0" y2="180.0" class="grid"/><text x="48" y="184.0" class="tick" text-anchor="end">5%</text><line x1="56" x2="704" y1="148.0" y2="148.0" class="grid"/><text x="48" y="152.0" class="tick" text-anchor="end">10%</text><line x1="56" x2="704" y1="116.0" y2="116.0" class="grid"/><text x="48" y="120.0" class="tick" text-anchor="end">15%</text><line x1="56" x2="704" y1="84.0" y2="84.0" class="grid"/><text x="48" y="88.0" class="tick" text-anchor="end">20%</text><line x1="56" x2="704" y1="52.0" y2="52.0" class="grid"/><text x="48" y="56.0" class="tick" text-anchor="end">25%</text><line x1="56" x2="704" y1="20.0" y2="20.0" class="grid"/><text x="48" y="24.0" class="tick" text-anchor="end">30%</text><line x1="56" x2="704" y1="212.0" y2="212.0" class="zero"/><rect x="59.9" y="86.1" width="13.8" height="125.9" class="bar"><title>11-24: 20%</title></rect><text x="66.8" y="230" class="tick" text-anchor="middle">11-24</text><rect x="81.5" y="109.1" width="13.8" height="102.9" class="bar"><title>12-08: 16%</title></rect><rect x="103.1" y="157.4" width="13.8" height="54.6" class="bar"><title>12-15: 9%</title></rect><rect x="124.7" y="35.8" width="13.8" height="176.2" class="bar"><title>12-22: 28%</title></rect><text x="131.6" y="230" class="tick" text-anchor="middle">12-22</text><rect x="146.3" y="145.0" width="13.8" height="67.0" class="bar"><title>12-29: 10%</title></rect><rect x="167.9" y="92.0" width="13.8" height="120.0" class="bar"><title>01-05: 19%</title></rect><rect x="189.5" y="142.2" width="13.8" height="69.8" class="bar"><title>01-12: 11%</title></rect><text x="196.4" y="230" class="tick" text-anchor="middle">01-12</text><rect x="211.1" y="161.7" width="13.8" height="50.3" class="bar"><title>01-19: 8%</title></rect><rect x="232.7" y="139.4" width="13.8" height="72.6" class="bar"><title>01-26: 11%</title></rect><rect x="254.3" y="139.7" width="13.8" height="72.3" class="bar"><title>02-02: 11%</title></rect><text x="261.2" y="230" class="tick" text-anchor="middle">02-02</text><rect x="275.9" y="149.3" width="13.8" height="62.7" class="bar"><title>02-09: 10%</title></rect><rect x="297.5" y="134.8" width="13.8" height="77.2" class="bar"><title>02-16: 12%</title></rect><rect x="319.1" y="156.3" width="13.8" height="55.7" class="bar"><title>02-23: 9%</title></rect><text x="326.0" y="230" class="tick" text-anchor="middle">02-23</text><rect x="340.7" y="126.7" width="13.8" height="85.3" class="bar"><title>03-02: 13%</title></rect><rect x="362.3" y="125.4" width="13.8" height="86.6" class="bar"><title>03-09: 14%</title></rect><rect x="383.9" y="132.2" width="13.8" height="79.8" class="bar"><title>03-16: 12%</title></rect><text x="390.8" y="230" class="tick" text-anchor="middle">03-16</text><rect x="405.5" y="174.6" width="13.8" height="37.4" class="bar"><title>03-23: 6%</title></rect><rect x="427.1" y="122.8" width="13.8" height="89.2" class="bar"><title>03-30: 14%</title></rect><rect x="448.7" y="114.9" width="13.8" height="97.1" class="bar"><title>04-06: 15%</title></rect><text x="455.6" y="230" class="tick" text-anchor="middle">04-06</text><rect x="470.3" y="137.2" width="13.8" height="74.8" class="bar"><title>04-13: 12%</title></rect><rect x="491.9" y="151.0" width="13.8" height="61.0" class="bar"><title>04-20: 10%</title></rect><rect x="513.5" y="154.9" width="13.8" height="57.1" class="bar"><title>04-27: 9%</title></rect><text x="520.4" y="230" class="tick" text-anchor="middle">04-27</text><rect x="535.1" y="143.5" width="13.8" height="68.5" class="bar"><title>05-04: 11%</title></rect><rect x="556.7" y="82.6" width="13.8" height="129.4" class="bar"><title>05-11: 20%</title></rect><rect x="578.3" y="148.6" width="13.8" height="63.4" class="bar"><title>05-18: 10%</title></rect><text x="585.2" y="230" class="tick" text-anchor="middle">05-18</text><rect x="599.9" y="56.3" width="13.8" height="155.7" class="bar"><title>05-25: 24%</title></rect><rect x="621.5" y="96.7" width="13.8" height="115.3" class="bar"><title>06-01: 18%</title></rect><rect x="643.1" y="52.4" width="13.8" height="159.6" class="bar"><title>06-08: 25%</title></rect><text x="650.0" y="230" class="tick" text-anchor="middle">06-08</text><rect x="664.7" y="70.5" width="13.8" height="141.5" class="bar"><title>06-15: 22%</title></rect><rect x="686.3" y="36.6" width="13.8" height="175.4" class="bar"><title>06-22: 27%</title></rect><text x="380.0" y="252" class="axis" text-anchor="middle">Week of the claimed resolution</text></svg><figcaption>Share of the AI's claimed resolutions that did not hold, by week of the claim, against your agents' resolutions in the same week. Weeks with fewer than 20 claims are left out.</figcaption></figure><p>The largest step up was in the week of <b>2026-05-25</b>: from 12.2% to 23.3%. This scan is descriptive; the test is section 1.</p><div class="table-wrap"><table>
+<thead><tr><th>Week</th><th class="n">Conversations</th><th class="n">Resolved by the AI</th><th class="n">Claims checked</th><th class="n">Came back (AI)</th><th class="n">Came back (people)</th><th class="n">Did not hold</th></tr></thead>
+<tbody><tr><td style="white-space:nowrap">2026-06-22</td><td class="n">196</td><td class="n">78%</td><td class="n">153</td><td class="n">28.8%</td><td class="n">1.9%</td><td class="n">27%</td></tr><tr><td style="white-space:nowrap">2026-06-15</td><td class="n">214</td><td class="n">74%</td><td class="n">158</td><td class="n">23.4%</td><td class="n">1.7%</td><td class="n">22%</td></tr><tr><td style="white-space:nowrap">2026-06-08</td><td class="n">220</td><td class="n">77%</td><td class="n">169</td><td class="n">25.4%</td><td class="n">0.7%</td><td class="n">25%</td></tr><tr><td style="white-space:nowrap">2026-06-01</td><td class="n">212</td><td class="n">75%</td><td class="n">160</td><td class="n">20.0%</td><td class="n">2.4%</td><td class="n">18%</td></tr><tr><td style="white-space:nowrap">2026-05-25</td><td class="n">193</td><td class="n">76%</td><td class="n">146</td><td class="n">25.3%</td><td class="n">1.3%</td><td class="n">24%</td></tr><tr><td style="white-space:nowrap">2026-05-18</td><td class="n">204</td><td class="n">76%</td><td class="n">155</td><td class="n">12.3%</td><td class="n">2.6%</td><td class="n">10%</td></tr><tr><td style="white-space:nowrap">2026-05-11</td><td class="n">221</td><td class="n">71%</td><td class="n">158</td><td class="n">20.9%</td><td class="n">0.8%</td><td class="n">20%</td></tr><tr><td style="white-space:nowrap">2026-05-04</td><td class="n">204</td><td class="n">75%</td><td class="n">152</td><td class="n">11.8%</td><td class="n">1.3%</td><td class="n">11%</td></tr><tr><td style="white-space:nowrap">2026-04-27</td><td class="n">201</td><td class="n">72%</td><td class="n">145</td><td class="n">9.7%</td><td class="n">0.8%</td><td class="n">9%</td></tr><tr><td style="white-space:nowrap">2026-04-20</td><td class="n">216</td><td class="n">72%</td><td class="n">156</td><td class="n">10.9%</td><td class="n">1.5%</td><td class="n">10%</td></tr><tr><td style="white-space:nowrap">2026-04-13</td><td class="n">189</td><td class="n">79%</td><td class="n">150</td><td class="n">13.3%</td><td class="n">1.9%</td><td class="n">12%</td></tr><tr><td style="white-space:nowrap">2026-04-06</td><td class="n">212</td><td class="n">76%</td><td class="n">161</td><td class="n">15.5%</td><td class="n">0.4%</td><td class="n">15%</td></tr><tr><td style="white-space:nowrap">2026-03-30</td><td class="n">198</td><td class="n">77%</td><td class="n">152</td><td class="n">15.1%</td><td class="n">1.4%</td><td class="n">14%</td></tr><tr><td style="white-space:nowrap">2026-03-23</td><td class="n">169</td><td class="n">74%</td><td class="n">125</td><td class="n">9.6%</td><td class="n">4.0%</td><td class="n">6%</td></tr><tr><td style="white-space:nowrap">2026-03-16</td><td class="n">161</td><td class="n">72%</td><td class="n">116</td><td class="n">14.7%</td><td class="n">2.5%</td><td class="n">12%</td></tr><tr><td style="white-space:nowrap">2026-03-09</td><td class="n">156</td><td class="n">68%</td><td class="n">106</td><td class="n">15.1%</td><td class="n">1.8%</td><td class="n">14%</td></tr><tr><td style="white-space:nowrap">2026-03-02</td><td class="n">141</td><td class="n">71%</td><td class="n">100</td><td class="n">14.0%</td><td class="n">0.8%</td><td class="n">13%</td></tr><tr><td style="white-space:nowrap">2026-02-23</td><td class="n">131</td><td class="n">70%</td><td class="n">92</td><td class="n">9.8%</td><td class="n">1.2%</td><td class="n">9%</td></tr><tr><td style="white-space:nowrap">2026-02-16</td><td class="n">150</td><td class="n">78%</td><td class="n">117</td><td class="n">13.7%</td><td class="n">1.8%</td><td class="n">12%</td></tr><tr><td style="white-space:nowrap">2026-02-09</td><td class="n">154</td><td class="n">82%</td><td class="n">127</td><td class="n">11.8%</td><td class="n">2.2%</td><td class="n">10%</td></tr><tr><td style="white-space:nowrap">2026-02-02</td><td class="n">121</td><td class="n">75%</td><td class="n">91</td><td class="n">12.1%</td><td class="n">0.9%</td><td class="n">11%</td></tr><tr><td style="white-space:nowrap">2026-01-26</td><td class="n">104</td><td class="n">72%</td><td class="n">75</td><td class="n">13.3%</td><td class="n">2.2%</td><td class="n">11%</td></tr><tr><td style="white-space:nowrap">2026-01-19</td><td class="n">114</td><td class="n">75%</td><td class="n">85</td><td class="n">9.4%</td><td class="n">1.7%</td><td class="n">8%</td></tr><tr><td style="white-space:nowrap">2026-01-12</td><td class="n">103</td><td class="n">79%</td><td class="n">81</td><td class="n">14.8%</td><td class="n">4.4%</td><td class="n">11%</td></tr><tr><td style="white-space:nowrap">2026-01-05</td><td class="n">62</td><td class="n">69%</td><td class="n">43</td><td class="n">20.9%</td><td class="n">2.7%</td><td class="n">19%</td></tr><tr><td style="white-space:nowrap">2025-12-29</td><td class="n">40</td><td class="n">65%</td><td class="n">26</td><td class="n">11.5%</td><td class="n">1.2%</td><td class="n">10%</td></tr><tr><td style="white-space:nowrap">2025-12-22</td><td class="n">48</td><td class="n">73%</td><td class="n">35</td><td class="n">28.6%</td><td class="n">1.4%</td><td class="n">28%</td></tr><tr><td style="white-space:nowrap">2025-12-15</td><td class="n">55</td><td class="n">71%</td><td class="n">39</td><td class="n">12.8%</td><td class="n">4.7%</td><td class="n">9%</td></tr><tr><td style="white-space:nowrap">2025-12-08</td><td class="n">40</td><td class="n">82%</td><td class="n">33</td><td class="n">18.2%</td><td class="n">2.5%</td><td class="n">16%</td></tr><tr><td style="white-space:nowrap">2025-12-01</td><td class="n">24</td><td class="n">79%</td><td class="n">19</td><td class="n">n/a</td><td class="n">n/a</td><td class="n">n/a</td></tr><tr><td style="white-space:nowrap">2025-11-24</td><td class="n">32</td><td class="n">69%</td><td class="n">22</td><td class="n">22.7%</td><td class="n">3.8%</td><td class="n">20%</td></tr><tr><td style="white-space:nowrap">2025-11-17</td><td class="n">21</td><td class="n">71%</td><td class="n">15</td><td class="n">n/a</td><td class="n">n/a</td><td class="n">n/a</td></tr><tr><td style="white-space:nowrap">2025-11-10</td><td class="n">13</td><td class="n">69%</td><td class="n">9</td><td class="n">n/a</td><td class="n">n/a</td><td class="n">n/a</td></tr></tbody>
+</table></div>
+
+<p class="meta">Probative Labs 0.3.0 · settings <span class="mono">42017da8a652</span> · run 2026-10-16T17:05:07+00:00</p>
+<footer>Generated by Probative Labs, independent verification of what AI delivers. A regression is a change in outcomes, whatever its cause; a release date narrows it down. Method: docs/regression-watch.md.</footer>
+</main>
+</body>
+</html>

@@ -7,6 +7,9 @@ This guide is for a service-desk analyst, data analyst or IT operations lead who
 | Your situation | Start with | Effort |
 | --- | --- | --- |
 | A virtual agent or AI agent reports resolutions (and you may pay per resolution) | **Resolution audit**: did the claimed resolutions hold? | About an hour, plus getting two exports |
+| You pay per resolution and have the vendor's bill | **Bill reconciliation**: what to dispute, line by line (`probative reconcile`) | An hour, plus the bill |
+| The AI agent closes tickets by itself | **Action audit**: how often its closures were reversed (`probative closures`) | An hour |
+| You are choosing between vendors | **Bake-off**: vendors side by side on your own teams (`probative bakeoff`) | A trial of 6 to 10 weeks |
 | Teams got the AI on different dates, or some were held back | **Evidence pack**: what changed, and was it worth it? | About two hours over a week, mostly exports and agreeing two numbers with finance |
 | The rollout hasn't happened yet | **Measurement plan**: design the rollout so the result can be proven | An afternoon |
 

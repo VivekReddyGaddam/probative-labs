@@ -66,8 +66,9 @@ class AuditError(RuntimeError):
 
 @dataclass
 class AuditInputs:
-    claims: pd.DataFrame
+    claims: pd.DataFrame  # conversations the AI claimed as resolved
     tickets: pd.DataFrame
+    conversations: pd.DataFrame  # every conversation, whatever its outcome
     files: list[dict]
     claims_rows: int
     not_resolutions: int
@@ -108,9 +109,6 @@ def load_audit_inputs(
     c_map = resolve_mapping(CLAIMS_PRESET, claims_mapping or {})
     cl, _ = apply_mapping(c_raw, c_map, S.SESSION_COLUMNS, required=(S.REQUESTER, S.SESSION_STARTED))
     rows = len(cl)
-    if S.SESSION_OUTCOME in cl.columns and cl[S.SESSION_OUTCOME].notna().any():
-        is_claim = cl[S.SESSION_OUTCOME].astype("string").str.strip().str.lower() == resolved_value.strip().lower()
-        cl = cl[is_claim.fillna(False)].reset_index(drop=True)
     if pseudonymizer is not None:
         cl = pseudonymizer.apply(cl, (S.REQUESTER,))
 
@@ -126,9 +124,14 @@ def load_audit_inputs(
     for df in (cl, units):
         if S.DESCRIPTION in df.columns:
             df.drop(columns=[S.DESCRIPTION], inplace=True)
+    conversations = cl
+    if S.SESSION_OUTCOME in cl.columns and cl[S.SESSION_OUTCOME].notna().any():
+        is_claim = cl[S.SESSION_OUTCOME].astype("string").str.strip().str.lower() == resolved_value.strip().lower()
+        cl = cl[is_claim.fillna(False)].reset_index(drop=True)
     return AuditInputs(
         claims=cl,
         tickets=units,
+        conversations=conversations,
         files=[f.to_dict() for f in files],
         claims_rows=rows,
         not_resolutions=rows - len(cl),
@@ -141,12 +144,13 @@ def load_audit_inputs(
 # ---------------------------------------------------------------------------------
 
 
-def _returns(
+def next_ticket(
     left: pd.DataFrame, time_col: str, tickets: pd.DataFrame, by: list[str], window: pd.Timedelta
-) -> np.ndarray:
-    """True where the same person (and type) opened a ticket in the ``window`` after ``time_col``."""
+) -> pd.Series:
+    """When the same person (and type) next opened a ticket in the ``window`` after ``time_col``; NaT if not."""
+    out = np.full(len(left), np.datetime64("NaT", "ns"), dtype="datetime64[ns]")
     if left.empty:
-        return np.zeros(0, dtype=bool)
+        return pd.Series(out, index=left.index)
     lt = left[[*by, time_col]].copy()
     lt["_row"] = np.arange(len(lt))
     rt = tickets[[*by, S.OPENED]].dropna()
@@ -164,9 +168,15 @@ def _returns(
         tolerance=window,
         allow_exact_matches=False,
     )
-    out = np.zeros(len(left), dtype=bool)
-    out[m["_row"].to_numpy()] = m["_next"].notna().to_numpy()
-    return out
+    out[m["_row"].to_numpy()] = m["_next"].to_numpy(dtype="datetime64[ns]")
+    return pd.Series(out, index=left.index)
+
+
+def _returns(
+    left: pd.DataFrame, time_col: str, tickets: pd.DataFrame, by: list[str], window: pd.Timedelta
+) -> np.ndarray:
+    """True where the same person (and type) opened a ticket in the ``window`` after ``time_col``."""
+    return next_ticket(left, time_col, tickets, by, window).notna().to_numpy()
 
 
 def _failed(r: float, b: float) -> float:
@@ -301,6 +311,133 @@ def _interval(draws: np.ndarray, level: float) -> tuple[float, float]:
     return float(np.quantile(d, a)), float(np.quantile(d, 1 - a))
 
 
+def choose_match(eligible: pd.DataFrame, tickets: pd.DataFrame, match: Match, noun: str = "claims"):
+    """Match returns on the same type of issue when both files are typed alike, else on the person only."""
+    typed = S.WORK_TYPE in eligible.columns and S.WORK_TYPE in tickets.columns
+    known = None
+    if typed and len(eligible):
+        known = float(eligible[S.WORK_TYPE].isin(set(tickets[S.WORK_TYPE].dropna())).mean())
+    notes: list[str] = []
+    used: Match = match
+    if match == "same_type" and not typed:
+        used = "any"
+        notes.append(f"The {noun} carry no category, so a return was any ticket from the same person.")
+    elif match == "same_type" and known is not None and known < 0.5:
+        used = "any"
+        notes.append(
+            f"Only {known:.0%} of the {noun}' categories exist in the ticket data, so a return was any "
+            "ticket from the same person. Map the category to the ticket category for a tighter check."
+        )
+    by = [S.REQUESTER] + ([S.WORK_TYPE] if used == "same_type" else [])
+    return used, known, notes, typed, by
+
+
+def type_standardizer(eligible: pd.DataFrame, typed: bool):
+    """Types for standardizing the baseline; types under 1% of the AI's items are grouped."""
+    if typed:
+        shares = eligible[S.WORK_TYPE].value_counts(normalize=True)
+        kept = set(shares[shares >= MIN_TYPE_SHARE].index)
+
+        def std_type(s: pd.Series) -> pd.Series:
+            return s.astype("string").where(s.isin(kept), OTHER_TYPES)
+
+        return std_type
+
+    def all_types(s: pd.Series) -> pd.Series:
+        return pd.Series(ALL_TYPES, index=s.index, dtype="string")
+
+    return all_types
+
+
+def estimate_excess(
+    cl: pd.DataFrame, base: pd.DataFrame, *, reps: int, seed: int, level: float, min_cell: int
+) -> dict[str, Any]:
+    """The excess return share with its range: people bootstrap, widened to a month jackknife if larger.
+
+    ``cl`` holds the AI's items and ``base`` the human comparison, each with the person, ``_month``,
+    ``_type`` and ``_ret`` (did it come back) columns.
+    """
+    point = _rates(cl, base, min_cell)
+    draws = _bootstrap(cl, base, point, reps, seed)
+    f_lo, f_hi = _interval(draws["failed"], level)
+    # People are resampled, but months are shared by everyone in them: widen the range to a
+    # leave-one-month-out jackknife when that is larger, as the main engine does for teams.
+    f_point = point["failed"]
+    months = sorted(cl["_month"].unique())
+    interval = "people bootstrap"
+    if len(months) >= 4 and f_point == f_point:
+        jk = np.array([_rates(cl[cl["_month"] != m], base[base["_month"] != m], min_cell)["failed"] for m in months])
+        jk = jk[np.isfinite(jk)]
+        if len(jk) >= 3:
+            jack_se = float(np.sqrt((len(jk) - 1) / len(jk) * np.sum((jk - jk.mean()) ** 2)))
+            boot_draws = draws["failed"][np.isfinite(draws["failed"])]
+            boot_se = float(np.std(boot_draws, ddof=1)) if len(boot_draws) > 1 else 0.0
+            if jack_se > boot_se:
+                from scipy.stats import norm
+
+                z = float(norm.ppf(1 - (1 - level) / 2))
+                f_lo, f_hi = min(f_lo, f_point - z * jack_se), max(f_hi, f_point + z * jack_se)
+                interval = "people bootstrap, widened to a leave-one-month-out jackknife"
+    ai_lo, ai_hi = _interval(draws["ai"], level)
+    b_lo, b_hi = _interval(draws["base"], level)
+    return {
+        "point": point,
+        "f_lo": f_lo,
+        "f_hi": f_hi,
+        "ai_lo": ai_lo,
+        "ai_hi": ai_hi,
+        "b_lo": b_lo,
+        "b_hi": b_hi,
+        "interval": interval,
+        "draws": draws,
+    }
+
+
+def confidence_level(
+    *,
+    n_items: int,
+    n_base: int,
+    half_width: float,
+    items: str,
+    base: str,
+    id_overlap: float | None = None,
+    match_fallback: bool = False,
+) -> dict[str, Any]:
+    level_i = 2
+    reasons: list[str] = []
+
+    def lower(to: int, why: str) -> None:
+        nonlocal level_i
+        level_i = min(level_i, to)
+        reasons.append(why)
+
+    if n_items < 200:
+        lower(0, f"Only {n_items:,} {items} could be checked; at least 200 are needed for a firm answer.")
+    elif n_items < 500:
+        lower(1, f"{n_items:,} {items} could be checked; 500 or more gives a tighter range.")
+    if n_base < 300:
+        lower(0, f"Only {n_base:,} {base} in the same weeks to compare with.")
+    elif n_base < 1000:
+        lower(1, f"{n_base:,} {base} in the same weeks to compare with; more history helps.")
+    if id_overlap is not None and id_overlap < 0.3:
+        lower(
+            0,
+            f"Only {id_overlap:.0%} of the people in the AI's records appear in the ticket data. The two systems "
+            "may identify people differently; map the same identifier (email or employee ID) in both.",
+        )
+    elif id_overlap is not None and id_overlap < 0.6:
+        lower(1, f"{id_overlap:.0%} of the people in the AI's records appear in the ticket data.")
+    if match_fallback:
+        lower(1, "Returns could not be matched by type of issue, so unrelated tickets count as returns.")
+    if half_width == half_width and half_width > 0.15:
+        lower(0, f"The range is wide (±{half_width:.0%}).")
+    elif half_width == half_width and half_width > 0.08:
+        lower(1, f"The range is fairly wide (±{half_width:.0%}).")
+    if not reasons:
+        reasons.append(f"Enough {items} and {base}, a tight range, and the data lines up across systems.")
+    return {"level": LEVELS[level_i], "reasons": reasons}
+
+
 def _band(n: int) -> str:
     for upper, label in ((200, "under 200"), (1000, "200–999"), (10000, "1,000–9,999"), (100000, "10,000–99,999")):
         if n < upper:
@@ -385,34 +522,9 @@ def audit_resolutions(  # noqa: C901 - one ordered story, like the main analysis
             f"{window_days} days of follow-up; export tickets covering the same dates"
         )
 
-    # How returns are matched: same person and same type of issue when both files are typed alike.
-    typed = S.WORK_TYPE in eligible.columns and S.WORK_TYPE in tk.columns
-    used_match: Match = match
-    known_share = None
-    if typed:
-        known_share = float(eligible[S.WORK_TYPE].isin(set(tk[S.WORK_TYPE].dropna())).mean())
-    if match == "same_type" and not typed:
-        used_match = "any"
-        notes.append("The claims carry no category, so a return was any ticket from the same person.")
-    elif match == "same_type" and known_share is not None and known_share < 0.5:
-        used_match = "any"
-        notes.append(
-            f"Only {known_share:.0%} of the claims' categories exist in the ticket data, so a return was any "
-            "ticket from the same person. Map the claims' category to the ticket category for a tighter check."
-        )
-    by = [S.REQUESTER] + ([S.WORK_TYPE] if used_match == "same_type" else [])
-
-    # Types for standardizing the baseline: rare claim types are grouped.
-    if typed:
-        shares = eligible[S.WORK_TYPE].value_counts(normalize=True)
-        kept = set(shares[shares >= MIN_TYPE_SHARE].index)
-
-        def std_type(s: pd.Series) -> pd.Series:
-            return s.astype("string").where(s.isin(kept), OTHER_TYPES)
-    else:
-
-        def std_type(s: pd.Series) -> pd.Series:
-            return pd.Series(ALL_TYPES, index=s.index, dtype="string")
+    used_match, known_share, match_notes, typed, by = choose_match(eligible, tk, match)
+    notes.extend(match_notes)
+    std_type = type_standardizer(eligible, typed)
 
     def prepare(window_: pd.Timedelta, by_: list[str], people: set[str] | None = None):
         el = cl[~outside & (cl[S.SESSION_STARTED] <= data_end - window_)].copy()
@@ -432,32 +544,10 @@ def audit_resolutions(  # noqa: C901 - one ordered story, like the main analysis
     eligible, base = prepare(window, by)
     if base.empty:
         raise AuditError("no human-resolved tickets in the same weeks to compare with; include resolved dates")
-    point = _rates(eligible, base, min_cell)
-    rows = point["rows"]
-    draws = _bootstrap(eligible, base, point, reps, seed)
-    f_lo, f_hi = _interval(draws["failed"], level)
-    # People are resampled, but months are shared by everyone in them: widen the range to a
-    # leave-one-month-out jackknife when that is larger, as the main engine does for teams.
-    f_point = point["failed"]
-    months = sorted(eligible["_month"].unique())
-    interval = "people bootstrap"
-    if len(months) >= 4 and f_point == f_point:
-        jk = np.array(
-            [_rates(eligible[eligible["_month"] != m], base[base["_month"] != m], min_cell)["failed"] for m in months]
-        )
-        jk = jk[np.isfinite(jk)]
-        if len(jk) >= 3:
-            jack_se = float(np.sqrt((len(jk) - 1) / len(jk) * np.sum((jk - jk.mean()) ** 2)))
-            boot_draws = draws["failed"][np.isfinite(draws["failed"])]
-            boot_se = float(np.std(boot_draws, ddof=1)) if len(boot_draws) > 1 else 0.0
-            if jack_se > boot_se:
-                from scipy.stats import norm
-
-                z = float(norm.ppf(1 - (1 - level) / 2))
-                f_lo, f_hi = min(f_lo, f_point - z * jack_se), max(f_hi, f_point + z * jack_se)
-                interval = "people bootstrap, widened to a leave-one-month-out jackknife"
-    ai_lo, ai_hi = _interval(draws["ai"], level)
-    b_lo, b_hi = _interval(draws["base"], level)
+    est = estimate_excess(eligible, base, reps=reps, seed=seed, level=level, min_cell=min_cell)
+    point, rows = est["point"], est["point"]["rows"]
+    f_lo, f_hi, interval = est["f_lo"], est["f_hi"], est["interval"]
+    ai_lo, ai_hi, b_lo, b_hi = est["ai_lo"], est["ai_hi"], est["b_lo"], est["b_hi"]
     f = point["failed"]
 
     n_period = len(in_period)
@@ -545,42 +635,16 @@ def audit_resolutions(  # noqa: C901 - one ordered story, like the main analysis
     ticket_people = set(tk[S.REQUESTER].dropna().astype(str))
     id_overlap = float(eligible[S.REQUESTER].astype(str).isin(ticket_people).mean())
     half_width = (f_hi - f_lo) / 2 if f_hi == f_hi else float("nan")
-    level_i = 2
-    reasons: list[str] = []
-
-    def lower(to: int, why: str) -> None:
-        nonlocal level_i
-        level_i = min(level_i, to)
-        reasons.append(why)
-
     n_el, n_base = len(eligible), len(base)
-    if n_el < 200:
-        lower(0, f"Only {n_el:,} claimed resolutions could be checked; at least 200 are needed for a firm answer.")
-    elif n_el < 500:
-        lower(1, f"{n_el:,} claimed resolutions could be checked; 500 or more gives a tighter range.")
-    if n_base < 300:
-        lower(0, f"Only {n_base:,} human-resolved tickets in the same weeks to compare with.")
-    elif n_base < 1000:
-        lower(1, f"{n_base:,} human-resolved tickets in the same weeks to compare with; more history helps.")
-    if id_overlap < 0.3:
-        lower(
-            0,
-            f"Only {id_overlap:.0%} of the people in the AI's records appear in the ticket data. The two systems "
-            "may identify people differently; map the same identifier (email or employee ID) in both.",
-        )
-    elif id_overlap < 0.6:
-        lower(1, f"{id_overlap:.0%} of the people in the AI's records appear in the ticket data.")
-    if match == "same_type" and used_match == "any":
-        lower(1, "Returns could not be matched by type of issue, so unrelated tickets count as returns.")
-    if half_width == half_width and half_width > 0.15:
-        lower(0, f"The range is wide (±{half_width:.0%}).")
-    elif half_width == half_width and half_width > 0.08:
-        lower(1, f"The range is fairly wide (±{half_width:.0%}).")
-    if not reasons:
-        reasons.append(
-            "Enough claims and human-resolved tickets, a tight range, and the same people appear in both systems."
-        )
-    confidence = {"level": LEVELS[level_i], "reasons": reasons}
+    confidence = confidence_level(
+        n_items=n_el,
+        n_base=n_base,
+        half_width=half_width,
+        items="claimed resolutions",
+        base="human-resolved tickets",
+        id_overlap=id_overlap,
+        match_fallback=match == "same_type" and used_match == "any",
+    )
 
     # Headline ------------------------------------------------------------------------------------
     from probative.report.pack import money, unit_price

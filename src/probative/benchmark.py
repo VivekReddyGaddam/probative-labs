@@ -37,6 +37,10 @@ def _teams_band(n: int | None) -> str | None:
     return _band(n, ((8, "under 8"), (20, "8–19"), (50, "20–49"), (100, "50–99")), "100 or more")
 
 
+def _band_count(n: int | None) -> str | None:
+    return _band(n, ((200, "under 200"), (1000, "200–999"), (10000, "1,000–9,999")), "10,000 or more")
+
+
 def _weekly_band(n: float | None) -> str | None:
     return _band(n, ((500, "under 500"), (2000, "500–1,999"), (10000, "2,000–9,999")), "10,000 or more")
 
@@ -45,13 +49,16 @@ def contribution(
     results: dict[str, Any] | None = None,
     audit: dict[str, Any] | None = None,
     *,
+    closures: dict[str, Any] | None = None,
+    reconciliation: dict[str, Any] | None = None,
     platform: str | None = None,
     today: date | None = None,
 ) -> dict[str, Any]:
-    """Build an anonymous benchmark contribution from an evidence pack and/or a resolution audit."""
-    if not results and not audit:
-        raise ValueError("give an evidence pack (results.json), a resolution audit (audit.json), or both")
-    program = (results or {}).get("program") or (audit or {}).get("program") or {}
+    """Build an anonymous benchmark contribution from any of: evidence pack, resolution audit, action audit and
+    bill reconciliation."""
+    if not (results or audit or closures or reconciliation):
+        raise ValueError("give at least one result: results.json, audit.json, closures.json or reconciliation.json")
+    program = next((x.get("program") for x in (results, audit, closures, reconciliation) if x and x.get("program")), {})
     body: dict[str, Any] = {
         "format": FORMAT,
         "month": (today or date.today()).strftime("%Y-%m"),
@@ -98,6 +105,22 @@ def contribution(
             "match": (audit.get("settings") or {}).get("match"),
             "confidence": (audit.get("confidence") or {}).get("level"),
             "claims_band": (audit.get("claims") or {}).get("band"),
+        }
+    if closures:
+        f = closures.get("failed_share") or {}
+        body["closure_audit"] = {
+            "failed_share": f.get("estimate"),
+            "failed_share_ci_low": f.get("ci_low"),
+            "failed_share_ci_high": f.get("ci_high"),
+            "confidence": (closures.get("confidence") or {}).get("level"),
+            "closures_band": _band_count((closures.get("counts") or {}).get("ai_closures")),
+        }
+    if reconciliation:
+        d = reconciliation.get("disputed") or {}
+        body["billing"] = {
+            "billing_error_share": d.get("billing_error_share"),
+            "contractual_definition": (reconciliation.get("settings") or {}).get("contractual"),
+            "item_level": (reconciliation.get("settings") or {}).get("item_level"),
         }
     body["excluded"] = EXCLUDED
     body["sha256"] = fingerprint({k: v for k, v in body.items() if k != "sha256"})

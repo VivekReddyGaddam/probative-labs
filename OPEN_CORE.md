@@ -16,6 +16,7 @@ The commercial product, Probative Labs Cloud, sells what enterprises pay for onc
 | **Plan** | | |
 | Power calculator, lottery-based wave planner, pre-registration | ✓ (CLI) | ✓ (guided UI) |
 | Measurement plan to sign before go-live | ✓ | ✓ |
+| Pre-purchase bake-off: lottery assignment, power check, decision pack | ✓ | Run as a service |
 | Registrations stored append-only with server timestamps | | ✓ |
 | **Verify: what changed** | | |
 | Measurement method, evidence-grade definitions, validation suite | ✓ | ✓ |
@@ -30,6 +31,11 @@ The commercial product, Probative Labs Cloud, sells what enterprises pay for onc
 | **Verify: what the AI claims** | | |
 | Resolution audit: claimed resolutions that did not hold, against a human baseline, with ranges and confidence | ✓ | ✓ |
 | Resolution audits on data synced from live connectors, with the amount paid for resolutions that did not hold | | ✓ |
+| Bill reconciliation: billing errors, contract-defined failures, dispute pack and CSV | ✓ | ✓ |
+| Model outcome terms for contracts (draft for counsel) | ✓ | ✓ |
+| Regression watch: latest weeks against the weeks before, release-date tests | ✓ | ✓ |
+| Action audit: tickets the AI closed by itself | ✓ | Planned |
+| Re-performance: rerun any result and confirm every number (`probative reproduce`) | ✓ | ✓ |
 | **Benchmark** | | |
 | Anonymous contribution format and `probative benchmark` | ✓ | ✓ |
 | Peer benchmarks: your result against other organizations running the same AI | | ✓ |

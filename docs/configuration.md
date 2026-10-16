@@ -105,6 +105,22 @@ Settings for `probative audit` (see [resolution-audit.md](resolution-audit.md)).
 | `match` | `same_type` | `same_type` or `any`: whether only a ticket about the same type of issue counts |
 | `price_per_resolution` | none | Price paid per claimed resolution, if the AI is billed per outcome |
 | `resolved_value` | `resolved` | Outcome value that marks a claimed resolution |
+| `contractual` | `false` | The contract defines a resolution as no repeat ticket within the window, so `probative reconcile` disputes each one ([outcome-terms.md](outcome-terms.md)) |
+| `definition_name` | `Verified resolution` | Name of that definition, shown in dispute packs |
+| `ai_resolvers` | none | For `probative closures`: the "resolved by" values that mean the AI closed the ticket |
+| `resolver_column`, `ai_flag_column` | auto | The "resolved by" column, or a yes/no column marking AI closures |
+
+## `bakeoff`
+
+A pre-purchase trial of vendors (see [bakeoff.md](bakeoff.md)).
+
+| Key | Meaning |
+| --- | --- |
+| `assignment` | Team-to-arm file from `probative bakeoff plan` |
+| `start`, `end` | Trial dates |
+| `vendors` | A list of `{name, annual_price, claims}`; price and claims are optional |
+
+`analysis.include_teams` restricts any analysis to a list of teams; the bake-off uses it to compare one vendor's teams with the control teams.
 
 ## `registration`
 

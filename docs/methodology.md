@@ -137,6 +137,22 @@ did not hold                  f = (r − b) ÷ (1 − b)
 
 The audit does not need a comparison group of teams, so it works when everyone got the AI on the same day. It is a floor: failures that end in a phone call or a colleague's help leave no ticket.
 
+## Bill reconciliation
+
+`probative reconcile` matches each line of a per-resolution bill to the buyer's conversation log by the vendor's item ID, and to the ticket system by person and issue type. Lines billed twice, with no matching conversation, for conversations that were not resolved, or outside the billing period are billing errors. With a contract definition of a resolution (no repeat ticket within the window), each billed item followed by such a ticket is disputed too; without one, the resolution audit's excess over the human baseline is reported as a negotiation figure. Bills without item IDs are reconciled by day. See [reconciliation.md](reconciliation.md) and the model terms in [outcome-terms.md](outcome-terms.md).
+
+## Regression watch
+
+`probative watch` compares the latest 4 weeks of the AI's outcomes with the 12 weeks before: the share of claimed resolutions that did not hold (against the human baseline in the same weeks and types) and the share of conversations the AI resolved. The windows are bootstrapped over people independently, which is conservative. A regression is a worsening of at least 2 percentage points whose 95% range excludes zero. Known release dates are tested on four weeks either side, with a Bonferroni correction. See [regression-watch.md](regression-watch.md).
+
+## Action audit
+
+`probative closures` applies the resolution-audit estimator to tickets the AI closed by itself: a closure is reversed if the ticket was reopened or the same person opened a ticket about the same type of issue within the window, and the AI's reversal rate is compared with your agents' closures in the same months and types. See [action-audit.md](action-audit.md).
+
+## Bake-off
+
+`probative bakeoff` assigns teams to vendors and a control group by lottery, then measures each vendor against the control teams over the trial with the same estimator, guardrails and ranges as an evidence pack (the analysis is restricted to that vendor's teams and the control teams). A vendor leads only if eligible (effect excludes zero, grade counts, guardrails held), and is a clear winner only if its range does not overlap the runner-up's. See [bakeoff.md](bakeoff.md).
+
 ## Measurement plan
 
 `probative plan pack` assembles, before go-live, everything the analysis will hold the program to: the wave schedule and holdout, the chance of detecting the expected effect at 8, 12 and 16 weeks after the last wave (simulated with the same estimator, using noise calibrated from the customer's own history when available), the guardrails and thresholds, the diagnostics, decision rules mapping each outcome to renew, expand, fix or stop, the value inputs, the registration hash and a sign-off table. The expected grade is A only if the wave order is randomized and registered before the first wave.
@@ -171,7 +187,7 @@ Every result records:
 - the bootstrap seed and draws;
 - every exclusion, with a reason and a count.
 
-Given the same files, configuration and pseudonymization key, `probative analyze` reproduces the result exactly.
+Given the same files, configuration and pseudonymization key, `probative analyze` reproduces the result exactly. `probative reproduce results.json` does that check for you: it reruns the analysis (or an audit) with the recorded settings and seed, confirms the input files match their recorded fingerprints, and lists any value that differs.
 
 ## Validation
 

@@ -1,0 +1,60 @@
+{% set lvl = (r.settings.level * 100) | int %}
+{% macro chipfor(s) %}<span class="chip chip-{{ {'regression': 'breach', 'watch': 'watch', 'stable': 'pass', 'improved': 'pass'}.get(s, 'unavailable') }}">{{ {'regression': 'Regression', 'watch': 'Watch', 'stable': 'Stable', 'improved': 'Improved', 'info': 'For context', 'insufficient': 'Not enough data'}.get(s, s) }}</span>{% endmacro %}
+{% macro val(c, x) %}{% if x is none %}n/a{% elif c.unit == "count" %}{{ x | num(0) }}{% else %}{{ x | pct(1) }}{% endif %}{% endmacro %}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Regression watch · {{ r.program.name or "AI agent" }}</title>
+<style>
+{% include "_style.css.j2" %}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div>
+    <div class="eyebrow">Regression watch</div>
+    <h1>{{ r.program.name or "AI agent" }}</h1>
+    <div class="meta">Weeks {{ r.period.first_week }} to {{ r.period.last_week }}{% if r.period.recent %} · latest {{ r.settings.recent_weeks }} weeks compared with the {{ r.settings.reference_weeks }} before{% endif %}{% if r.program.vendor %} · {{ r.program.vendor }}{% endif %}</div>
+  </div>
+  <div class="grade word {{ {'regression': 'c-low', 'watch': 'c-medium'}.get(r.status, '') }}" title="Status">
+    <div><b>{{ {'regression': 'Regression', 'watch': 'Watch', 'stable': 'Stable', 'improved': 'Improved'}.get(r.status, 'n/a') }}</b><small>Status</small></div>
+  </div>
+</header>
+
+<p class="headline">{{ r.headline }}</p>
+
+<h2><span class="num">1</span>Latest weeks against the weeks before</h2>
+{% if r.checks %}
+<div class="table-wrap"><table>
+<thead><tr><th>Measure</th><th class="n">Before</th><th class="n">Latest</th><th class="n">Change</th><th class="n">{{ lvl }}% range</th><th>Status</th></tr></thead>
+<tbody>{% for c in r.checks %}<tr><td>{{ c.metric }}</td><td class="n">{{ val(c, c.before) }}</td><td class="n">{{ val(c, c.after) }}</td><td class="n">{% if c.unit == "count" %}{{ c.delta | signed(0) }}{% else %}{{ c.delta | spct(1) }}{% endif %}</td><td class="n">{% if c.ci_low is not none %}{{ c.ci_low | spct(1) }} to {{ c.ci_high | spct(1) }}{% endif %}</td><td>{{ chipfor(c.status) }}</td></tr>{% endfor %}</tbody>
+</table></div>
+<p class="meta">A regression needs a worsening of at least {{ (r.settings.min_change * 100) | round(0) | int }} points that the range does not include zero for. Shares that did not hold are measured against your agents' resolutions in the same weeks, so a busy or quiet week cannot pose as a change in the AI.</p>
+{% else %}<p>{{ r.notes[-1] if r.notes else "Not enough data." }}</p>{% endif %}
+
+{% if r.events %}
+<h2><span class="num">2</span>Known vendor releases</h2>
+{% if r.events | length == 1 %}<p>Four weeks before the release against up to four weeks after, with a {{ lvl }}% range.</p>{% else %}<p>Four weeks before each release against up to four weeks after. Each test uses a {{ (r.events[0].level * 100) | round(1) }}% range, so all {{ r.events | length }} together keep a {{ lvl }}% level.</p>{% endif %}
+<div class="table-wrap"><table>
+<thead><tr><th>Release</th><th>Date</th><th class="n">Before</th><th class="n">After</th><th class="n">Change</th><th class="n">Range</th><th>Status</th></tr></thead>
+<tbody>{% for e in r.events %}<tr><td>{{ e.name }}</td><td>{{ e.date }}</td><td class="n">{{ e.before | pct(1) }}</td><td class="n">{{ e.after | pct(1) }}</td><td class="n">{{ e.delta | spct(1) }}</td><td class="n">{% if e.ci_low is not none %}{{ e.ci_low | spct(1) }} to {{ e.ci_high | spct(1) }}{% endif %}</td><td>{{ chipfor(e.status) }}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% endif %}
+
+<h2><span class="num">3</span>Week by week</h2>
+{% if chart %}<figure>{{ chart | safe }}<figcaption>Share of the AI's claimed resolutions that did not hold, by week of the claim, against your agents' resolutions in the same week. Weeks with fewer than 20 claims are left out.</figcaption></figure>{% endif %}
+{% if r.change_point %}<p>The largest step up was in the week of <b>{{ r.change_point.week }}</b>: from {{ r.change_point.before | pct(1) }} to {{ r.change_point.after | pct(1) }}. This scan is descriptive; the test is section 1.</p>{% endif %}
+<div class="table-wrap"><table>
+<thead><tr><th>Week</th><th class="n">Conversations</th>{% if r.weekly and r.weekly[0].resolved_share is defined %}<th class="n">Resolved by the AI</th>{% endif %}<th class="n">Claims checked</th><th class="n">Came back (AI)</th><th class="n">Came back (people)</th><th class="n">Did not hold</th></tr></thead>
+<tbody>{% for w in r.weekly | reverse %}<tr><td style="white-space:nowrap">{{ w.week }}</td><td class="n">{{ w.conversations | num(0) }}</td>{% if w.resolved_share is defined %}<td class="n">{{ w.resolved_share | pct }}</td>{% endif %}<td class="n">{{ w.claims | num(0) }}</td><td class="n">{{ w.ai_return_rate | pct(1) }}</td><td class="n">{{ w.baseline_return_rate | pct(1) }}</td><td class="n">{{ w.failed_share | pct }}</td></tr>{% endfor %}</tbody>
+</table></div>
+
+{% if r.notes %}<h2><span class="num">4</span>Notes</h2><ul>{% for n in r.notes %}<li>{{ n }}</li>{% endfor %}</ul>{% endif %}
+<p class="meta">Probative Labs {{ r.lineage.code.probative }} · settings <span class="mono">{{ r.lineage.settings_sha256[:12] }}</span> · run {{ r.lineage.run_at }}</p>
+<footer>Generated by Probative Labs, independent verification of what AI delivers. A regression is a change in outcomes, whatever its cause; a release date narrows it down. Method: docs/regression-watch.md.</footer>
+</main>
+</body>
+</html>

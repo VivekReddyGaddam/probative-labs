@@ -103,6 +103,14 @@ Virtual-agent sessions, or any export of the resolutions an AI claims. They enab
 
 For the audit, common export names are recognized automatically: `Requester`, `Requester ID`, `User`, `User ID`, `Requester Email`, `User Email` or `Email` for the person; `Started`, `Start time`, `Created`, `Created at` or `Timestamp` for the time; `Topic` for the category. Map anything else with `--claims-column field="Your column"`.
 
+## Vendor bills (for `probative reconcile`)
+
+One line per billed resolution: `item_id` (the vendor's conversation or resolution ID, matching `session_id` in your conversation log), and ideally `billed_at` and `amount`. Without item IDs, give `billed_at` and `quantity` per line and the bill is reconciled by day. Common names are recognized: `Conversation ID`, `Resolution ID`, `Resolved at`, `Date`, `Amount`, `Price`, `Count`, `Quantity`.
+
+## Who resolved a ticket (for `probative closures`)
+
+A "resolved by" column in the ticket export (`resolved_by`, `Resolved by`, `Closed by`), or a yes/no column marking tickets the AI closed. It is read only to mark AI closures, before pseudonymization, and never stored.
+
 ## Staffing (optional)
 
 If time worked is not recorded, provide `team_id`, `week_start` and `hours`. Agent hours per ticket are then staffed hours divided by tickets. This cannot be mix-adjusted, and the pack says so.

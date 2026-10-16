@@ -175,3 +175,70 @@ def write_plan_pack(plan: dict, out_dir: str | Path) -> dict[str, Path]:
     paths["markdown"].write_text(env.get_template("measurement_plan.md.j2").render(r=plan))
     paths["html"].write_text(env.get_template("measurement_plan.html.j2").render(r=plan))
     return paths
+
+
+def write_reconciliation_pack(result: dict, out_dir: str | Path) -> dict[str, Path]:
+    """Write a bill reconciliation: JSON, the dispute pack (HTML, Markdown) and the disputed items as CSV."""
+    import csv
+
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    paths = {
+        "json": out / "reconciliation.json",
+        "markdown": out / "dispute-pack.md",
+        "html": out / "dispute-pack.html",
+        "csv": out / "disputed-items.csv",
+    }
+    env = _env()
+    paths["json"].write_text(json.dumps(result, indent=2))
+    paths["markdown"].write_text(env.get_template("dispute_pack.md.j2").render(r=result))
+    paths["html"].write_text(env.get_template("dispute_pack.html.j2").render(r=result))
+    fields = ["line", "item_id", "billed_at", "amount", "reason_code", "reason", "detail"]
+    with paths["csv"].open("w", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=fields)
+        w.writeheader()
+        for item in result.get("lines") or []:
+            w.writerow({f: item.get(f) for f in fields})
+    return paths
+
+
+def write_watch_pack(result: dict, out_dir: str | Path) -> dict[str, Path]:
+    """Write a regression watch as JSON, Markdown and HTML."""
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    paths = {"json": out / "watch.json", "markdown": out / "regression-watch.md", "html": out / "regression-watch.html"}
+    rows = [{**w, "label": str(w["week"])[5:]} for w in result.get("weekly") or []]
+    chart = share_bars_svg(
+        rows,
+        value="failed_share",
+        label="label",
+        title="Claimed resolutions that did not hold, by week",
+        axis="Week of the claimed resolution",
+    )
+    env = _env()
+    paths["json"].write_text(json.dumps(result, indent=2))
+    paths["markdown"].write_text(env.get_template("regression_watch.md.j2").render(r=result))
+    paths["html"].write_text(env.get_template("regression_watch.html.j2").render(r=result, chart=chart))
+    return paths
+
+
+def write_closure_pack(result: dict, out_dir: str | Path) -> dict[str, Path]:
+    """Write an action audit of the AI's own ticket closures as JSON, Markdown and HTML."""
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    paths = {"json": out / "closures.json", "markdown": out / "closure-audit.md", "html": out / "closure-audit.html"}
+    env = _env()
+    paths["json"].write_text(json.dumps(result, indent=2))
+    paths["markdown"].write_text(env.get_template("closure_audit.md.j2").render(r=result))
+    paths["html"].write_text(env.get_template("closure_audit.html.j2").render(r=result))
+    return paths
+
+
+def write_bakeoff_pack(result: dict, out_dir: str | Path) -> dict[str, Path]:
+    """Write a bake-off decision pack as JSON and HTML."""
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    paths = {"json": out / "bakeoff.json", "html": out / "decision-pack.html"}
+    paths["json"].write_text(json.dumps(result, indent=2))
+    paths["html"].write_text(_env().get_template("bakeoff_pack.html.j2").render(r=result))
+    return paths

@@ -138,7 +138,7 @@ footer { margin-top: 48px; color: var(--muted); font-size: 0.8rem; border-top: 1
 <ul>
   <li><b>Hypothesis:</b> AI summaries and resolution suggestions cut agent hours per ticket by at least 10% without lowering quality; the virtual agent deflects password resets and simple requests.</li>
   <li><b>Primary metric:</b> effort_hours (expected −10%)</li>
-  <li><b>Registration:</b> Registered 2026-10-16T15:09:26+00:00 after go-live.</li>
+  <li><b>Registration:</b> Registered 2026-10-16T17:04:47+00:00 after go-live.</li>
 </ul>
 
 <h2><span class="num">3</span>Design</h2>
@@ -225,11 +225,11 @@ footer { margin-top: 48px; color: var(--muted); font-size: 0.8rem; border-top: 1
 <h2><span class="num">11</span>Data lineage</h2>
 <div class="table-wrap"><table>
 <thead><tr><th>File</th><th class="n">Rows</th><th>Modified</th><th>SHA-256</th></tr></thead>
-<tbody><tr><td>incidents.csv</td><td class="n">74,477</td><td>2026-10-16T15:09:26+00:00</td><td class="mono">a5dd9e825b4798c2…</td></tr><tr><td>rollout.csv</td><td class="n">40</td><td>2026-10-16T15:09:26+00:00</td><td class="mono">dca626de90094161…</td></tr><tr><td>virtual_agent.csv</td><td class="n">4,741</td><td>2026-10-16T15:09:26+00:00</td><td class="mono">45589c60796fe765…</td></tr></tbody>
+<tbody><tr><td>incidents.csv</td><td class="n">74,477</td><td>2026-10-16T17:04:47+00:00</td><td class="mono">a5dd9e825b4798c2…</td></tr><tr><td>rollout.csv</td><td class="n">40</td><td>2026-10-16T17:04:47+00:00</td><td class="mono">dca626de90094161…</td></tr><tr><td>virtual_agent.csv</td><td class="n">4,741</td><td>2026-10-16T17:04:47+00:00</td><td class="mono">45589c60796fe765…</td></tr></tbody>
 </table></div>
 <ul>
 <li>Excluded, missing team_id: 74</li><li>Excluded, duplicate ID: 37</li><li>Excluded, resolved before opened: 106</li></ul>
-<p class="meta">Probative Labs 0.2.0 (git <span class="mono">e6ca2e331e78</span>) · configuration <span class="mono">3e246c2f719b</span> · run 2026-10-16T15:09:26+00:00</p>
+<p class="meta">Probative Labs 0.3.0 (git <span class="mono">d0f00634ba0d</span>) · configuration <span class="mono">b7c58538ad84</span> · run 2026-10-16T17:04:48+00:00</p>
 
 <h2><span class="num">12</span>Recommendation</h2>
 <p><b>Renew and expand.</b> Cash ROI is positive even at the low end of the range.</p>
@@ -246,7 +246,7 @@ footer { margin-top: 48px; color: var(--muted); font-size: 0.8rem; border-top: 1
 <p>Capacity value = (agent hours saved + verified deflections × baseline hours for that type − false deflections × extra hours) × loaded hourly cost. Cash value = capacity value × realization share + documented realized savings. ROI = (value − total cost) ÷ total cost.</p><p>Hours saved enter through their team-bootstrap draws; each customer assumption enters as a triangular distribution (low, most likely, high). The simulation reports the 10th, 50th and 90th percentiles. Payback = one-time costs ÷ (monthly value − monthly recurring cost).</p><p>Deflection counts only when the evidence grade counts, no guardrail breached, and ticket volume per team fell measurably for AI teams.</p><h3>Evidence grades</h3>
 <ul><li>A: randomized holdout or randomized wave order, registered before go-live, diagnostics pass.</li><li>B: staggered rollout or comparison group with pre-trend and placebo tests passed.</li><li>C: valid but weaker (e.g. fewer than 12 teams; synthetic control and interrupted time series from v2): counts, flagged as weaker.</li><li>D: diagnostics failed: indicative only, never added to totals.</li><li>E: vendor estimates, surveys and self-reported time: shown as claimed, never added.</li></ul><h3>Data handling</h3>
 <ul><li>Person and record identifiers are replaced at ingest with keyed HMAC-SHA256 pseudonyms (requester_id, assignee_id, unit_id).</li><li>Free text is used only for work typing and dropped before analysis.</li><li>Teams with fewer people than the minimum group size are left out; results are team-level only.</li><li>Trailing weeks with too many unresolved records are dropped (right-censoring guard).</li><li>Exclusions: missing team_id: 74; duplicate ID: 37; resolved before opened: 106</li></ul><h3>Reproduce this result</h3>
-<p>Run `probative analyze -c probative.yaml` with the same data files, configuration and pseudonymization key. Results are deterministic given the seed.</p><ul><li>Probative Labs 0.2.0 (git e6ca2e331e782c111dee33122de4fda1bd6b9f43-dirty), Python 3.12.15, numpy 2.5.4, pandas 3.0.6</li><li>Configuration SHA-256: 3e246c2f719bccc62f303652ecd6b78bb277379c51ff4203833cbe0ee046b7c8</li><li>Registration SHA-256: b4210a791a69d2af32f899ee0b17fe354dcc14560d46e1ad7e2d1180c4cdbccd</li><li>incidents.csv: 74,477 rows, SHA-256 a5dd9e825b4798c2…</li><li>rollout.csv: 40 rows, SHA-256 dca626de90094161…</li><li>virtual_agent.csv: 4,741 rows, SHA-256 45589c60796fe765…</li></ul></details>
+<p>Run `probative analyze -c probative.yaml` with the same data files, configuration and pseudonymization key. Results are deterministic given the seed.</p><ul><li>Probative Labs 0.3.0 (git d0f00634ba0dd3549d90ea9769569bd4ff932a61-dirty), Python 3.12.15, numpy 2.5.4, pandas 3.0.6</li><li>Configuration SHA-256: b7c58538ad847314cb88341ddce0d5ab7b1d29ec8875a5f631c43bdbeecd77a9</li><li>Registration SHA-256: b4210a791a69d2af32f899ee0b17fe354dcc14560d46e1ad7e2d1180c4cdbccd</li><li>incidents.csv: 74,477 rows, SHA-256 a5dd9e825b4798c2…</li><li>rollout.csv: 40 rows, SHA-256 dca626de90094161…</li><li>virtual_agent.csv: 4,741 rows, SHA-256 45589c60796fe765…</li></ul></details>
 
 <footer>Generated by Probative Labs, open-source AI impact measurement. Results are team-level only; no individual is scored. Method: docs/methodology.md.</footer>
 </main>

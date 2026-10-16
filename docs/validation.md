@@ -68,6 +68,40 @@ probative validate --audit --rates 0,0.12,0.3 --runs 60 --reps 199
 1. **Baseline timing.** The first version compared claims with human-resolved tickets from the whole period. Claims cluster later, when the bot deflects more, so the baseline came out slightly high and the estimate slightly low (−0.1 points with nothing planted). The baseline is now standardized by month as well as issue type.
 2. **Ranges.** Resampling people alone gave 85% to 93% coverage. Months are shared by everyone in them, so the range is now widened to a leave-one-month-out jackknife when that is larger.
 
+## Bill reconciliation
+
+On simulated bills with known errors (1% of resolutions billed twice, 0.5% unknown IDs, 2% of escalations billed), every planted duplicate, unknown ID and billed escalation was found (`tests/test_billing.py`). Hand-built cases check each reason, the contract definition and reconciliation by day.
+
+## Regression watch
+
+Simulated desks where the share of the AI's resolutions that do not hold rises from 12% to 24% six weeks before the end of the data, and desks with no change. Reproduce with `probative validate --watch --runs 60`.
+
+| Scenario | Runs | Regression alarm | Watch or alarm | Change dated within a week |
+| --- | --- | --- | --- | --- |
+| No change | 60 | 1.7% | 16.7% | n/a |
+| 12% to 24%, six weeks before the end | 60 | 100% | 100% | 100% |
+
+## Action audit
+
+Simulated desks where the AI agent closes 40% of AI-assisted easy tickets by itself, and a planted share of its closures gets reopened. Reproduce with `probative validate --closures --runs 40`.
+
+| Planted share that did not stick | Runs | Bias | RMSE | 95% range covers truth | Excess reported |
+| --- | --- | --- | --- | --- | --- |
+| 0% | 40 | −0.001 | 0.004 | 97.5% | 0% |
+| 10% | 40 | −0.001 | 0.009 | 85% | 100% |
+| 25% | 40 | 0.000 | 0.011 | 92.5% | 100% |
+
+The 85% at 10% looked low, so 80 more runs were made at that rate with another seed: coverage 94%, and the reported uncertainty was 0.96 of the actual spread. The first batch's shortfall was chance.
+
+## Bake-off
+
+Simulated desks with no AI, then a 10-week trial on 30 teams: about 10 per vendor and 10 control teams. Reproduce with `probative validate --bakeoff --runs 20`.
+
+| Scenario | Runs | Clear winner named | Correct vendor | Wrong clear winner |
+| --- | --- | --- | --- | --- |
+| Vendor A −20%, vendor B −5% | 20 | 100% | 100% | 0% |
+| Both −10% | 20 | 5% | n/a | 5% |
+
 ## How the effect estimator was corrected during validation
 
 Validation changed the method before release:
@@ -87,6 +121,8 @@ Validation changed the method before release:
 - detection of anticipation by the pre-trend test;
 - placebo and leave-one-team-out behavior;
 - design selection and grading rules.
+
+`tests/test_billing.py`, `tests/test_watch.py`, `tests/test_closures.py`, `tests/test_bakeoff.py` and `tests/test_reproduce.py` cover the bill reconciliation, the regression watch, the action audit, the bake-off and re-performance.
 
 `tests/test_audit.py` checks the resolution audit:
 

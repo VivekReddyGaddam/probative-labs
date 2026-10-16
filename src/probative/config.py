@@ -137,6 +137,9 @@ class AnalysisConfig(BaseModel):
     placebo_outcomes: list[str] = Field(default_factory=lambda: ["after_hours"])
     censoring_threshold: float = Field(0.05, gt=0, lt=1)
     min_type_units: int = Field(200, ge=10)
+    include_teams: list[str] | None = Field(
+        None, description="Analyse only these teams (used by bake-offs to compare one vendor's teams with control)."
+    )
 
 
 class GuardrailConfig(BaseModel):
@@ -206,6 +209,33 @@ class AuditConfig(BaseModel):
         None, ge=0, description="Price paid per claimed resolution, if the AI is billed per outcome."
     )
     resolved_value: str = Field("resolved", description="Outcome value that marks a claimed resolution.")
+    contractual: bool = Field(
+        False,
+        description="The contract defines a resolution this way, so each claim that came back is disputable "
+        "(see docs/outcome-terms.md). Otherwise only billing errors are, and the excess is a negotiation figure.",
+    )
+    definition_name: str = Field("Verified resolution", description="Name of the outcome definition in the contract.")
+    ai_resolvers: list[str] = Field(
+        default_factory=list,
+        description="For `probative closures`: the 'resolved by' values that mean the AI closed the ticket itself.",
+    )
+    resolver_column: str | None = Field(None, description="Ticket column saying who resolved it (auto-detected).")
+    ai_flag_column: str | None = Field(None, description="Or a yes/no ticket column marking tickets the AI closed.")
+
+
+class BakeoffVendor(BaseModel):
+    name: str
+    annual_price: Range | None = Field(None, description="Quoted price per year, for value for money.")
+    claims: Path | None = Field(None, description="This vendor's conversations, for a resolution audit per vendor.")
+
+
+class BakeoffConfig(BaseModel):
+    """A randomized head-to-head trial of AI vendors on the buyer's own work (``probative bakeoff``)."""
+
+    assignment: Path = Field(Path("bakeoff.csv"), description="Team-to-arm assignment from `probative bakeoff plan`.")
+    start: date
+    end: date
+    vendors: list[BakeoffVendor]
 
 
 class ProjectConfig(BaseModel):
@@ -222,6 +252,7 @@ class ProjectConfig(BaseModel):
     costs: list[CostLine] = Field(default_factory=list)
     claimed: list[ClaimedValue] = Field(default_factory=list)
     audit: AuditConfig = Field(default_factory=AuditConfig)
+    bakeoff: BakeoffConfig | None = None
     registration: Path = Path("registration.yaml")
 
     _base_dir: Path = PrivateAttr(default=Path("."))

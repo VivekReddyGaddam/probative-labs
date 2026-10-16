@@ -88,6 +88,18 @@
     <p class="formula">Did not hold = (return rate after the AI − return rate after people) ÷ (1 − return rate after people)</p>
     <p>Ranges come from resampling people, widened to a leave-one-month-out jackknife when that is larger. The audit reruns with 3- and 14-day windows, any-ticket matching and a same-people baseline, and reports a high, medium or low confidence with its reasons. It needs no comparison group of teams. It is a floor: failures that end in a phone call leave no ticket.</p>
 
+    <h2 id="reconcile">Bill reconciliation</h2>
+    <p>Every line of a per-resolution bill is matched to your conversation log by the vendor's item ID and to your tickets by person and issue type. Billing errors (billed twice, no matching conversation, not resolved, outside the period) are disputed line by line. If the contract defines a resolution as no repeat ticket within the window, each item that came back is disputed too; otherwise the audit's excess over the human baseline is reported as a negotiation figure.</p>
+
+    <h2 id="watch">Regression watch</h2>
+    <p>The latest four weeks are compared with the twelve before: the share of claimed resolutions that did not hold, against the human baseline in the same weeks, and the share of conversations the AI resolved. A regression is a worsening of at least 2 points whose 95% range excludes zero. Known release dates are tested one by one. With no change planted, it raised a false alarm in 1 of 60 simulated desks; a planted jump from 12% to 24% was caught and dated in all 60.</p>
+
+    <h2 id="actions">Action audit</h2>
+    <p>For tickets the AI closed by itself: how often they were reopened or followed by a repeat ticket, against your agents' closures of the same types in the same months, with the same estimator and ranges as the resolution audit.</p>
+
+    <h2 id="bakeoff">Bake-off</h2>
+    <p>Teams are assigned to vendors and a control group by lottery. Each vendor is measured against the control teams over the same weeks. A vendor leads only if its effect excludes zero with guardrails held, and wins clearly only if its range does not overlap the runner-up's.</p>
+
     <h2 id="plan">Measurement plan</h2>
     <p>Before go-live, the plan fixes who gets the AI when and who waits, simulates the chance of detecting the expected effect with your own history, and records the guardrails, the diagnostics and decision rules that map each outcome to renew, expand, fix or stop. A lottery-based wave order registered before the first wave earns grade A.</p>
 
@@ -116,6 +128,8 @@
         <li><a href="/probative-labs/benchmarks/">Benchmarks</a></li>
         <li><a href="/probative-labs/sample/evidence-pack.html">Sample evidence pack</a></li>
         <li><a href="/probative-labs/sample/resolution-audit.html">Sample resolution audit</a></li>
+        <li><a href="/probative-labs/sample/dispute-pack.html">Sample dispute pack</a></li>
+        <li><a href="/probative-labs/sample/regression-watch.html">Sample regression watch</a></li>
         <li><a href="/probative-labs/pricing/">Pricing</a></li>
         <li><a href="/probative-labs/pilot/">Book a pilot</a></li>
       </ul>

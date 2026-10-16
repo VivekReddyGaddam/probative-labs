@@ -4,10 +4,11 @@ One company's result cannot say whether it is typical, and AI vendors do not pub
 
 ## What a contribution contains
 
-`probative benchmark` turns an evidence pack and/or a resolution audit into a small JSON file:
+`probative benchmark` turns any of your results (evidence pack, resolution audit, action audit, bill reconciliation) into a small JSON file:
 
 ```bash
-probative benchmark --results out/results.json --audit out/audit/audit.json --platform servicenow
+probative benchmark --results out/results.json --audit out/audit/audit.json \
+    --closures out/closures/closures.json --reconciliation out/reconcile/reconciliation.json --platform servicenow
 ```
 
 | Field | Example | Notes |
@@ -21,6 +22,8 @@ probative benchmark --results out/results.json --audit out/audit/audit.json --pl
 | `effect.teams_band`, `effect.weekly_tickets_band` | `20–49`, `500–1,999` | Bands, never exact counts |
 | `resolution_audit.failed_share` and its range | `0.12` | Claimed resolutions that did not hold |
 | `resolution_audit.confidence`, `claims_band` | `high`, `1,000–9,999` | |
+| `closure_audit.failed_share` and its range | `0.08` | AI closures that did not stick (`--closures`) |
+| `billing.billing_error_share` | `0.02` | Share of billed items with billing errors (`--reconciliation`); no amounts |
 | `sha256` | | Fingerprint of the contents |
 
 It never contains company, program, team or person names, ticket text or identifiers, money amounts (costs, prices, ROI in currency), exact dates or exact volumes.

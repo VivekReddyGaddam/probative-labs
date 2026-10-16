@@ -1,6 +1,6 @@
 # Evidence pack: AI agent assist (simulated)
 
-IT service desk · 2025-01-06 to 2026-07-05 · evidence grade **B** · Probative Labs 0.2.0
+IT service desk · 2025-01-06 to 2026-07-05 · evidence grade **B** · Probative Labs 0.3.0
 
 ## 1. Headline
 
@@ -12,7 +12,7 @@ AI agent assist (simulated) changed agent hours per ticket by -0.11 h per ticket
 
 - **Hypothesis:** AI summaries and resolution suggestions cut agent hours per ticket by at least 10% without lowering quality; the virtual agent deflects password resets and simple requests.
 - **Primary metric:** effort_hours (expected −10%)
-- **Registration:** Registered 2026-10-16T15:09:26+00:00 after go-live.
+- **Registration:** Registered 2026-10-16T17:04:47+00:00 after go-live.
 
 ## 3. Design
 
@@ -172,9 +172,9 @@ Claimed figures are grade E: shown for comparison, never added to measured value
 
 | File | Rows | Modified | SHA-256 |
 | --- | --- | --- | --- |
-| incidents.csv | 74,477 | 2026-10-16T15:09:26+00:00 | `a5dd9e825b4798c2…` |
-| rollout.csv | 40 | 2026-10-16T15:09:26+00:00 | `dca626de90094161…` |
-| virtual_agent.csv | 4,741 | 2026-10-16T15:09:26+00:00 | `45589c60796fe765…` |
+| incidents.csv | 74,477 | 2026-10-16T17:04:47+00:00 | `a5dd9e825b4798c2…` |
+| rollout.csv | 40 | 2026-10-16T17:04:47+00:00 | `dca626de90094161…` |
+| virtual_agent.csv | 4,741 | 2026-10-16T17:04:47+00:00 | `45589c60796fe765…` |
 
 Exclusions:
 - missing team_id: 74
@@ -182,7 +182,7 @@ Exclusions:
 - resolved before opened: 106
 
 
-Code: Probative Labs 0.2.0 (git e6ca2e331e782c111dee33122de4fda1bd6b9f43-dirty). Configuration SHA-256 `3e246c2f719bccc6…`. Run 2026-10-16T15:09:26+00:00.
+Code: Probative Labs 0.3.0 (git d0f00634ba0dd3549d90ea9769569bd4ff932a61-dirty). Configuration SHA-256 `b7c58538ad847314…`. Run 2026-10-16T17:04:48+00:00.
 
 ## 12. Recommendation
 

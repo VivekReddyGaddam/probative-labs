@@ -234,6 +234,11 @@ def analyze(  # noqa: C901 - the analysis is one ordered story; splitting it hid
     units[S.PERIOD] = ((units[S.OPENED] - origin).dt.days // 7).astype(int)
     units = pb.derive(units)
     units[S.TEAM] = units[S.TEAM].astype("string").str.strip()
+    if a.include_teams is not None:
+        included = units[S.TEAM].isin([t.strip() for t in a.include_teams])
+        if (~included).sum():
+            exclusions["teams outside this comparison"] = int((~included).sum())
+        units = units[included].reset_index(drop=True)
 
     # 3. Who had the AI from when ---------------------------------------------------------
     starts = (

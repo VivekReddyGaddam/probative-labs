@@ -6,7 +6,7 @@
 - **Verify:** measure what actually changed against teams that did not have the AI yet, and audit the resolutions an AI claims, including the ones you pay for.
 - **Benchmark:** compare with other companies running the same AI, without sharing data.
 
-This repository is the open-source engine. The method is published and validated against planted truths, and every result can be rerun by your own data team or auditor. v0.2 covers the IT service desk.
+This repository is the open-source engine. The method is published and validated against planted truths, and every result can be rerun by your own data team or auditor. v0.3 covers the IT service desk.
 
 **[Website](https://vivekreddygaddam.github.io/probative-labs/)** · **[Sample evidence pack](https://vivekreddygaddam.github.io/probative-labs/sample/evidence-pack.html)** · **[Sample resolution audit](https://vivekreddygaddam.github.io/probative-labs/sample/resolution-audit.html)** · **[Run a pilot on your own data](docs/pilot-guide.md)**
 
@@ -39,17 +39,23 @@ probative demo --open
 
 `probative demo` simulates a 40-team service desk with a known AI effect and a known share of false virtual-agent resolutions. The data has deflection, seasonality, a staggered rollout and messy records. The demo measures it end to end and writes an evidence pack and a resolution audit, so you can check both against the truth.
 
-## Three ways to use it
+## What it does
 
-### Audit the resolutions an AI claims
+### Verify what the AI claims
 
-Works for any desk with a virtual agent or AI agent, **including desks where everyone got the AI on the same day.**
+These need no staggered rollout: they work even when everyone got the AI on the same day.
 
 ```bash
 probative audit --tickets incidents.csv --preset servicenow --claims virtual_agent.csv --price 0.99
+probative reconcile vendor-bill.csv --period 2026-09 --contractual   # a dispute pack for the vendor
+probative watch --events vendor-releases.csv                         # silent regressions after updates
+probative closures --ai-resolver "AI Agent"                          # tickets the AI closed by itself
 ```
 
-A claimed resolution holds if the person does not open a ticket about the same type of issue within 7 days. Some people come back after any resolution, so the return rate after the AI is compared with the return rate after human-resolved tickets of the same types in the same months. The excess is the share of claims that did not hold, with a range, a confidence level and, if you give a price, what was paid for them. See [docs/resolution-audit.md](docs/resolution-audit.md).
+- **Resolution audit:** a claimed resolution holds if the person does not open a ticket about the same type of issue within 7 days. The return rate after the AI is compared with the return rate after human-resolved tickets of the same types in the same months; the excess is the share that did not hold, with a range and a confidence level. [docs/resolution-audit.md](docs/resolution-audit.md)
+- **Bill reconciliation:** every billed resolution is checked against your records: billed twice, no matching conversation, not resolved, outside the period, and, if your contract defines a resolution, did not hold. Writes a dispute pack and a line-by-line CSV. [docs/reconciliation.md](docs/reconciliation.md), with model contract terms in [docs/outcome-terms.md](docs/outcome-terms.md)
+- **Regression watch:** compares the latest weeks with the weeks before and tests known release dates, so an unannounced model change shows up in your own data. [docs/regression-watch.md](docs/regression-watch.md)
+- **Action audit:** how often tickets the AI closed by itself were reopened or repeated, against your agents' closures. [docs/action-audit.md](docs/action-audit.md)
 
 ### Measure what changed
 
@@ -63,25 +69,25 @@ probative analyze --open             # evidence pack: HTML, Markdown and JSON
 
 You need a ticket export (ServiceNow, Jira Service Management, Zendesk, Freshservice, BMC Helix and Ivanti work as-is) and a rollout file saying which team got the AI on which date. See [docs/data-model.md](docs/data-model.md) and [docs/configuration.md](docs/configuration.md).
 
-### Plan before go-live
-
-The cheapest time to make evidence strong is before the rollout.
+### Plan before you buy or roll out
 
 ```bash
-probative plan waves teams.csv --waves 3 --start 2026-11-02 --holdout 0.2   # lottery-based wave order
-probative register                   # lock hypothesis, metrics and guardrails before results exist
-probative plan pack --open           # the measurement plan to sign: waves, power, guardrails, decision rules
+probative bakeoff plan teams.csv --vendors "Vendor A,Vendor B" --start 2026-11-02 --weeks 8   # before you buy
+probative bakeoff analyze --open                                                              # the decision pack
+probative plan waves teams.csv --waves 3 --start 2026-11-02 --holdout 0.2                     # before you roll out
+probative register && probative plan pack --open                                              # lock it, sign it
 ```
 
-A randomized wave order registered before go-live earns evidence grade A.
+A bake-off runs vendors side by side on your own teams, assigned by lottery, against control teams ([docs/bakeoff.md](docs/bakeoff.md)). A randomized wave order registered before go-live earns evidence grade A.
 
-### Contribute to the benchmark
+### Benchmark and re-perform
 
 ```bash
-probative benchmark --results out/results.json --audit out/audit/audit.json
+probative benchmark --results out/results.json --audit out/audit/audit.json   # anonymous contribution
+probative reproduce out/results.json -c probative.yaml                         # rerun it: do all numbers match?
 ```
 
-Writes an anonymous summary (rates, ranges, grades and size bands; no names, ticket text or money) for you to review and, if you choose, share. Once enough companies contribute for the same AI product, contributors see how theirs compares. See [docs/benchmarks.md](docs/benchmarks.md).
+Benchmark contributions hold rates, ranges, grades and size bands only, for you to review and, if you choose, share ([docs/benchmarks.md](docs/benchmarks.md)). `reproduce` lets an auditor re-perform any result from the same inputs.
 
 ## What you get
 
@@ -89,7 +95,9 @@ Writes an anonymous summary (rates, ranges, grades and size bands; no names, tic
 
 - **Evidence pack** ([sample](https://vivekreddygaddam.github.io/probative-labs/sample/evidence-pack.html), [Markdown](docs/sample/evidence-pack.md)): the effect and its range, the design and why, headline versus mix-adjusted results, an event-study chart, quality guardrails, diagnostics, capacity and cash ROI ranges, the vendor's claim beside the measured result, assumptions with owners, data lineage and a renew, expand, fix or stop recommendation.
 - **Resolution audit** ([sample](https://vivekreddygaddam.github.io/probative-labs/sample/resolution-audit.html)): claimed resolutions that did not hold, by issue type and month, with robustness checks, coverage and the amount paid for failed resolutions.
-- **Measurement plan:** the rollout, its power to detect the expected effect, guardrails, decision rules agreed in advance, the registration hash and a sign-off table.
+- **Dispute pack:** what was billed, what is disputed and why, line by line for the vendor, and what was not billed in the vendor's favour.
+- **Regression watch:** the latest weeks against the weeks before, release-date tests and a weekly chart.
+- **Action audit, bake-off decision pack and measurement plan.**
 
 ## The method, briefly
 
@@ -114,11 +122,12 @@ The method and this engine are open source under Apache-2.0. Probative Labs Clou
 
 ## Status and roadmap
 
-v0.2 is alpha. It covers the IT service desk. Planned next:
+v0.3 is alpha. It covers the IT service desk. Planned next:
 
 - Agent-level staggered adoption, for desks where every team got the AI at once but people started using it at different times
+- Action audits beyond ticket closures (access approvals, refunds, record changes) from system change history
 - Synthetic control and interrupted time series
-- Ready-made mappings for conversation and automated-resolution exports
+- Ready-made mappings for conversation, automated-resolution and billing exports
 - Software engineering, customer service, security and finance playbooks
 
 Breaking changes are possible before 1.0.

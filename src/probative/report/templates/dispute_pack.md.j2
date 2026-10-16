@@ -1,0 +1,40 @@
+{% set cur = r.settings.currency %}
+{% set a = r.audit %}
+# Dispute pack: {{ r.program.vendor or r.program.name or "per-resolution bill" }}
+
+Billing period {{ r.period.start }} to {{ r.period.end }} · {{ r.billed.count | num(0) }} billed resolutions{% if r.billed.amount is not none %} · {{ r.billed.amount | money(cur) }} billed{% endif %}
+
+> {{ r.headline }}
+
+## 1. The definition used
+
+**{{ r.settings.definition_name }}:** a conversation the AI resolved, inside the billing period, after which the same person did not open a ticket {% if r.settings.match == "same_type" %}about the same type of issue {% endif %}within {{ r.settings.window_days }} days.
+
+{{ "The contract uses this definition, so every billed item that did not meet it is disputed." if r.settings.contractual else "No contract definition was applied: only billing errors are disputed line by line, and the resolution audit gives a negotiation figure." }}
+
+## 2. Reconciliation
+
+| Reason | Items | Amount |
+| --- | ---: | ---: |
+{% for x in r.reasons %}
+| {{ x.reason }} | {{ x.count | num(0) }} | {{ x.amount | money(cur) }} |
+{% endfor %}
+| **Disputed** | **{{ r.disputed.count | num(0) }}** | **{{ r.disputed.amount | money(cur) }}** |
+
+Held: {{ r.held.held | num(0) }} of {{ r.held.checked | num(0) }} checked; {{ r.held.came_back | num(0) }} came back; {{ r.held.too_recent | num(0) }} too recent to check.
+{% if a %}
+
+## 3. Compared with your agents' resolutions
+
+{{ a.ai_rate | pct(1) }} came back after the AI against {{ a.baseline_rate | pct(1) }} after your agents. Did not hold beyond that normal rate: **{{ a.failed_share.estimate | pct(1) }}** (range {{ a.failed_share.ci_low | pct(1) }} to {{ a.failed_share.ci_high | pct(1) }}).{% if a.negotiation %} Negotiation figure: {{ a.negotiation.estimate | money(cur) }} ({{ a.negotiation.ci_low | money(cur) }} to {{ a.negotiation.ci_high | money(cur) }}).{% endif %}
+{% endif %}
+
+## 4. In the vendor's favour
+
+{{ r.unbilled.resolved_not_billed | num(0) }} conversations resolved in this period are not on the bill.
+{% for n in r.notes %}
+
+- {{ n }}
+{% endfor %}
+
+The line-by-line list is in `disputed-items.csv`. Probative Labs {{ r.lineage.code.probative }} · settings `{{ r.lineage.settings_sha256[:12] }}` · run {{ r.lineage.run_at }}

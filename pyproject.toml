@@ -1,7 +1,7 @@
 [project]
 name = "probative-labs"
-version = "0.2.0"
-description = "Independent verification of what enterprise AI delivers: measurement plans, causal ROI evidence and audits of AI-claimed resolutions."
+version = "0.3.0"
+description = "Independent verification of what enterprise AI delivers: causal ROI evidence, audits of AI-claimed resolutions and per-resolution bills, regression watch and vendor bake-offs."
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]

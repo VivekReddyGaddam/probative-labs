@@ -30,10 +30,15 @@ app = typer.Typer(
     no_args_is_help=True,
     add_completion=False,
 )
+bakeoff_app = typer.Typer(
+    help="Pre-purchase bake-off: a randomized head-to-head trial of AI vendors on your own work.",
+    no_args_is_help=True,
+)
 plan_app = typer.Typer(
     help="Plan before go-live: power, rollout waves and a measurement plan to sign off.", no_args_is_help=True
 )
 app.add_typer(plan_app, name="plan")
+app.add_typer(bakeoff_app, name="bakeoff")
 
 ConfigOpt = Annotated[Path, typer.Option("--config", "-c", help="Project configuration file.")]
 
@@ -525,47 +530,17 @@ def audit(
 
     Works without a staggered rollout, so it fits desks where everyone got the AI at once.
     """
-    from probative.audit import AuditError, load_audit_inputs, run_audit
+    from probative.audit import AuditError, run_audit
 
-    if config is None and claims is None and not tickets and Path("probative.yaml").exists():
-        config = Path("probative.yaml")
-    cfg = _load(config) if config else None
+    cfg = _default_config(config, claims, tickets)
     base = cfg.base_dir if cfg else Path(".")
     a = cfg.audit if cfg else None
-    if claims is None and cfg and cfg.data.self_service:
-        claims = cfg.resolve(cfg.data.self_service)
-    if not tickets and cfg:
-        tickets = [cfg.resolve(p) for p in cfg.data.work_units]
-    if claims is None or not tickets:
-        typer.secho("Give --claims and --tickets, or a project whose data.self_service is set (--config).", fg="red")
-        raise typer.Exit(2)
-    preset = preset or (cfg.data.mapping_preset if cfg else "canonical")
-    if preset not in PRESETS:
-        typer.secho(f"Unknown preset {preset!r}. Choose from: {', '.join(PRESETS)}", fg="red")
-        raise typer.Exit(2)
     match = match or (a.match if a else "same_type")
     if match not in ("same_type", "any"):
         typer.secho("--match must be same_type or any", fg="red")
         raise typer.Exit(2)
-    pseud = (
-        None
-        if cfg and cfg.data.pseudonymized
-        else Pseudonymizer.from_env_or_file(base / ".probative" / "pseudonym.key")
-    )
     try:
-        inputs = load_audit_inputs(
-            tickets,
-            claims,
-            preset=preset,
-            ticket_mapping={**(cfg.data.mapping if cfg else {}), **_pairs(tickets_column, "--tickets-column")},
-            claims_mapping={
-                **(cfg.data.self_service_mapping if cfg else {}),
-                **_pairs(claims_column, "--claims-column"),
-            },
-            typing_fields=cfg.typing.fields if cfg else None,
-            resolved_value=resolved_value or (a.resolved_value if a else "resolved"),
-            pseudonymizer=pseud,
-        )
+        inputs = _audit_inputs(cfg, claims, tickets, preset, claims_column, tickets_column, resolved_value)
         _say(f"{len(inputs.claims):,} claimed resolutions and {len(inputs.tickets):,} tickets read")
         result = run_audit(
             inputs,
@@ -588,10 +563,333 @@ def audit(
         webbrowser.open(paths["html"].resolve().as_uri())
 
 
+def _audit_inputs(
+    cfg: ProjectConfig | None,
+    claims: Path | None,
+    tickets: list[Path] | None,
+    preset: str | None,
+    claims_column: list[str] | None,
+    tickets_column: list[str] | None,
+    resolved_value: str | None,
+):
+    """Load the AI's conversations and the tickets, from a project and/or command-line options."""
+    from probative.audit import load_audit_inputs
+
+    base = cfg.base_dir if cfg else Path(".")
+    a = cfg.audit if cfg else None
+    if claims is None and cfg and cfg.data.self_service:
+        claims = cfg.resolve(cfg.data.self_service)
+    if not tickets and cfg:
+        tickets = [cfg.resolve(p) for p in cfg.data.work_units]
+    if claims is None or not tickets:
+        typer.secho("Give --claims and --tickets, or a project whose data.self_service is set (--config).", fg="red")
+        raise typer.Exit(2)
+    preset = preset or (cfg.data.mapping_preset if cfg else "canonical")
+    if preset not in PRESETS:
+        typer.secho(f"Unknown preset {preset!r}. Choose from: {', '.join(PRESETS)}", fg="red")
+        raise typer.Exit(2)
+    pseud = (
+        None
+        if cfg and cfg.data.pseudonymized
+        else Pseudonymizer.from_env_or_file(base / ".probative" / "pseudonym.key")
+    )
+    return load_audit_inputs(
+        tickets,
+        claims,
+        preset=preset,
+        ticket_mapping={**(cfg.data.mapping if cfg else {}), **_pairs(tickets_column, "--tickets-column")},
+        claims_mapping={**(cfg.data.self_service_mapping if cfg else {}), **_pairs(claims_column, "--claims-column")},
+        typing_fields=cfg.typing.fields if cfg else None,
+        resolved_value=resolved_value or (a.resolved_value if a else "resolved"),
+        pseudonymizer=pseud,
+    )
+
+
+def _default_config(config: Path | None, claims: Path | None, tickets: list[Path] | None) -> ProjectConfig | None:
+    if config is None and claims is None and not tickets and Path("probative.yaml").exists():
+        config = Path("probative.yaml")
+    return _load(config) if config else None
+
+
+@app.command()
+def reconcile(
+    bill: Annotated[Path, typer.Argument(help="The vendor's bill: one line per billed item, or a date and count.")],
+    config: Annotated[
+        Path | None, typer.Option("--config", "-c", help="Take files and settings from a project.")
+    ] = None,
+    claims: Annotated[Path | None, typer.Option(help="Your record of the AI's conversations.")] = None,
+    tickets: Annotated[list[Path] | None, typer.Option(help="Ticket export covering the period plus a week.")] = None,
+    preset: Annotated[str | None, typer.Option(help="Ticket export preset.")] = None,
+    period: Annotated[str | None, typer.Option(help="Billing period: YYYY-MM, or YYYY-MM-DD:YYYY-MM-DD.")] = None,
+    price: Annotated[float | None, typer.Option(help="Price per resolution, if the bill has no amounts.")] = None,
+    currency: Annotated[str | None, typer.Option(help="Currency (USD).")] = None,
+    contractual: Annotated[
+        bool | None,
+        typer.Option(
+            "--contractual/--no-contractual",
+            help="The contract defines a resolution as no repeat ticket within the window: dispute each one.",
+        ),
+    ] = None,
+    window: Annotated[int | None, typer.Option(help="Days within which a repeat ticket counts (7).")] = None,
+    match: Annotated[str | None, typer.Option(help="same_type (default) or any.")] = None,
+    resolved_value: Annotated[str | None, typer.Option(help="Outcome value that marks a resolution.")] = None,
+    bill_column: Annotated[
+        list[str] | None, typer.Option("--bill-column", help='Map a bill field, e.g. item_id="Conversation".')
+    ] = None,
+    claims_column: Annotated[list[str] | None, typer.Option("--claims-column")] = None,
+    tickets_column: Annotated[list[str] | None, typer.Option("--tickets-column")] = None,
+    reps: Annotated[int, typer.Option(help="Bootstrap draws for the comparison with your agents.")] = 499,
+    out: Annotated[Path | None, typer.Option("--out", "-o", help="Output directory (out/reconcile).")] = None,
+    open_report: Annotated[bool, typer.Option("--open", help="Open the dispute pack.")] = False,
+) -> None:
+    """Reconcile a per-resolution bill: billing errors, resolutions that did not hold, and a dispute pack."""
+    from probative.audit import AuditError, load_bill, reconcile_bill
+
+    cfg = _default_config(config, claims, tickets)
+    a = cfg.audit if cfg else None
+    m = match or (a.match if a else "same_type")
+    if m not in ("same_type", "any"):
+        typer.secho("--match must be same_type or any", fg="red")
+        raise typer.Exit(2)
+    try:
+        inputs = _audit_inputs(cfg, claims, tickets, preset, claims_column, tickets_column, resolved_value)
+        bill_df, bill_meta = load_bill(bill, _pairs(bill_column, "--bill-column"))
+        result = reconcile_bill(
+            bill_df,
+            inputs.conversations,
+            inputs.tickets,
+            period=period,
+            price=price if price is not None else (a.price_per_resolution if a else None),
+            currency=currency or (cfg.value.currency if cfg else "USD"),
+            window_days=window or (a.window_days if a else 7),
+            match=m,  # type: ignore[arg-type]
+            contractual=contractual if contractual is not None else (a.contractual if a else False),
+            definition_name=a.definition_name if a else "Verified resolution",
+            resolved_value=resolved_value or (a.resolved_value if a else "resolved"),
+            reps=reps,
+            program=_program_info(cfg),
+            files=[*inputs.files, bill_meta],
+        ).to_dict()
+    except (AuditError, ValueError, FileNotFoundError) as exc:
+        typer.secho(f"Reconciliation failed: {exc}", fg="red")
+        raise typer.Exit(1) from exc
+    from probative.report import write_reconciliation_pack
+
+    base = cfg.base_dir if cfg else Path(".")
+    out_dir = out or Path("out") / "reconcile"
+    out_dir = out_dir if out_dir.is_absolute() else base / out_dir
+    paths = write_reconciliation_pack(result, out_dir)
+    typer.secho(result["headline"], bold=True)
+    typer.echo(f"\nDispute pack:   {paths['html']}\nDisputed items: {paths['csv']}")
+    if open_report:
+        webbrowser.open(paths["html"].resolve().as_uri())
+
+
+@app.command("watch")
+def watch_cmd(
+    config: Annotated[
+        Path | None, typer.Option("--config", "-c", help="Take files and settings from a project.")
+    ] = None,
+    claims: Annotated[Path | None, typer.Option(help="Your record of the AI's conversations.")] = None,
+    tickets: Annotated[list[Path] | None, typer.Option(help="Ticket export covering the same weeks.")] = None,
+    preset: Annotated[str | None, typer.Option(help="Ticket export preset.")] = None,
+    events: Annotated[Path | None, typer.Option(help="CSV of known vendor release dates (date, name).")] = None,
+    recent_weeks: Annotated[int, typer.Option(help="Latest weeks to check.")] = 4,
+    reference_weeks: Annotated[int, typer.Option(help="Weeks before them to compare with.")] = 12,
+    min_change: Annotated[
+        float, typer.Option(help="Smallest worsening that counts, as a share (0.02 = 2 points).")
+    ] = 0.02,
+    window: Annotated[int | None, typer.Option(help="Days within which a return counts (7).")] = None,
+    match: Annotated[str | None, typer.Option(help="same_type (default) or any.")] = None,
+    resolved_value: Annotated[str | None, typer.Option(help="Outcome value that marks a resolution.")] = None,
+    claims_column: Annotated[list[str] | None, typer.Option("--claims-column")] = None,
+    tickets_column: Annotated[list[str] | None, typer.Option("--tickets-column")] = None,
+    reps: Annotated[int, typer.Option(help="Bootstrap draws.")] = 499,
+    out: Annotated[Path | None, typer.Option("--out", "-o", help="Output directory (out/watch).")] = None,
+    open_report: Annotated[bool, typer.Option("--open", help="Open the report.")] = False,
+) -> None:
+    """Watch for silent regressions: did the AI get worse in the latest weeks, or after a release?
+
+    Exits with code 3 when it finds a regression, so it can run on a schedule and alert.
+    """
+    from probative.audit import AuditError, load_events, watch
+
+    cfg = _default_config(config, claims, tickets)
+    a = cfg.audit if cfg else None
+    try:
+        inputs = _audit_inputs(cfg, claims, tickets, preset, claims_column, tickets_column, resolved_value)
+        result = watch(
+            inputs.conversations,
+            inputs.tickets,
+            window_days=window or (a.window_days if a else 7),
+            match=(match or (a.match if a else "same_type")),  # type: ignore[arg-type]
+            recent_weeks=recent_weeks,
+            reference_weeks=reference_weeks,
+            min_change=min_change,
+            events=load_events(events) if events else None,
+            resolved_value=resolved_value or (a.resolved_value if a else "resolved"),
+            reps=reps,
+            program=_program_info(cfg),
+            files=inputs.files,
+        ).to_dict()
+    except (AuditError, ValueError, FileNotFoundError) as exc:
+        typer.secho(f"Watch failed: {exc}", fg="red")
+        raise typer.Exit(1) from exc
+    from probative.report import write_watch_pack
+
+    base = cfg.base_dir if cfg else Path(".")
+    out_dir = out or Path("out") / "watch"
+    out_dir = out_dir if out_dir.is_absolute() else base / out_dir
+    paths = write_watch_pack(result, out_dir)
+    color = {"regression": "red", "watch": "yellow"}.get(result["status"])
+    typer.secho(result["headline"], bold=True, fg=color)
+    typer.echo(f"\nRegression watch: {paths['html']}")
+    if open_report:
+        webbrowser.open(paths["html"].resolve().as_uri())
+    if result["status"] == "regression":
+        raise typer.Exit(3)
+
+
+@app.command()
+def closures(
+    config: Annotated[
+        Path | None, typer.Option("--config", "-c", help="Take files and settings from a project.")
+    ] = None,
+    tickets: Annotated[
+        list[Path] | None, typer.Option(help="Ticket export, including who resolved each ticket.")
+    ] = None,
+    preset: Annotated[str | None, typer.Option(help="Ticket export preset.")] = None,
+    ai_resolver: Annotated[
+        list[str] | None, typer.Option("--ai-resolver", help="A 'resolved by' value that means the AI closed it.")
+    ] = None,
+    resolver_column: Annotated[str | None, typer.Option(help="The 'resolved by' column (auto-detected).")] = None,
+    ai_flag_column: Annotated[str | None, typer.Option(help="Or a yes/no column marking AI closures.")] = None,
+    window: Annotated[int | None, typer.Option(help="Days within which a repeat ticket counts (7).")] = None,
+    match: Annotated[str | None, typer.Option(help="same_type (default) or any.")] = None,
+    tickets_column: Annotated[list[str] | None, typer.Option("--tickets-column")] = None,
+    reps: Annotated[int, typer.Option(help="Bootstrap draws.")] = 999,
+    out: Annotated[Path | None, typer.Option("--out", "-o", help="Output directory (out/closures).")] = None,
+    open_report: Annotated[bool, typer.Option("--open", help="Open the report.")] = False,
+) -> None:
+    """Audit tickets the AI closed by itself: how often were they reopened or repeated, against your agents?"""
+    from probative.audit import AuditError, audit_closures, load_closure_inputs
+
+    cfg = _default_config(config, None, tickets)
+    a = cfg.audit if cfg else None
+    if not tickets and cfg:
+        tickets = [cfg.resolve(p) for p in cfg.data.work_units]
+    if not tickets:
+        typer.secho("Give --tickets, or a project (--config).", fg="red")
+        raise typer.Exit(2)
+    base = cfg.base_dir if cfg else Path(".")
+    try:
+        inputs = load_closure_inputs(
+            tickets,
+            ai_resolvers=ai_resolver or (a.ai_resolvers if a else None),
+            resolver_column=resolver_column or (a.resolver_column if a else None),
+            ai_flag_column=ai_flag_column or (a.ai_flag_column if a else None),
+            preset=preset or (cfg.data.mapping_preset if cfg else "canonical"),
+            ticket_mapping={**(cfg.data.mapping if cfg else {}), **_pairs(tickets_column, "--tickets-column")},
+            typing_fields=cfg.typing.fields if cfg else None,
+            pseudonymizer=None
+            if cfg and cfg.data.pseudonymized
+            else Pseudonymizer.from_env_or_file(base / ".probative" / "pseudonym.key"),
+        )
+        _say(f"{inputs.ai_closed:,} tickets closed by the AI ({inputs.flag_source})")
+        result = audit_closures(
+            inputs.tickets,
+            window_days=window or (a.window_days if a else 7),
+            match=(match or (a.match if a else "same_type")),  # type: ignore[arg-type]
+            reps=reps,
+            flag_source=inputs.flag_source,
+            program=_program_info(cfg),
+            files=inputs.files,
+        ).to_dict()
+    except (AuditError, ValueError, FileNotFoundError) as exc:
+        typer.secho(f"Action audit failed: {exc}", fg="red")
+        raise typer.Exit(1) from exc
+    from probative.report import write_closure_pack
+
+    out_dir = out or Path("out") / "closures"
+    out_dir = out_dir if out_dir.is_absolute() else base / out_dir
+    paths = write_closure_pack(result, out_dir)
+    typer.secho(result["headline"], bold=True)
+    typer.echo(f"\nAction audit: {paths['html']}")
+    if open_report:
+        webbrowser.open(paths["html"].resolve().as_uri())
+
+
+@app.command()
+def reproduce(
+    result_file: Annotated[Path, typer.Argument(help="A recorded results.json (evidence pack) or audit.json.")],
+    config: Annotated[Path | None, typer.Option("--config", "-c", help="The project the result came from.")] = None,
+    claims: Annotated[Path | None, typer.Option(help="For an audit: the AI's conversations.")] = None,
+    tickets: Annotated[list[Path] | None, typer.Option(help="For an audit: the ticket export.")] = None,
+    preset: Annotated[str | None, typer.Option(help="Ticket export preset.")] = None,
+) -> None:
+    """Rerun a recorded result from the same inputs and confirm every number matches (for auditors)."""
+    import json
+
+    from probative.reproduce import compare, count_values, file_mismatches
+
+    recorded = json.loads(result_file.read_text())
+    kind = recorded.get("kind", "evidence_pack")
+    cfg = _default_config(config, claims, tickets)
+    if kind == "evidence_pack":
+        if cfg is None:
+            typer.secho("Give the project the evidence pack came from (--config).", fg="red")
+            raise typer.Exit(2)
+        boot = (recorded.get("lineage") or {}).get("bootstrap") or {}
+        cfg.analysis.bootstrap_reps = boot.get("reps", cfg.analysis.bootstrap_reps)
+        cfg.analysis.seed = boot.get("seed", cfg.analysis.seed)
+        rerun = analyze(cfg, progress=_say).to_dict()
+        files = rerun["lineage"]["files"]
+    elif kind == "resolution_audit":
+        from probative.audit import run_audit
+
+        s = recorded["settings"]
+        inputs = _audit_inputs(cfg, claims, tickets, preset, None, None, None)
+        rerun = run_audit(
+            inputs,
+            window_days=s["window_days"],
+            match=s.get("match_requested", s["match"]),
+            price=s["price"],
+            currency=s["currency"],
+            reps=s["reps"],
+            seed=s["seed"],
+            level=s["level"],
+            min_cell=s["min_cell"],
+            program=recorded.get("program") or {},
+        ).to_dict()
+        files = inputs.files
+    else:
+        typer.secho(f"Reproducing a {kind.replace('_', ' ')} is not supported yet.", fg="yellow")
+        raise typer.Exit(2)
+    changed = file_mismatches((recorded.get("lineage") or {}).get("files") or [], files)
+    for c in changed:
+        typer.secho(f"  input: {c}", fg="yellow")
+    diffs = compare(recorded, rerun)
+    if diffs:
+        typer.secho(f"Not reproduced: {len(diffs)} difference(s).", fg="red", bold=True)
+        for d in diffs[:20]:
+            typer.echo(f"  {d}")
+        raise typer.Exit(1)
+    typer.secho(
+        f"Reproduced: all {count_values(recorded):,} recorded values match"
+        + (" (inputs match their recorded fingerprints)." if not changed else "."),
+        fg="green",
+        bold=True,
+    )
+
+
 @app.command()
 def benchmark(
     results: Annotated[Path | None, typer.Option(help="An evidence pack's results.json.")] = None,
     audit_file: Annotated[Path | None, typer.Option("--audit", help="A resolution audit's audit.json.")] = None,
+    closures_file: Annotated[Path | None, typer.Option("--closures", help="An action audit's closures.json.")] = None,
+    reconciliation_file: Annotated[
+        Path | None, typer.Option("--reconciliation", help="A bill reconciliation's reconciliation.json.")
+    ] = None,
     platform: Annotated[str | None, typer.Option(help="Ticket platform, e.g. servicenow.")] = None,
     out: Annotated[Path, typer.Option("--out", "-o")] = Path("benchmark-contribution.json"),
 ) -> None:
@@ -610,18 +908,114 @@ def benchmark(
                     results = candidate
                 else:
                     audit_file = candidate
-    if results is None and audit_file is None:
-        typer.secho("Give --results out/results.json and/or --audit out/audit/audit.json.", fg="red")
+    if results is None and audit_file is None and closures_file is None and reconciliation_file is None:
+        typer.secho("Give --results, --audit, --closures or --reconciliation (JSON files from the reports).", fg="red")
         raise typer.Exit(2)
+
+    def load(p: Path | None) -> dict | None:
+        return json.loads(p.read_text()) if p else None
+
     body = contribution(
-        json.loads(results.read_text()) if results else None,
-        json.loads(audit_file.read_text()) if audit_file else None,
+        load(results),
+        load(audit_file),
+        closures=load(closures_file),
+        reconciliation=load(reconciliation_file),
         platform=platform,
     )
     out.write_text(json.dumps(body, indent=2))
     typer.echo(json.dumps(body, indent=2))
     typer.secho(f"\nWrote {out}. Review it; nothing is sent anywhere.", bold=True)
     typer.echo("To join the benchmark, share this file with Probative Labs. See docs/benchmarks.md.")
+
+
+@bakeoff_app.command("plan")
+def bakeoff_plan(
+    teams_file: Annotated[Path, typer.Argument(help="CSV with a team_id column (and optional strata).")],
+    vendors: Annotated[str, typer.Option(help="Vendor names, comma-separated.")],
+    start: Annotated[str, typer.Option(help="Trial start date, YYYY-MM-DD.")],
+    weeks: Annotated[int, typer.Option(help="Trial length in weeks.")] = 8,
+    control: Annotated[float, typer.Option(help="Share of teams kept as a control.")] = 0.25,
+    stratify: Annotated[str | None, typer.Option(help="Column to balance arms on, e.g. parent_unit.")] = None,
+    effect: Annotated[float, typer.Option(help="Smallest effect worth detecting, e.g. -0.10.")] = -0.10,
+    config: Annotated[
+        Path | None, typer.Option("--config", "-c", help="Calibrate detectability from this project's history.")
+    ] = None,
+    seed: Annotated[int | None, typer.Option(help="Randomization seed (recorded in the output).")] = None,
+    sims: Annotated[int, typer.Option(help="Power simulations.")] = 200,
+    out: Annotated[Path, typer.Option("--out", "-o")] = Path("bakeoff.csv"),
+) -> None:
+    """Assign teams to vendors and a control group by lottery, and check each vendor can be measured."""
+    from probative.bakeoff import CONTROL, plan_bakeoff
+
+    teams = pd.read_csv(teams_file, dtype=str)
+    if S.TEAM not in teams.columns:
+        typer.secho(f"{teams_file} needs a {S.TEAM} column", fg="red")
+        raise typer.Exit(2)
+    names = [v.strip() for v in vendors.split(",") if v.strip()]
+    seed = seed if seed is not None else secrets.randbelow(2**31)
+    try:
+        plan = plan_bakeoff(
+            teams,
+            names,
+            first_start=date.fromisoformat(start),
+            weeks=weeks,
+            control_share=control,
+            stratify_by=stratify,
+            seed=seed,
+        )
+    except ValueError as exc:
+        typer.secho(str(exc), fg="red")
+        raise typer.Exit(2) from exc
+    plan.to_csv(out, index=False)
+    counts = plan["arm"].value_counts()
+    typer.echo(counts.to_string())
+    noise = _noise_from_history(_load(config)) if config else NoiseModel()
+    n_control = int(counts.get(CONTROL, 0))
+    typer.secho(f"\nChance of detecting {effect:+.0%} for each vendor against control after {weeks} weeks:", bold=True)
+    for name in names:
+        n_arm = int(counts.get(name, 0))
+        rows = power_table(
+            team_options=[n_arm + n_control],
+            post_options=[weeks],
+            n_waves=1,
+            weeks_pre=26,
+            effect=effect * noise.mean,
+            noise=noise,
+            wave_spacing=1,
+            holdout_share=n_control / (n_arm + n_control),
+            sims=sims,
+        )
+        mark = "" if rows[0].power >= 0.8 else "  (below 80%: add teams or weeks)"
+        typer.echo(f"  {name}: {rows[0].power:.0%}, smallest detectable {rows[0].mde_relative:.1%}{mark}")
+    typer.echo(f"\nWrote {out} (seed {seed}). Add a bakeoff section to probative.yaml, then run the trial.")
+
+
+@bakeoff_app.command("analyze")
+def bakeoff_analyze(
+    config: ConfigOpt = Path("probative.yaml"),
+    reps: Annotated[int | None, typer.Option(help="Override bootstrap draws.")] = None,
+    out: Annotated[Path, typer.Option("--out", "-o", help="Output directory.")] = Path("out") / "bakeoff",
+    open_report: Annotated[bool, typer.Option("--open", help="Open the decision pack.")] = False,
+) -> None:
+    """Measure every vendor against the control teams and write the decision pack."""
+    from probative.bakeoff import run_bakeoff
+    from probative.report import write_bakeoff_pack
+
+    cfg = _load(config)
+    if cfg.bakeoff is None:
+        typer.secho("probative.yaml has no bakeoff section; see docs/bakeoff.md.", fg="red")
+        raise typer.Exit(2)
+    try:
+        result = run_bakeoff(cfg, reps=reps, progress=_say)
+    except (ValueError, FileNotFoundError) as exc:
+        typer.secho(f"Bake-off failed: {exc}", fg="red")
+        raise typer.Exit(1) from exc
+    out_dir = out if out.is_absolute() else cfg.base_dir / out
+    paths = write_bakeoff_pack(result, out_dir)
+    typer.secho(result["decision"]["text"], bold=True)
+    typer.echo(f"\nDecision pack: {paths['html']}")
+    if open_report:
+        webbrowser.open(paths["html"].resolve().as_uri())
 
 
 @app.command()
@@ -637,10 +1031,57 @@ def validate(
     rates: Annotated[
         str, typer.Option(help="With --audit: planted shares of false resolutions, comma-separated.")
     ] = "0,0.12,0.3",
+    watch_check: Annotated[
+        bool, typer.Option("--watch", help="Validate the regression watch: false alarms and detection.")
+    ] = False,
+    closures_check: Annotated[bool, typer.Option("--closures", help="Validate the action audit.")] = False,
+    bakeoff_check: Annotated[bool, typer.Option("--bakeoff", help="Validate the bake-off decision.")] = False,
 ) -> None:
     """Check the estimator (or, with --audit, the resolution audit) against planted truths, including zero."""
-    from probative.validation import run_audit_validation, run_validation, summarize, summarize_audit
+    from probative import validation as V
+    from probative.validation import (
+        run_audit_validation,
+        run_validation,
+        run_watch_validation,
+        summarize,
+        summarize_audit,
+        summarize_watch,
+    )
 
+    for flag, run_f, sum_f, title, note in (
+        (
+            closures_check,
+            V.run_closure_validation,
+            V.summarize_closures,
+            "Action audit validation",
+            "coverage should be near 0.95; flags_excess near 0.025 at a planted rate of 0 and near 1 otherwise.",
+        ),
+        (
+            bakeoff_check,
+            V.run_bakeoff_validation,
+            V.summarize_bakeoff,
+            "Bake-off validation",
+            "clear_winner should be high when A is better and low when they are equal; wrong_clear_winner near 0.",
+        ),
+    ):
+        if flag:
+            df = run_f(runs=runs, reps=max(reps, 99), seed=seed, progress=_say)
+            if out:
+                df.to_csv(out, index=False)
+            typer.secho(f"\n{title}", bold=True)
+            with pd.option_context("display.float_format", "{:.3f}".format, "display.width", 140):
+                typer.echo(sum_f(df).to_string(index=False))
+            typer.echo(f"\n{note}")
+            return
+    if watch_check:
+        df = run_watch_validation(runs=runs, reps=max(reps, 99), seed=seed, progress=_say)
+        if out:
+            df.to_csv(out, index=False)
+        typer.secho("\nRegression watch validation", bold=True)
+        with pd.option_context("display.float_format", "{:.3f}".format, "display.width", 140):
+            typer.echo(summarize_watch(df).to_string(index=False))
+        typer.echo("\nregression_alarm should be near 0 with no regression and near 1 with one.")
+        return
     if audit_check:
         df = run_audit_validation(
             rates=tuple(float(r) for r in rates.split(",")), runs=runs, reps=max(reps, 99), seed=seed, progress=_say

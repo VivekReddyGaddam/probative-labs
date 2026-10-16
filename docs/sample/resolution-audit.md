@@ -58,7 +58,7 @@ did not hold = (return rate after the AI − return rate after people) ÷ (1 −
 
 ## 6. Audit confidence: high
 
-- Enough claims and human-resolved tickets, a tight range, and the same people appear in both systems.
+- Enough claimed resolutions and human-resolved tickets, a tight range, and the data lines up across systems.
 
 - Claimed resolutions: 3,543; checked: 3,371; too recent to check: 172; outside the ticket dates: 0
 - People in the AI's records who also appear in the ticket data: 100%
@@ -72,6 +72,6 @@ did not hold = (return rate after the AI − return rate after people) ÷ (1 −
 | incidents.csv | 74,477 | `a5dd9e825b4798c2…` |
 | virtual_agent.csv | 4,741 | `45589c60796fe765…` |
 
-Probative Labs 0.2.0 · settings `81a896999fd9` · seed 20261014 · run 2026-10-16T15:09:42+00:00
+Probative Labs 0.3.0 · settings `81a896999fd9` · seed 20261014 · run 2026-10-16T17:05:04+00:00
 
 People who give up and call or email instead leave no ticket, so this audit can undercount failures: treat the result as a floor unless every channel creates a ticket.

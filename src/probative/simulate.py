@@ -156,11 +156,17 @@ class SimSpec:
     resolution_effect: float = -0.08
     deflection: bool = True
     false_deflection_rate: float = 0.12
+    regression_week: int | None = None  # from this week on, a silent vendor update changes the false rate
+    false_deflection_rate_after: float | None = None
     reopen_effect: float = 0.0  # absolute change in reopen probability (plant a guardrail breach)
     ramp_weeks: int = 6
     extraction_lag_days: int = 7  # days between the window end and the export (drives right-censoring)
     tickets_per_team_week: tuple[float, float] = (12.0, 40.0)
     users: int = 6000
+    ai_closure_share: float = 0.0  # share of AI-assisted easy tickets the AI agent closes by itself
+    ai_closure_failure_rate: float = 0.0  # planted share of AI closures that get reopened
+    bill_price: float = 1.0  # the vendor's price per claimed resolution
+    bill_errors: tuple[float, float, float] = (0.01, 0.005, 0.02)  # duplicates, unknown IDs, escalations billed
     data_quality_issues: bool = True
     seed: int = 7
     types: tuple[TicketType, ...] = field(default=TYPES)
@@ -173,6 +179,7 @@ class SimData:
     sessions: pd.DataFrame
     teams: pd.DataFrame
     truth: dict
+    bill: pd.DataFrame = field(default_factory=pd.DataFrame)
 
     def write(self, out_dir: str | Path, fmt: str = "servicenow") -> dict[str, Path]:
         """Write the files a customer would export, with tickets in ``fmt`` (see EXPORT_FORMATS)."""
@@ -183,6 +190,7 @@ class SimData:
             "rollout": out / "rollout.csv",
             "sessions": out / "virtual_agent.csv",
             "teams": out / "teams.csv",
+            "bill": out / "billing.csv",
             "truth": out / "truth.json",
         }
         export_tickets(self.tickets, fmt).to_csv(paths["tickets"], index=False)
@@ -191,6 +199,10 @@ class SimData:
         sessions["requester_id"] = _requester(sessions["requester_id"], fmt)
         sessions.to_csv(paths["sessions"], index=False)
         self.teams.to_csv(paths["teams"], index=False)
+        if self.bill.empty:
+            del paths["bill"]
+        else:
+            self.bill.to_csv(paths["bill"], index=False)
         paths["truth"].write_text(json.dumps({**self.truth, "export_format": fmt}, indent=2, default=str))
         return paths
 
@@ -392,7 +404,10 @@ def generate(spec: SimSpec | None = None) -> SimData:
     # Deflection ---------------------------------------------------------------------
     deflect_rate = np.array([t.deflect_rate for t in types])[ktype]
     deflected = spec.deflection & treated & (rng.random(n) < deflect_rate * ramp)
-    false_back = deflected & (rng.random(n) < spec.false_deflection_rate)
+    false_rate = np.full(n, spec.false_deflection_rate)
+    if spec.regression_week is not None and spec.false_deflection_rate_after is not None:
+        false_rate = np.where(week >= spec.regression_week, spec.false_deflection_rate_after, false_rate)
+    false_back = deflected & (rng.random(n) < false_rate)
     verified = deflected & ~false_back
     session_time = opened - pd.to_timedelta(rng.uniform(5, 60, n), unit="m")
     # A false deflection comes back as a ticket 1-4 business days later at the same time of
@@ -471,6 +486,8 @@ def generate(spec: SimSpec | None = None) -> SimData:
     tickets.insert(0, "number", [f"INC{1_000_000 + i:07d}" for i in range(len(tickets))])
     tickets = tickets.drop(columns="opened_dt").reset_index(drop=True)
 
+    closures = _plant_ai_closures(tickets, spec)
+
     if spec.data_quality_issues and len(tickets) > 1000:
         m = len(tickets)
         bad = rng.choice(m, size=max(1, m // 700), replace=False)
@@ -498,6 +515,8 @@ def generate(spec: SimSpec | None = None) -> SimData:
         }
     )
     sessions = sessions[pd.to_datetime(sessions["started_at"]) < window_end].reset_index(drop=True)
+
+    bill, bill_truth = _vendor_bill(sessions, spec)
 
     rollout_rows = []
     for i in range(T):
@@ -546,8 +565,65 @@ def generate(spec: SimSpec | None = None) -> SimData:
             "start": spec.start.isoformat(),
             "end": (spec.start + timedelta(weeks=W) - timedelta(days=1)).isoformat(),
         },
+        "bill": bill_truth,
+        "ai_closures": closures,
     }
-    return SimData(tickets=tickets, rollout=rollout, sessions=sessions, teams=teams, truth=truth)
+    return SimData(tickets=tickets, rollout=rollout, sessions=sessions, teams=teams, truth=truth, bill=bill)
+
+
+def _plant_ai_closures(tickets: pd.DataFrame, spec: SimSpec) -> dict:
+    """Mark tickets the AI agent closed by itself ("resolved_by"), and reopen a planted share of them.
+
+    Uses its own random stream and changes nothing unless ``ai_closure_share`` is set.
+    """
+    if spec.ai_closure_share <= 0:
+        return {}
+    rng = np.random.default_rng(spec.seed + 9_001)
+    easy = {t.category for t in spec.types if t.deflect_rate > 0}
+    candidate = (
+        (tickets["u_ai_assisted"] == "true") & tickets["category"].isin(easy) & (tickets["resolved_at"] != "")
+    ).to_numpy()
+    closed = candidate & (rng.random(len(tickets)) < spec.ai_closure_share)
+    failed = closed & (rng.random(len(tickets)) < spec.ai_closure_failure_rate)
+    reopen = tickets["reopen_count"].to_numpy()
+    tickets["reopen_count"] = np.where(failed & (reopen == 0), 1, reopen)
+    tickets["resolved_by"] = np.where(closed, "AI Agent", tickets["assigned_to"])
+    return {"closed_by_ai": int(closed.sum()), "planted_failure_rate": spec.ai_closure_failure_rate}
+
+
+def _vendor_bill(sessions: pd.DataFrame, spec: SimSpec) -> tuple[pd.DataFrame, dict]:
+    """The vendor's per-resolution bill, with known errors: duplicates, unknown IDs and billed escalations.
+
+    Uses its own random stream, so adding the bill leaves every other simulated file unchanged.
+    """
+    rng = np.random.default_rng(spec.seed + 7_777)
+    dup_share, unknown_share, escalated_share = spec.bill_errors
+    resolved = sessions[sessions["outcome"] == "resolved"]
+    others = sessions[sessions["outcome"] != "resolved"]
+    if resolved.empty:
+        return pd.DataFrame(), {}
+    dups = resolved[rng.random(len(resolved)) < dup_share]
+    escalated = others[rng.random(len(others)) < escalated_share]
+    n_unknown = int(round(len(resolved) * unknown_share))
+    unknown_dates = resolved["started_at"].to_numpy()[rng.integers(0, len(resolved), n_unknown)]
+    unknown = pd.DataFrame(
+        {"session_id": [f"VX{i:08d}" for i in rng.integers(0, 10**8, n_unknown)], "started_at": unknown_dates}
+    )
+    lines = pd.concat([resolved[["session_id", "started_at"]], dups, escalated, unknown], ignore_index=True)[
+        ["session_id", "started_at"]
+    ]
+    lines = lines.iloc[rng.permutation(len(lines))].sort_values("started_at", kind="stable")
+    bill = pd.DataFrame(
+        {"Conversation ID": lines["session_id"], "Resolved at": lines["started_at"], "Amount": spec.bill_price}
+    ).reset_index(drop=True)
+    truth = {
+        "lines": len(bill),
+        "duplicates": len(dups),
+        "unknown_ids": n_unknown,
+        "escalations_billed": len(escalated),
+        "price": spec.bill_price,
+    }
+    return bill, truth
 
 
 def demo_config(data_dir: str = "data", truth: dict | None = None, fmt: str = "servicenow") -> dict:

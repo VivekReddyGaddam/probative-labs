@@ -111,6 +111,28 @@
 </section>
 
 <section class="band">
+  <div class="wrap split">
+    <div>
+      <div class="eyebrow">Reconcile the bill</div>
+      <h2>A dispute pack, line by line.</h2>
+      <p>Every billed resolution is matched to your own records: billed twice, no matching conversation, escalated or abandoned, outside the period, and, if your contract defines a resolution, did not hold. You get a summary for both sides and a CSV of disputed items by the vendor's own IDs, with no personal data. Resolutions you had that were not billed are listed too, in the vendor's favour.</p>
+      
+      <p class="small muted">In the simulated sample month, 110 of 650 billed resolutions were disputable: 13 billing errors and 97 that did not hold under the contract's definition.</p>
+      <div class="cta-row"><a class="btn" href="/probative-labs/sample/dispute-pack.html">Sample dispute pack</a></div>
+    </div>
+    <div>
+      <div class="eyebrow">Write it into the contract</div>
+      <h2>Define a resolution before you pay for one.</h2>
+      <p>Our model terms define a verified resolution, the data the vendor must provide each month, independent measurement, credits and notice of model changes. They are a starting point for your counsel, not legal advice.</p>
+      <div class="cta-row"><a class="btn" href="https://github.com/VivekReddyGaddam/probative-labs/blob/main/docs/outcome-terms.md">Model terms</a></div>
+      <div class="eyebrow" style="margin-top:2rem">Watch for silent regressions</div>
+      <p>Vendors update models without notice. Each month the watch compares the latest weeks with the weeks before, and tests known release dates.</p>
+      <div class="cta-row"><a class="btn btn-ghost" href="/probative-labs/sample/regression-watch.html">Sample regression watch</a></div>
+    </div>
+  </div>
+</section>
+
+<section>
   <div class="wrap narrow">
     <h2>Questions</h2>
     <dl class="faq">
@@ -121,7 +143,7 @@
       <dt>What can it miss?</dt>
       <dd>Someone who gives up on the bot and phones or asks a colleague leaves no ticket, so the audit is a floor unless every channel creates a ticket. It also needs the same person identifier in both systems; the report shows how many people it could match.</dd>
       <dt>Can we run it ourselves?</dt>
-      <dd>Yes. The audit is part of the open-source engine: <code>probative audit --tickets incidents.csv --claims conversations.csv</code>. Customers pay for continuous monthly audits, connectors, benchmarks and our readout.</dd>
+      <dd>Yes. The audit, the bill reconciliation and the watch are part of the open-source engine: <code>probative audit</code>, <code>probative reconcile</code>, <code>probative watch</code>. Customers pay for monthly checks on live data, connectors, benchmarks and our readout.</dd>
     </dl>
     <div class="cta-row"><a class="btn btn-primary" href="/probative-labs/pilot/">Book an audit</a><a class="btn" href="https://github.com/VivekReddyGaddam/probative-labs/blob/main/docs/resolution-audit.md">Full method</a></div>
   </div>
@@ -142,6 +164,8 @@
         <li><a href="/probative-labs/benchmarks/">Benchmarks</a></li>
         <li><a href="/probative-labs/sample/evidence-pack.html">Sample evidence pack</a></li>
         <li><a href="/probative-labs/sample/resolution-audit.html">Sample resolution audit</a></li>
+        <li><a href="/probative-labs/sample/dispute-pack.html">Sample dispute pack</a></li>
+        <li><a href="/probative-labs/sample/regression-watch.html">Sample regression watch</a></li>
         <li><a href="/probative-labs/pricing/">Pricing</a></li>
         <li><a href="/probative-labs/pilot/">Book a pilot</a></li>
       </ul>

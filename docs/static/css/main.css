@@ -169,7 +169,7 @@ section.tight { padding: 3rem 0; }
 .checklist li { padding-left: 1.6rem; position: relative; margin: 0.45rem 0; }
 .checklist li::before { content: ""; position: absolute; left: 0.2rem; top: 0.45rem; width: 0.7rem; height: 0.38rem;
   border-left: 2px solid var(--accent); border-bottom: 2px solid var(--accent); transform: rotate(-45deg); }
-.tiers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; align-items: stretch; }
+.tiers { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; align-items: stretch; }
 .tier { display: flex; flex-direction: column; }
 .tier.featured { border: 2px solid var(--accent); }
 .tier .price { font: 600 1.6rem var(--serif); margin: 0.4rem 0 0.1rem; }

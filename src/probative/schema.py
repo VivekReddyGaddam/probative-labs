@@ -112,3 +112,17 @@ STAFFING_COLUMNS: dict[str, str] = {
     "week_start": "datetime",
     "hours": "number",
 }
+
+# Vendor bills (for outcome bill reconciliation) ------------------------------------
+
+BILL_ITEM = "item_id"  # the vendor's identifier for the billed conversation or resolution
+BILLED_AT = "billed_at"
+AMOUNT = "amount"
+QUANTITY = "quantity"
+
+BILL_COLUMNS: dict[str, str] = {
+    BILL_ITEM: "string",
+    BILLED_AT: "datetime",
+    AMOUNT: "number",
+    QUANTITY: "number",
+}

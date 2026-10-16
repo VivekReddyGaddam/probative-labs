@@ -1,0 +1,25 @@
+{% set f = r.failed_share %}
+{% set rv = r.reversals %}
+# Action audit: tickets the AI closed ({{ r.program.name or "AI agent" }})
+
+Closures {{ r.period.from }} to {{ r.period.to }} · {{ r.counts.ai_closures | num(0) }} by the AI, {{ r.counts.people_closures | num(0) }} by your agents · **audit confidence: {{ r.confidence.level }}**
+
+> {{ r.headline }}
+
+| | AI | Your agents |
+| --- | ---: | ---: |
+| Reversed (reopened or repeat within {{ r.settings.window_days }} days) | {{ rv.ai_rate | pct(1) }} | {{ rv.people_rate | pct(1) }} |
+| Reopened | {{ rv.ai_reopened | pct(1) }} | {{ rv.people_reopened | pct(1) }} |
+| Repeat ticket | {{ rv.ai_repeat | pct(1) }} | {{ rv.people_repeat | pct(1) }} |
+
+AI closures that did not stick, beyond the normal rate: **{{ f.estimate | pct(1) }}** (range {{ f.ci_low | pct(1) }} to {{ f.ci_high | pct(1) }}).
+{% for reason in r.confidence.reasons %}
+
+- {{ reason }}
+{% endfor %}
+{% for n in r.notes %}
+
+- {{ n }}
+{% endfor %}
+
+Probative Labs {{ r.lineage.code.probative }} · settings `{{ r.lineage.settings_sha256[:12] }}` · run {{ r.lineage.run_at }}
