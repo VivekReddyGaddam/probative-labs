@@ -28,10 +28,9 @@
     <nav class="site-nav" id="site-nav" data-nav aria-label="Main">
       <a href="/probative-labs/resolution-audit/" >Resolution audit</a>
       <a href="/probative-labs/method/" aria-current="page">Method</a>
-      <a href="/probative-labs/benchmarks/" >Benchmarks</a>
+      <a href="/probative-labs/pricing/" >Pricing</a>
       <a href="/probative-labs/independence/" >Independence</a>
       <a href="/probative-labs/open-source/" >Open source</a>
-      <a href="/probative-labs/pricing/" >Pricing</a>
       
       <a class="btn btn-primary btn-sm" href="/probative-labs/pilot/">Book a pilot</a>
     </nav>
@@ -40,16 +39,20 @@
 <main id="content">
 
 
-<section class="hero">
-  <div class="wrap narrow">
+<section class="page-hero">
+  <div class="wrap">
     <div class="eyebrow">Method</div>
     <h1>Two questions, answered independently.</h1>
-    <p class="lead"><b>What changed?</b> We compare with what would have happened without the AI, using the strongest comparison your data allows, and say so plainly when no comparison is good enough. <b>Did the AI's claims hold?</b> We check the resolutions it reports against what happened next.</p>
+    <p class="lead"><b>What changed?</b> We compare with what would have happened without the AI, and say so plainly when no comparison is good enough. <b>Did the AI's claims hold?</b> We check what it reports against what happened next.</p>
+    <nav class="toc" aria-label="On this page">
+      <a href="#designs">Comparison designs</a><a href="#mix">Mix adjustment</a><a href="#checks">Diagnostics</a><a href="#value">Value and ROI</a>
+      <a href="#audit">Resolution audit</a><a href="#reconcile">Bill reconciliation</a><a href="#watch">Regression watch</a><a href="#bakeoff">Bake-off</a><a href="#validation">Validation</a>
+    </nav>
   </div>
 </section>
 <section class="tight">
   <div class="wrap narrow prose">
-    <h2>Comparison designs</h2>
+    <h2 id="designs">Comparison designs</h2>
     <div class="table-wrap"><table>
       <thead><tr><th>Design</th><th>When it is used</th><th>Grade</th></tr></thead>
       <tbody>
@@ -65,7 +68,7 @@
     <h2 id="mix">Mix adjustment</h2>
     <p>Every ticket is typed by category. Effects are estimated within type and reported beside the headline number. When AI absorbs password resets, the average remaining ticket is harder. A headline average punishes the AI for its own success; the mix-adjusted effect does not.</p>
 
-    <h2>Uncertainty and diagnostics</h2>
+    <h2 id="checks">Uncertainty and diagnostics</h2>
     <ul>
       <li><b>Team-level ranges.</b> Tickets in a team are not independent, so uncertainty comes from resampling whole teams, with a small-sample correction.</li>
       <li><b>Pre-trend test.</b> Were AI and comparison teams moving together before rollout?</li>
@@ -80,7 +83,7 @@
     <h2>Quality guardrails</h2>
     <p>Reopen rate, reassignments, escalations, satisfaction and false deflection are estimated with the same design. If any breaches its agreed threshold, the program's value is withheld: faster but worse earns nothing.</p>
 
-    <h2>Value and ROI</h2>
+    <h2 id="value">Value and ROI</h2>
     <p>ROI = (value − total cost) ÷ total cost. It is always a range: the measured effect's uncertainty is combined with your finance team's assumptions (loaded hourly cost, realization share) in 10,000 simulations. Capacity ROI counts freed hours. Cash ROI counts only money that provably moved.</p>
 
     <h2 id="audit">Resolution audit</h2>
@@ -103,7 +106,7 @@
     <h2 id="plan">Measurement plan</h2>
     <p>Before go-live, the plan fixes who gets the AI when and who waits, simulates the chance of detecting the expected effect with your own history, and records the guardrails, the diagnostics and decision rules that map each outcome to renew, expand, fix or stop. A lottery-based wave order registered before the first wave earns grade A.</p>
 
-    <h2>Validated on known answers</h2>
+    <h2 id="validation">Validated on known answers</h2>
     <p>The engine and the audit are tested on simulated service desks with planted truths, including zero, using the same pipeline customers use. With no false resolutions planted, the audit never reported an excess; with 12% and 30% planted, its 95% ranges contained the truth in 98% and 93% of runs. The results are published.</p>
     <div class="cta-row">
       <a class="btn" href="https://github.com/VivekReddyGaddam/probative-labs/blob/main/docs/methodology.md">Full methodology</a>
@@ -118,7 +121,7 @@
   <div class="wrap footer-grid">
     <div>
       <a class="brand" href="/probative-labs/"><img src="/probative-labs/static/img/logo.svg" alt="" width="28" height="28">Probative Labs</a>
-      <p class="muted small" style="margin-top:0.8rem;max-width:22rem">Independent proof of what each AI investment delivered. Probative Labs sells no AI, takes no money from AI vendors and is not part of any platform it measures.</p>
+      <p class="muted small" style="margin-top:0.8rem;max-width:20rem">Independent proof of what each AI investment delivered. We sell no AI and take no money from AI vendors.</p>
     </div>
     <div>
       <h4>Product</h4>
@@ -126,12 +129,17 @@
         <li><a href="/probative-labs/resolution-audit/">Resolution audit</a></li>
         <li><a href="/probative-labs/method/">Method</a></li>
         <li><a href="/probative-labs/benchmarks/">Benchmarks</a></li>
-        <li><a href="/probative-labs/sample/evidence-pack.html">Sample evidence pack</a></li>
-        <li><a href="/probative-labs/sample/resolution-audit.html">Sample resolution audit</a></li>
-        <li><a href="/probative-labs/sample/dispute-pack.html">Sample dispute pack</a></li>
-        <li><a href="/probative-labs/sample/regression-watch.html">Sample regression watch</a></li>
         <li><a href="/probative-labs/pricing/">Pricing</a></li>
         <li><a href="/probative-labs/pilot/">Book a pilot</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Samples</h4>
+      <ul>
+        <li><a href="/probative-labs/sample/evidence-pack.html">Evidence pack</a></li>
+        <li><a href="/probative-labs/sample/resolution-audit.html">Resolution audit</a></li>
+        <li><a href="/probative-labs/sample/dispute-pack.html">Dispute pack</a></li>
+        <li><a href="/probative-labs/sample/regression-watch.html">Regression watch</a></li>
       </ul>
     </div>
     <div>
@@ -153,7 +161,7 @@
       </ul>
     </div>
   </div>
-  <div class="wrap"><p class="muted small" style="margin-top:2rem">© 2026 Probative Labs. The measurement engine is open source under the Apache License 2.0.</p></div>
+  <div class="wrap"><p class="muted small" style="margin-top:2.5rem">© 2026 Probative Labs · The engine is open source under the Apache License 2.0.</p></div>
 </footer>
 </body>
 </html>

@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Resolution audit · Probative Labs</title>
-<meta name="description" content="Did the resolutions your AI agent claimed actually hold? Probative Labs checks each one against what happened next and compares with your agents' own resolutions. Works even if everyone got the AI on the same day.">
+<meta name="description" content="Did the resolutions your AI agent claimed actually hold? Probative Labs checks each one against what happened next, compares with your agents' own resolutions, and reconciles the bill. Works even if everyone got the AI on the same day.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Probative Labs">
 <meta property="og:title" content="Resolution audit · Probative Labs">
-<meta property="og:description" content="Did the resolutions your AI agent claimed actually hold? Probative Labs checks each one against what happened next and compares with your agents' own resolutions. Works even if everyone got the AI on the same day.">
+<meta property="og:description" content="Did the resolutions your AI agent claimed actually hold? Probative Labs checks each one against what happened next, compares with your agents' own resolutions, and reconciles the bill. Works even if everyone got the AI on the same day.">
 <meta property="og:image" content="https://vivekreddygaddam.github.io/probative-labs/static/img/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="627">
@@ -28,10 +28,9 @@
     <nav class="site-nav" id="site-nav" data-nav aria-label="Main">
       <a href="/probative-labs/resolution-audit/" aria-current="page">Resolution audit</a>
       <a href="/probative-labs/method/" >Method</a>
-      <a href="/probative-labs/benchmarks/" >Benchmarks</a>
+      <a href="/probative-labs/pricing/" >Pricing</a>
       <a href="/probative-labs/independence/" >Independence</a>
       <a href="/probative-labs/open-source/" >Open source</a>
-      <a href="/probative-labs/pricing/" >Pricing</a>
       
       <a class="btn btn-primary btn-sm" href="/probative-labs/pilot/">Book a pilot</a>
     </nav>
@@ -41,19 +40,20 @@
 
 
 
+
 <section class="hero">
   <div class="wrap hero-grid">
     <div>
       <div class="eyebrow">Resolution audit</div>
       <h1>Did your AI's resolutions actually hold?</h1>
-      <p class="lead">Virtual agents and AI agents report how many issues they resolved, and more and more, that is what you pay for. We check every claimed resolution against what happened next, independently of the vendor.</p>
+      <p class="lead">Virtual agents and AI agents report how many issues they resolved, and that is often what you pay for. We check every claimed resolution against what happened next, independently of the vendor.</p>
       <div class="cta-row"><a class="btn btn-primary" href="/probative-labs/pilot/">Book an audit</a><a class="btn" href="/probative-labs/sample/resolution-audit.html">See a sample audit</a></div>
-      <p class="muted small" style="margin-top:1rem">Two weeks from your exports to a readout. Works even if every team got the AI on the same day.</p>
+      <div class="trust"><span>About two weeks</span><span>Two exports, no production access</span><span>Works with any rollout</span></div>
     </div>
     
     <aside class="proof" aria-labelledby="audit-title">
       <h3 id="audit-title">Sample audit</h3>
-      <p class="muted small">A simulated service desk where a known share of the virtual agent's resolutions came back.</p>
+      <p class="muted small">A simulated service desk with a known share of false resolutions.</p>
       <div class="bar-row">
         <div class="label"><span>Came back within 7 days after the AI</span><b>13.9%</b></div>
         <div class="bar"><span class="claimed" style="width: 69.3%"></span></div>
@@ -62,8 +62,8 @@
         <div class="label"><span>Came back after your agents' resolutions</span><b>1.8%</b></div>
         <div class="bar"><span class="range" style="left:0; width: 8.9%"></span></div>
       </div>
-      <p style="margin-top:1rem"><b>12%</b> of 3,543 claimed resolutions did not hold (range 11% to 14%): $435 paid for them at $1.00 each. Audit confidence: high.</p>
-      <p class="foot">Simulated data with a planted share of false resolutions, audited by the open engine.</p>
+      <p style="margin:1rem 0 0"><b>12%</b> of 3,543 claimed resolutions did not hold (range 11% to 14%): $435 paid for them at $1.00 each.</p>
+      <p class="foot">Audit confidence: high. Simulated data, audited by the open engine.</p>
     </aside>
     
   </div>
@@ -71,14 +71,16 @@
 
 <section class="band">
   <div class="wrap">
-    <div class="eyebrow">How it works</div>
-    <h2>A resolution holds only if the person does not need help again.</h2>
+    <div class="section-head">
+      <div class="eyebrow">How it works</div>
+      <h2>A resolution holds only if the person does not need help again.</h2>
+    </div>
     <ol class="steps">
-      <li><h3>Find returns</h3><p>For each claimed resolution, look for a ticket from the same person within a week, about the same type of issue.</p></li>
-      <li><h3>Find the normal rate</h3><p>People come back after your agents' resolutions too. We measure that in the same months, for the same issue types.</p></li>
-      <li><h3>Count only the excess</h3><p>Only returns above the normal rate count against the AI, so unrelated tickets do not inflate the result.</p></li>
-      <li><h3>State the uncertainty</h3><p>A range from resampling people, robustness checks, and a high, medium or low confidence with the reasons.</p></li>
-      <li><h3>Put a price on it</h3><p>If you pay per resolution, the audit shows how much went to resolutions that did not hold.</p></li>
+      <li><h3>Find returns</h3><p>A ticket from the same person, about the same issue, within a week.</p></li>
+      <li><h3>Find the normal rate</h3><p>How often people come back after your agents' resolutions, same months and issue types.</p></li>
+      <li><h3>Count the excess</h3><p>Only returns above that normal rate count against the AI.</p></li>
+      <li><h3>State the uncertainty</h3><p>A range, robustness checks and a confidence level with its reasons.</p></li>
+      <li><h3>Put a price on it</h3><p>If you pay per resolution: what went to ones that did not hold.</p></li>
     </ol>
     <p class="formula" style="margin-top:1.6rem">Did not hold = (return rate after the AI − return rate after people) ÷ (1 − return rate after people)</p>
   </div>
@@ -88,63 +90,68 @@
   <div class="wrap split">
     <div>
       <div class="eyebrow">What we need</div>
-      <h2>Two exports. No production access.</h2>
+      <h2>Two exports.</h2>
       <ul class="checklist">
-        <li>The AI's conversations or automated resolutions: who, when, outcome and topic</li>
-        <li>Your ticket export for the same dates plus a week (ServiceNow, Jira Service Management, Zendesk, Freshservice, BMC Helix, Ivanti or any CSV)</li>
-        <li>Optional: the price you pay per resolution</li>
+        <li>The AI's conversations: who, when, outcome and topic</li>
+        <li>Your tickets for the same dates plus a week, from ServiceNow, Jira Service Management, Zendesk, Freshservice, BMC Helix, Ivanti or any CSV</li>
+        <li>Optional: the vendor's bill or your price per resolution</li>
       </ul>
-      <p class="small muted" style="margin-top:1rem">People are pseudonymized as the files are read. Results describe the AI, never individual employees or customers.</p>
+      <p class="small muted" style="margin-top:1rem">People are pseudonymized as the files are read. Results describe the AI, never individuals.</p>
     </div>
     <div>
       <div class="eyebrow">What you get</div>
-      <h2>An audit your vendor cannot argue with.</h2>
+      <h2>An audit your vendor can check.</h2>
       <ul class="checklist">
         <li>Share of claimed resolutions that did not hold, with a range</li>
-        <li>Breakdown by issue type and by month</li>
-        <li>Robustness checks: 3- and 14-day windows, any-ticket matching, same-people baseline</li>
-        <li>What was paid for resolutions that did not hold</li>
-        <li>Full method and data fingerprints, so anyone can rerun it</li>
+        <li>Breakdowns by issue type and by month</li>
+        <li>Robustness checks and an audit confidence level</li>
+        <li>The method and data fingerprints, so anyone can rerun it</li>
       </ul>
     </div>
   </div>
 </section>
 
 <section class="band">
-  <div class="wrap split">
-    <div>
-      <div class="eyebrow">Reconcile the bill</div>
-      <h2>A dispute pack, line by line.</h2>
-      <p>Every billed resolution is matched to your own records: billed twice, no matching conversation, escalated or abandoned, outside the period, and, if your contract defines a resolution, did not hold. You get a summary for both sides and a CSV of disputed items by the vendor's own IDs, with no personal data. Resolutions you had that were not billed are listed too, in the vendor's favour.</p>
-      
-      <p class="small muted">In the simulated sample month, 110 of 650 billed resolutions were disputable: 13 billing errors and 97 that did not hold under the contract's definition.</p>
-      <div class="cta-row"><a class="btn" href="/probative-labs/sample/dispute-pack.html">Sample dispute pack</a></div>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Beyond the audit</div>
+      <h2>From a finding to money back.</h2>
     </div>
-    <div>
-      <div class="eyebrow">Write it into the contract</div>
-      <h2>Define a resolution before you pay for one.</h2>
-      <p>Our model terms define a verified resolution, the data the vendor must provide each month, independent measurement, credits and notice of model changes. They are a starting point for your counsel, not legal advice.</p>
-      <div class="cta-row"><a class="btn" href="https://github.com/VivekReddyGaddam/probative-labs/blob/main/docs/outcome-terms.md">Model terms</a></div>
-      <div class="eyebrow" style="margin-top:2rem">Watch for silent regressions</div>
-      <p>Vendors update models without notice. Each month the watch compares the latest weeks with the weeks before, and tests known release dates.</p>
-      <div class="cta-row"><a class="btn btn-ghost" href="/probative-labs/sample/regression-watch.html">Sample regression watch</a></div>
+    <div class="pillars">
+      <div class="card">
+        <h3>Reconcile the bill</h3>
+        <p>Every billed resolution checked against your records: billed twice, no matching conversation, escalated, outside the period, and, under your contract's definition, did not hold. In the sample month, 110 of 650 billed resolutions were disputable.</p>
+        <ul class="links"><li><a href="/probative-labs/sample/dispute-pack.html">Sample dispute pack</a></li></ul>
+      </div>
+      <div class="card">
+        <h3>Write it into the contract</h3>
+        <p>Define a resolution before you pay for one. Our model terms cover what counts as a resolution, the data the vendor provides each month, independent measurement and credits. A starting point for your counsel, not legal advice.</p>
+        <ul class="links"><li><a href="https://github.com/VivekReddyGaddam/probative-labs/blob/main/docs/outcome-terms.md">Model terms</a></li></ul>
+      </div>
+      <div class="card">
+        <h3>Watch for silent regressions</h3>
+        <p>Vendors update models without notice. Each month, the latest weeks are compared with the weeks before, and known release dates are tested.</p>
+        <ul class="links"><li><a href="/probative-labs/sample/regression-watch.html">Sample regression watch</a></li></ul>
+      </div>
     </div>
   </div>
 </section>
 
 <section>
   <div class="wrap narrow">
-    <h2>Questions</h2>
-    <dl class="faq">
-      <dt>Do we need a staggered rollout?</dt>
-      <dd>No. The audit compares the AI's resolutions with your agents' resolutions in the same months, so it works even if every team got the AI on the same day.</dd>
-      <dt>What if the AI's resolutions hold up?</dt>
-      <dd>Then the audit says so: the range includes zero, and the report states that the AI's resolutions are not shown to fail more often than your agents'.</dd>
-      <dt>What can it miss?</dt>
-      <dd>Someone who gives up on the bot and phones or asks a colleague leaves no ticket, so the audit is a floor unless every channel creates a ticket. It also needs the same person identifier in both systems; the report shows how many people it could match.</dd>
-      <dt>Can we run it ourselves?</dt>
-      <dd>Yes. The audit, the bill reconciliation and the watch are part of the open-source engine: <code>probative audit</code>, <code>probative reconcile</code>, <code>probative watch</code>. Customers pay for monthly checks on live data, connectors, benchmarks and our readout.</dd>
-    </dl>
+    <div class="section-head"><h2>Questions</h2></div>
+    <div class="faq-list">
+      <details><summary>Do we need a staggered rollout?</summary><div><p>No. The audit compares the AI's resolutions with your agents' resolutions in the same months, so it works even if every team got the AI on the same day.</p></div></details>
+      <details><summary>What if the AI's resolutions hold up?</summary><div><p>Then the audit says so: the range includes zero, and the report states that the AI's resolutions are not shown to fail more often than your agents'.</p></div></details>
+      <details><summary>What can it miss?</summary><div><p>Someone who gives up on the bot and phones or asks a colleague leaves no ticket, so the audit is a floor unless every channel creates a ticket. It also needs the same person identifier in both systems; the report shows how many people it could match.</p></div></details>
+      <details><summary>Can we run it ourselves?</summary><div><p>Yes. The audit, the bill reconciliation and the watch are in the open-source engine: <code>probative audit</code>, <code>probative reconcile</code> and <code>probative watch</code>. Plans pay for monthly checks on live data, connectors, benchmarks and our readout.</p></div></details>
+    </div>
+  </div>
+</section>
+
+<section class="band cta-band">
+  <div class="wrap narrow">
+    <h2>See what held, and what to dispute.</h2>
     <div class="cta-row"><a class="btn btn-primary" href="/probative-labs/pilot/">Book an audit</a><a class="btn" href="https://github.com/VivekReddyGaddam/probative-labs/blob/main/docs/resolution-audit.md">Full method</a></div>
   </div>
 </section>
@@ -154,7 +161,7 @@
   <div class="wrap footer-grid">
     <div>
       <a class="brand" href="/probative-labs/"><img src="/probative-labs/static/img/logo.svg" alt="" width="28" height="28">Probative Labs</a>
-      <p class="muted small" style="margin-top:0.8rem;max-width:22rem">Independent proof of what each AI investment delivered. Probative Labs sells no AI, takes no money from AI vendors and is not part of any platform it measures.</p>
+      <p class="muted small" style="margin-top:0.8rem;max-width:20rem">Independent proof of what each AI investment delivered. We sell no AI and take no money from AI vendors.</p>
     </div>
     <div>
       <h4>Product</h4>
@@ -162,12 +169,17 @@
         <li><a href="/probative-labs/resolution-audit/">Resolution audit</a></li>
         <li><a href="/probative-labs/method/">Method</a></li>
         <li><a href="/probative-labs/benchmarks/">Benchmarks</a></li>
-        <li><a href="/probative-labs/sample/evidence-pack.html">Sample evidence pack</a></li>
-        <li><a href="/probative-labs/sample/resolution-audit.html">Sample resolution audit</a></li>
-        <li><a href="/probative-labs/sample/dispute-pack.html">Sample dispute pack</a></li>
-        <li><a href="/probative-labs/sample/regression-watch.html">Sample regression watch</a></li>
         <li><a href="/probative-labs/pricing/">Pricing</a></li>
         <li><a href="/probative-labs/pilot/">Book a pilot</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Samples</h4>
+      <ul>
+        <li><a href="/probative-labs/sample/evidence-pack.html">Evidence pack</a></li>
+        <li><a href="/probative-labs/sample/resolution-audit.html">Resolution audit</a></li>
+        <li><a href="/probative-labs/sample/dispute-pack.html">Dispute pack</a></li>
+        <li><a href="/probative-labs/sample/regression-watch.html">Regression watch</a></li>
       </ul>
     </div>
     <div>
@@ -189,7 +201,7 @@
       </ul>
     </div>
   </div>
-  <div class="wrap"><p class="muted small" style="margin-top:2rem">© 2026 Probative Labs. The measurement engine is open source under the Apache License 2.0.</p></div>
+  <div class="wrap"><p class="muted small" style="margin-top:2.5rem">© 2026 Probative Labs · The engine is open source under the Apache License 2.0.</p></div>
 </footer>
 </body>
 </html>
