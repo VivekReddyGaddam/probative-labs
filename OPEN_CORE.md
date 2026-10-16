@@ -4,7 +4,7 @@ Probative Labs is an independent check on what AI vendors claim. A checker that 
 
 The commercial product, Probative Labs Cloud, sells what enterprises pay for once they trust the method:
 
-- verification that runs continuously, not once a year: live connectors, monthly resolution audits, alerts when results move;
+- verification that keeps running, not once a year: live connectors and resolution audits on fresh data;
 - peer benchmarks, which only exist because many companies contribute;
 - running measurement across a whole AI portfolio, with the cost ledger and finance sign-off;
 - meeting security and governance requirements without a data team.
@@ -29,7 +29,7 @@ The commercial product, Probative Labs Cloud, sells what enterprises pay for onc
 | Evidence pack (HTML, Markdown, JSON) and method appendix | ✓ | ✓ |
 | **Verify: what the AI claims** | | |
 | Resolution audit: claimed resolutions that did not hold, against a human baseline, with ranges and confidence | ✓ | ✓ |
-| Monthly audits on live data, with the amount paid for resolutions that did not hold | | ✓ |
+| Resolution audits on data synced from live connectors, with the amount paid for resolutions that did not hold | | ✓ |
 | **Benchmark** | | |
 | Anonymous contribution format and `probative benchmark` | ✓ | ✓ |
 | Peer benchmarks: your result against other organizations running the same AI | | ✓ |
@@ -38,7 +38,7 @@ The commercial product, Probative Labs Cloud, sells what enterprises pay for onc
 | Hosted program registry and portfolio view | | ✓ |
 | Cost ledger: contract, seat and usage import | | ✓ |
 | Unit values with finance sign-off and change history | | ✓ |
-| Renewal memos and board reports | | ✓ |
+| Renewal memos and board reports | | Planned |
 | Single sign-on (OIDC), roles, audit log, retention controls | | ✓ |
 | Single-tenant and customer-hosted deployment | | ✓ |
 | Methodologist support and rollout design workshops | | ✓ |
