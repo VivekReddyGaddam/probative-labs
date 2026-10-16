@@ -1,5 +1,6 @@
 """Rollout designer: plan measurement before go-live, when it is cheapest and strongest."""
 
+from probative.rollout.plan import build_plan
 from probative.rollout.power import (
     NoiseModel,
     PowerResult,
@@ -15,6 +16,7 @@ __all__ = [
     "NoiseModel",
     "PowerResult",
     "RegistrationStatus",
+    "build_plan",
     "check_registration",
     "estimate_noise",
     "lock_registration",

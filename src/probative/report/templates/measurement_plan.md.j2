@@ -1,0 +1,102 @@
+{% set ro = r.rollout %}
+{% set det = r.detectability %}
+# Measurement plan: {{ r.program.name }}
+
+Prepared {{ r.lineage.created }}{% if r.program.owner %} · Owner: {{ r.program.owner }}{% endif %} · **expected evidence grade: {{ r.expected_grade.grade }}**
+
+> {{ r.expected_grade.text }}
+
+## 1. The question
+
+- **Hypothesis:** {{ r.hypothesis.statement }}
+- **Primary metric:** {{ r.hypothesis.metric_label }}, expected {{ r.hypothesis.expected_effect | spct }}
+- **Fixed in advance:** the metric, the guardrails and the decision rules below.
+
+## 2. Rollout
+
+{% if ro %}
+| Group | Starts | Teams |
+| --- | --- | ---: |
+{% for w in ro.waves %}
+| Wave {{ w.wave }} | {{ w.start }} | {{ w.teams }} |
+{% endfor %}
+{% if ro.holdout_teams %}
+| Held back (comparison) | {{ ro.holdout_release or "later" }} | {{ ro.holdout_teams }} |
+{% endif %}
+
+{{ "The wave order was drawn by lottery" ~ (" (seed " ~ ro.seed ~ ")" if ro.seed else "") ~ "." if ro.randomized else "Teams get the AI on different dates; teams without it yet are the comparison." }}
+{% if not r.comparison %}
+
+**Everyone gets the AI on the same day and nobody waits, so there is nothing to compare against.** Split the rollout into at least two waves or hold some teams back.
+{% endif %}
+{% else %}
+No rollout file yet: run `probative plan waves teams.csv --waves 3 --holdout 0.2` and rebuild this plan.
+{% endif %}
+
+## 3. Can the effect be detected?
+
+{% if det.rows %}
+Simulated {{ det.sims }} times with the planned teams and waves, using {{ det.noise_source }}.
+
+| Teams | Weeks after the last wave | Chance of detecting it | Smallest detectable change |
+| ---: | ---: | ---: | ---: |
+{% for p in det.rows %}
+| {{ p.teams }} | {{ p.weeks_after }} | {{ p.power | pct }}{% if p.power >= 0.8 %} ✓{% endif %} | {{ p.mde_relative | pct(1) }} |
+{% endfor %}
+{% if r.readout %}
+
+Earliest reliable readout: **{{ r.readout.date }}** ({{ r.readout.weeks_after_last_wave }} weeks after the last wave).
+{% endif %}
+{% else %}
+Not simulated.
+{% endif %}
+
+## 4. Quality guardrails
+
+{% for g in r.guardrails %}
+- {{ g.label }}: {{ g.threshold }}
+{% endfor %}
+
+## 5. Checks that run on the result
+
+{% for d in r.diagnostics %}
+- {{ d }}
+{% endfor %}
+
+## 6. Decision rules, agreed now
+
+| If the evidence shows | Then |
+| --- | --- |
+{% for d in r.decision_rules %}
+| {{ d.if }} | {{ d.then }} |
+{% endfor %}
+
+## 7. Value inputs
+
+- Loaded cost per agent hour: {{ r.value.loaded_hourly_cost.low | num(0) }} to {{ r.value.loaded_hourly_cost.high | num(0) }} {{ r.value.currency }} (most likely {{ r.value.loaded_hourly_cost.mid | num(0) }})
+- Share of freed hours provably redeployed: {{ r.value.realization_rate.low | pct }} to {{ r.value.realization_rate.high | pct }}
+- Agreed by: {{ r.value.owner or "not yet recorded" }}
+{% if r.audit.enabled %}
+- Monthly resolution audit: a claim holds if the person does not come back within {{ r.audit.window_days }} days{% if r.audit.price %}; billed at {{ r.audit.price | unit_price(r.value.currency) }} per resolution{% endif %}
+{% endif %}
+
+## 8. Registration
+
+{{ r.registration.summary }}{% if r.registration.sha256 %} SHA-256 `{{ r.registration.sha256 }}`{% endif %}
+
+
+## 9. Sign-off
+
+| Role | Name | Date |
+| --- | --- | --- |
+{% for s in r.sign_off %}
+| {{ s.role }} | | |
+{% endfor %}
+{% if r.notes %}
+
+## Notes
+
+{% for n in r.notes %}
+- {{ n }}
+{% endfor %}
+{% endif %}

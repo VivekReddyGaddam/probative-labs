@@ -622,4 +622,5 @@ def demo_config(data_dir: str = "data", truth: dict | None = None, fmt: str = "s
                 "note": "Usage × assumed minutes saved per summary",
             }
         ],
+        "audit": {"window_days": 7, "match": "same_type", "price_per_resolution": 1.0},
     }

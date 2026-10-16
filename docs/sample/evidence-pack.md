@@ -1,6 +1,6 @@
 # Evidence pack: AI agent assist (simulated)
 
-IT service desk · 2025-01-06 to 2026-07-05 · evidence grade **B** · Probative Labs 0.1.0
+IT service desk · 2025-01-06 to 2026-07-05 · evidence grade **B** · Probative Labs 0.2.0
 
 ## 1. Headline
 
@@ -12,7 +12,7 @@ AI agent assist (simulated) changed agent hours per ticket by -0.11 h per ticket
 
 - **Hypothesis:** AI summaries and resolution suggestions cut agent hours per ticket by at least 10% without lowering quality; the virtual agent deflects password resets and simple requests.
 - **Primary metric:** effort_hours (expected −10%)
-- **Registration:** Registered 2026-10-14T18:00:10+00:00 after go-live.
+- **Registration:** Registered 2026-10-16T15:09:26+00:00 after go-live.
 
 ## 3. Design
 
@@ -164,17 +164,17 @@ Claimed figures are grade E: shown for comparison, never added to measured value
 
 | Assumption | Low | Most likely | High | Unit | Owner | Agreed |
 | --- | --- | --- | --- | --- | --- | --- |
-| Loaded cost per agent hour | 52.00 | 60.00 | 70.00 | USD | not recorded | not recorded |
-| Share of freed hours provably redeployed (realization) | 0.30 | 0.50 | 0.70 | share | not recorded | not recorded |
-| Extra agent hours per false deflection | 0.25 | 0.50 | 1.00 | h | not recorded | not recorded |
+| Loaded cost per agent hour | 52.00 | 60.00 | 70.00 | USD | Finance partner, IT (illustrative) | 2025-11-10 |
+| Share of freed hours provably redeployed (realization) | 0.30 | 0.50 | 0.70 | share | Finance partner, IT (illustrative) | 2025-11-10 |
+| Extra agent hours per false deflection | 0.25 | 0.50 | 1.00 | h | Finance partner, IT (illustrative) | 2025-11-10 |
 
 ## 11. Data lineage
 
 | File | Rows | Modified | SHA-256 |
 | --- | --- | --- | --- |
-| incidents.csv | 74,477 | 2026-10-14T18:00:10+00:00 | `a5dd9e825b4798c2…` |
-| rollout.csv | 40 | 2026-10-14T18:00:10+00:00 | `dca626de90094161…` |
-| virtual_agent.csv | 4,741 | 2026-10-14T18:00:10+00:00 | `45589c60796fe765…` |
+| incidents.csv | 74,477 | 2026-10-16T15:09:26+00:00 | `a5dd9e825b4798c2…` |
+| rollout.csv | 40 | 2026-10-16T15:09:26+00:00 | `dca626de90094161…` |
+| virtual_agent.csv | 4,741 | 2026-10-16T15:09:26+00:00 | `45589c60796fe765…` |
 
 Exclusions:
 - missing team_id: 74
@@ -182,7 +182,7 @@ Exclusions:
 - resolved before opened: 106
 
 
-Code: Probative Labs 0.1.0 (git cf4b33acef234115c42c51214c83721b5132dc89). Configuration SHA-256 `0d8ea8a3a418a7e9…`. Run 2026-10-14T18:00:11+00:00.
+Code: Probative Labs 0.2.0 (git e6ca2e331e782c111dee33122de4fda1bd6b9f43-dirty). Configuration SHA-256 `3e246c2f719bccc6…`. Run 2026-10-16T15:09:26+00:00.
 
 ## 12. Recommendation
 

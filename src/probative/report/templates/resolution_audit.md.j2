@@ -1,0 +1,87 @@
+{% set f = r.failed_share %}
+{% set ret = r.returns %}
+{% set b = r.billing %}
+{% set lvl = (r.settings.level * 100) | int %}
+# Resolution audit: {{ r.program.name or "resolutions claimed by the AI" }}
+
+Claims {{ r.period.claims_from }} to {{ r.period.claims_to }} · {{ r.claims.in_period | num(0) }} claimed resolutions · tickets {{ r.period.tickets_from }} to {{ r.period.tickets_to }} · **audit confidence: {{ r.confidence.level }}**
+
+> {{ r.headline }}
+
+## 1. What was checked
+
+For each resolution the AI claimed, the audit looked for a ticket from the same person in the following {{ r.settings.window_days }} days{% if r.settings.match == "same_type" %} about the same type of issue{% endif %}. The same check on tickets resolved by people{% if ret.standardized %}, weighted to the same issue mix{% endif %}, in the same weeks, gives the normal return rate. Only the excess counts against the AI:
+
+did not hold = (return rate after the AI − return rate after people) ÷ (1 − return rate after people)
+
+{{ lvl }}% ranges come from resampling people {{ r.settings.reps | num(0) }} times.
+
+## 2. Result
+
+| | Estimate | {{ lvl }}% range |
+| --- | ---: | ---: |
+| Came back within {{ r.settings.window_days }} days after an AI-claimed resolution | {{ ret.ai_rate | pct(1) }} | {{ ret.ai_ci_low | pct(1) }} to {{ ret.ai_ci_high | pct(1) }} |
+| Came back within {{ r.settings.window_days }} days after a human-resolved ticket | {{ ret.baseline_rate | pct(1) }} | {{ ret.baseline_ci_low | pct(1) }} to {{ ret.baseline_ci_high | pct(1) }} |
+| **Claimed resolutions that did not hold** | **{{ f.estimate | pct(1) }}** | {{ f.ci_low | pct(1) }} to {{ f.ci_high | pct(1) }} |
+| Resolutions that held, of {{ r.held.of | num(0) }} claimed | {{ r.held.estimate | num(0) }} | {{ r.held.ci_low | num(0) }} to {{ r.held.ci_high | num(0) }} |
+{% if b %}
+| Billed at {{ b.price | unit_price(b.currency) }} per claimed resolution | {{ b.billed | money(b.currency) }} | |
+| **Paid for resolutions that did not hold** | **{{ b.paid_for_failed.estimate | money(b.currency) }}** | {{ b.paid_for_failed.ci_low | money(b.currency) }} to {{ b.paid_for_failed.ci_high | money(b.currency) }} |
+{% endif %}
+{% if not f.excludes_zero %}
+
+The range includes zero: the AI's resolutions are not shown to fail more often than human resolutions.
+{% endif %}
+{% if r.by_type %}
+
+## 3. By type of issue
+
+| Type | Claimed | Came back | After AI | After people | Baseline | Did not hold |
+| --- | ---: | ---: | ---: | ---: | --- | ---: |
+{% for t in r.by_type %}
+| {{ t.work_type }} | {{ t.claims | num(0) }} | {{ t.returned | num(0) }} | {{ t.ai_return_rate | pct(1) }} | {{ t.baseline_return_rate | pct(1) }} | {{ t.baseline }} | {{ t.failed_share | pct }} |
+{% endfor %}
+{% endif %}
+{% if r.by_month %}
+
+## 4. Over time
+
+| Month | Claims checked | After AI | After people | Did not hold |
+| --- | ---: | ---: | ---: | ---: |
+{% for m in r.by_month %}
+| {{ m.month }} | {{ m.claims | num(0) }} | {{ m.ai_return_rate | pct(1) }} | {{ m.baseline_return_rate | pct(1) }} | {{ m.failed_share | pct }} |
+{% endfor %}
+{% endif %}
+
+## 5. Robustness
+
+| Check | Claims checked | Did not hold |
+| --- | ---: | ---: |
+{% for s in r.sensitivity %}
+| {{ s.check }}{% if s.main %} (main result){% endif %} | {{ s.claims | num(0) }} | {{ s.failed_share | pct(1) }} |
+{% endfor %}
+
+## 6. Audit confidence: {{ r.confidence.level }}
+
+{% for reason in r.confidence.reasons %}
+- {{ reason }}
+{% endfor %}
+
+- Claimed resolutions: {{ r.claims.resolutions | num(0) }}; checked: {{ r.claims.checked | num(0) }}; too recent to check: {{ r.claims.too_recent | num(0) }}; outside the ticket dates: {{ r.claims.outside_ticket_dates | num(0) }}
+- People in the AI's records who also appear in the ticket data: {{ r.coverage.id_overlap | pct }}
+- Human-resolved tickets in the baseline: {{ ret.baseline_tickets | num(0) }}
+{% for n in r.notes %}
+- {{ n }}
+{% endfor %}
+
+## 7. Data lineage
+
+| File | Rows | SHA-256 |
+| --- | ---: | --- |
+{% for fl in r.lineage.files %}
+| {{ fl.path.split("/")[-1] }} | {{ fl.rows | num(0) }} | `{{ fl.sha256[:16] }}…` |
+{% endfor %}
+
+Probative Labs {{ r.lineage.code.probative }} · settings `{{ r.lineage.settings_sha256[:12] }}` · seed {{ r.settings.seed }} · run {{ r.lineage.run_at }}
+
+People who give up and call or email instead leave no ticket, so this audit can undercount failures: treat the result as a floor unless every channel creates a ticket.

@@ -1,6 +1,6 @@
 # Methodology
 
-Probative Labs estimates the *counterfactual*: what would have happened to the same work without the AI. It uses the strongest comparison the data allows, and it states the uncertainty, the diagnostics and an evidence grade with every number. This document describes exactly what v0.1 of the open engine does. The code is the reference implementation; where this text and the code disagree, the code is a bug or this document is, and we want to know.
+Probative Labs checks what AI delivered, independently of the vendor. It answers two questions. **What changed?** It estimates the *counterfactual*, what would have happened to the same work without the AI, using the strongest comparison the data allows, and states the uncertainty, the diagnostics and an evidence grade with every number. **Did the AI's claims hold?** The resolution audit checks the resolutions an AI reports against what happened next. This document describes exactly what v0.2 of the open engine does. The code is the reference implementation; where this text and the code disagree, the code is a bug or this document is, and we want to know.
 
 ## The five steps
 
@@ -16,7 +16,7 @@ Results are computed on **team-by-week cells**: for example, the mean agent hour
 
 A team's **rollout week** is the first full week after its exposure start date. If the start falls mid-week, that week is dropped for the team (it is partly exposed). Teams that had the AI before the window starts are excluded, since they have no before period. Exposure is treated as absorbing. If an exposure ends (`end_date`), the team's later weeks are dropped rather than treated as untreated.
 
-## Comparison designs in v0.1
+## Comparison designs in v0.2
 
 | Design | When Probative Labs uses it | Evidence grade |
 | --- | --- | --- |
@@ -117,6 +117,30 @@ Deflection value counts toward measured value only if all of the following hold:
 
 Otherwise it is shown as indicative.
 
+## Resolution audit
+
+The audit checks each resolution an AI claims. A claim **did not hold** if the same person opened a ticket about the same type of issue within 7 days. People come back after human-resolved tickets too, so the audit measures the excess over that baseline:
+
+```
+return rate after the AI      r = claims followed by a return ÷ claims checked
+return rate after people      b = the same rate after human-resolved tickets, standardized to the claims'
+                                  mix of month and issue type
+did not hold                  f = (r − b) ÷ (1 − b)
+```
+
+- **Standardization.** Each (month, issue type) cell of claims is compared with human-resolved tickets of the same type resolved in the same month. Cells with fewer than 30 baseline tickets use the type over all months, then all tickets. Types under 1% of claims are grouped.
+- **Matching.** Claims and tickets are typed on the fields both files have (category, subcategory). If fewer than half of the claims' types exist in the tickets, or the claims have no category, any ticket from the same person counts as a return, and the audit says so.
+- **Eligibility.** A claim is checked only if the ticket export covers the full window after it. Later claims are reported as too recent; any billing estimate assumes they hold at the same rate.
+- **Uncertainty.** A Poisson bootstrap over people (999 draws) moves each person's claims and tickets together. If a leave-one-month-out jackknife standard error is larger than the bootstrap's, the 95% range is widened to it.
+- **Robustness.** 3- and 14-day windows, any-ticket matching and a baseline from the same people only are reported beside the main result.
+- **Confidence.** High, medium or low, from the number of claims and baseline tickets, the share of people found in both systems, issue-type matching and the width of the range. See [resolution-audit.md](resolution-audit.md).
+
+The audit does not need a comparison group of teams, so it works when everyone got the AI on the same day. It is a floor: failures that end in a phone call or a colleague's help leave no ticket.
+
+## Measurement plan
+
+`probative plan pack` assembles, before go-live, everything the analysis will hold the program to: the wave schedule and holdout, the chance of detecting the expected effect at 8, 12 and 16 weeks after the last wave (simulated with the same estimator, using noise calibrated from the customer's own history when available), the guardrails and thresholds, the diagnostics, decision rules mapping each outcome to renew, expand, fix or stop, the value inputs, the registration hash and a sign-off table. The expected grade is A only if the wave order is randomized and registered before the first wave.
+
 ## Value and ROI
 
 ```
@@ -160,6 +184,7 @@ The engine is tested on simulated service desks with planted effects, including 
 - **Small programs.** With fewer than about 12 teams, or a single team in a wave, ranges are approximate. The grade is lowered, and the pack says so.
 - **Large, heterogeneous effects.** When the effect scales with each team's own speed and the ticket mix also shifts, ranges for large effects are somewhat narrow (87% coverage of a −15% effect in validation). An analytic variance estimator is being evaluated.
 - **Time worked as recorded.** If agents under-record time, so does the engine. The staffing-based fallback (staffed hours ÷ tickets) cannot be mix-adjusted.
+- **Everyone at once.** The effect estimate needs teams that got the AI at different times. When every team got it on one day, the resolution audit still works, and agent-level staggered adoption is on the roadmap.
 - **Value is only as good as the unit values.** Finance owns the loaded cost and the realization evidence; the pack records who agreed them and when.
 
 ## References

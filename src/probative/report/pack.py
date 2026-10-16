@@ -10,7 +10,7 @@ from typing import Any
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 from probative.report.appendix import appendix_sections
-from probative.report.svg import event_study_svg
+from probative.report.svg import event_study_svg, share_bars_svg
 
 GRADE_TEXT = {
     "A": "Randomized design, pre-registered: counts toward measured ROI",
@@ -63,6 +63,14 @@ def money(x: Any, currency: str = "USD") -> str:
     return f"{sign}{sym}{abs(x):,.0f}" + ("" if sym else f" {currency}")
 
 
+def unit_price(x: Any, currency: str = "USD") -> str:
+    """A price per item, with cents: $0.99, not $1."""
+    if _missing(x):
+        return "n/a"
+    sym = {"USD": "$", "EUR": "€", "GBP": "£"}.get(currency, "")
+    return f"{sym}{x:,.2f}" + ("" if sym else f" {currency}")
+
+
 def months(x: Any) -> str:
     if _missing(x):
         return "not within the period"
@@ -76,7 +84,7 @@ def _env() -> Environment:
         trim_blocks=True,
         lstrip_blocks=True,
     )
-    env.filters.update(num=num, signed=signed, pct=pct, spct=spct, money=money, months=months)
+    env.filters.update(num=num, signed=signed, pct=pct, spct=spct, money=money, unit_price=unit_price, months=months)
     env.globals.update(GRADE_TEXT=GRADE_TEXT, STATUS_TEXT=STATUS_TEXT)
     return env
 
@@ -116,4 +124,54 @@ def write_pack(result: dict, out_dir: str | Path) -> dict[str, Path]:
     paths["markdown"].write_text(render_markdown(result))
     paths["appendix"].write_text(render_appendix(result))
     paths["html"].write_text(render_html(result))
+    return paths
+
+
+def _audit_context(result: dict) -> dict:
+    chart = share_bars_svg(
+        result.get("by_month") or [],
+        value="failed_share",
+        label="month",
+        title="Claimed resolutions that did not hold, by month",
+        axis="Month of the claimed resolution",
+    )
+    return {"r": result, "chart": chart}
+
+
+def render_audit_html(result: dict) -> str:
+    return _env().get_template("resolution_audit.html.j2").render(**_audit_context(result))
+
+
+def render_audit_markdown(result: dict) -> str:
+    return _env().get_template("resolution_audit.md.j2").render(**_audit_context(result))
+
+
+def write_audit_pack(result: dict, out_dir: str | Path) -> dict[str, Path]:
+    """Write a resolution audit as JSON, Markdown and HTML."""
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    paths = {
+        "json": out / "audit.json",
+        "markdown": out / "resolution-audit.md",
+        "html": out / "resolution-audit.html",
+    }
+    paths["json"].write_text(json.dumps(result, indent=2))
+    paths["markdown"].write_text(render_audit_markdown(result))
+    paths["html"].write_text(render_audit_html(result))
+    return paths
+
+
+def write_plan_pack(plan: dict, out_dir: str | Path) -> dict[str, Path]:
+    """Write a measurement plan as JSON, Markdown and HTML."""
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    paths = {
+        "json": out / "plan.json",
+        "markdown": out / "measurement-plan.md",
+        "html": out / "measurement-plan.html",
+    }
+    env = _env()
+    paths["json"].write_text(json.dumps(plan, indent=2))
+    paths["markdown"].write_text(env.get_template("measurement_plan.md.j2").render(r=plan))
+    paths["html"].write_text(env.get_template("measurement_plan.html.j2").render(r=plan))
     return paths

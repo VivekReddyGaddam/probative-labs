@@ -1,0 +1,129 @@
+{% set f = r.failed_share %}
+{% set ret = r.returns %}
+{% set b = r.billing %}
+{% set lvl = (r.settings.level * 100) | int %}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Resolution audit · {{ r.program.name or "AI claimed resolutions" }}</title>
+<style>
+{% include "_style.css.j2" %}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div>
+    <div class="eyebrow">Resolution audit</div>
+    <h1>{{ r.program.name or "Resolutions claimed by the AI" }}</h1>
+    <div class="meta">Claims {{ r.period.claims_from }} to {{ r.period.claims_to }} · {{ r.claims.in_period | num(0) }} claimed resolutions · tickets {{ r.period.tickets_from }} to {{ r.period.tickets_to }}{% if r.program.vendor %} · {{ r.program.vendor }}{% endif %}{% if r.program.tool %} · {{ r.program.tool }}{% endif %}</div>
+  </div>
+  <div class="grade word c-{{ r.confidence.level }}" title="Audit confidence">
+    <div><b>{{ r.confidence.level | capitalize }}</b><small>Audit confidence</small></div>
+  </div>
+</header>
+
+<div class="tiles">
+  <div class="tile"><div class="k">Claimed resolutions that did not hold</div><div class="v">{{ f.estimate | pct }}</div>
+    <div class="s">{{ lvl }}% range {{ f.ci_low | pct }} to {{ f.ci_high | pct }}</div></div>
+  <div class="tile"><div class="k">Resolutions that held</div><div class="v">{{ r.held.estimate | num(0) }}</div>
+    <div class="s">of {{ r.held.of | num(0) }} claimed · range {{ r.held.ci_low | num(0) }} to {{ r.held.ci_high | num(0) }}</div></div>
+  <div class="tile"><div class="k">People who came back within {{ r.settings.window_days }} days</div><div class="v">{{ ret.ai_rate | pct }}</div>
+    <div class="s">after the AI · {{ ret.baseline_rate | pct(1) }} after human-resolved tickets</div></div>
+  {% if b %}
+  <div class="tile"><div class="k">Paid for resolutions that did not hold</div><div class="v">{{ b.paid_for_failed.estimate | money(b.currency) }}</div>
+    <div class="s">range {{ b.paid_for_failed.ci_low | money(b.currency) }} to {{ b.paid_for_failed.ci_high | money(b.currency) }} · of {{ b.billed | money(b.currency) }} billed</div></div>
+  {% endif %}
+</div>
+
+<p class="headline">{{ r.headline }}</p>
+
+<h2><span class="num">1</span>What was checked</h2>
+<p>A claimed resolution holds if the person does not need help again with the same {{ "type of issue" if r.settings.match == "same_type" else "kind of problem" }} soon after. For each resolution the AI claimed, the audit looked for a ticket from the same person in the following {{ r.settings.window_days }} days{% if r.settings.match == "same_type" %} about the same type of issue{% endif %}.</p>
+<p>Some people come back after any resolution, for reasons that have nothing to do with the AI. So the same check is run on tickets resolved by people, {% if ret.standardized %}weighted to the same mix of issue types, {% endif %}in the same weeks. Only the excess return rate counts against the AI:</p>
+<p class="callout info">Did not hold = (return rate after the AI − return rate after people) ÷ (1 − return rate after people)</p>
+<p class="meta">Ranges come from resampling people {{ r.settings.reps | num(0) }} times, because one person's contacts are not independent. People are pseudonymized: the audit never sees names.</p>
+
+<h2><span class="num">2</span>Result</h2>
+<div class="table-wrap"><table>
+<thead><tr><th></th><th class="n">Estimate</th><th class="n">{{ lvl }}% range</th></tr></thead>
+<tbody>
+<tr><td>Came back within {{ r.settings.window_days }} days after an AI-claimed resolution</td><td class="n">{{ ret.ai_rate | pct(1) }}</td><td class="n">{{ ret.ai_ci_low | pct(1) }} to {{ ret.ai_ci_high | pct(1) }}</td></tr>
+<tr><td>Came back within {{ r.settings.window_days }} days after a human-resolved ticket{% if ret.standardized %} (same issue mix){% endif %}</td><td class="n">{{ ret.baseline_rate | pct(1) }}</td><td class="n">{{ ret.baseline_ci_low | pct(1) }} to {{ ret.baseline_ci_high | pct(1) }}</td></tr>
+<tr><td><b>Claimed resolutions that did not hold</b></td><td class="n"><b>{{ f.estimate | pct(1) }}</b></td><td class="n">{{ f.ci_low | pct(1) }} to {{ f.ci_high | pct(1) }}</td></tr>
+<tr><td>Resolutions that held, of {{ r.held.of | num(0) }} claimed</td><td class="n">{{ r.held.estimate | num(0) }}</td><td class="n">{{ r.held.ci_low | num(0) }} to {{ r.held.ci_high | num(0) }}</td></tr>
+{% if b %}
+<tr><td>Billed at {{ b.price | unit_price(b.currency) }} per claimed resolution</td><td class="n">{{ b.billed | money(b.currency) }}</td><td class="n"></td></tr>
+<tr><td><b>Paid for resolutions that did not hold</b></td><td class="n"><b>{{ b.paid_for_failed.estimate | money(b.currency) }}</b></td><td class="n">{{ b.paid_for_failed.ci_low | money(b.currency) }} to {{ b.paid_for_failed.ci_high | money(b.currency) }}</td></tr>
+{% endif %}
+</tbody></table></div>
+{% if not f.excludes_zero %}<div class="callout warn">The range includes zero: the AI's resolutions are not shown to fail more often than human resolutions.</div>{% endif %}
+
+{% if r.by_type %}
+<h2><span class="num">3</span>By type of issue</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Type</th><th class="n">Claimed</th><th class="n">Came back</th><th class="n">After AI</th><th class="n">After people</th><th>Baseline</th><th class="n">Did not hold</th></tr></thead>
+<tbody>{% for t in r.by_type %}<tr><td>{{ t.work_type }}</td><td class="n">{{ t.claims | num(0) }}</td><td class="n">{{ t.returned | num(0) }}</td><td class="n">{{ t.ai_return_rate | pct(1) }}</td><td class="n">{{ t.baseline_return_rate | pct(1) }}</td><td>{{ t.baseline }}</td><td class="n">{{ t.failed_share | pct }}</td></tr>{% endfor %}</tbody>
+</table></div>
+<p class="meta">Types with at least {{ r.settings.min_cell }} checked claims. Point estimates; the overall range is in section 2.</p>
+{% endif %}
+
+{% if r.by_month %}
+<h2><span class="num">4</span>Over time</h2>
+<figure>{{ chart | safe }}<figcaption>Share of claimed resolutions that did not hold, by month of the claim. Months with fewer than {{ r.settings.min_cell }} checked claims are left out.</figcaption></figure>
+<div class="table-wrap"><table>
+<thead><tr><th>Month</th><th class="n">Claims checked</th><th class="n">After AI</th><th class="n">After people</th><th class="n">Did not hold</th></tr></thead>
+<tbody>{% for m in r.by_month %}<tr><td>{{ m.month }}</td><td class="n">{{ m.claims | num(0) }}</td><td class="n">{{ m.ai_return_rate | pct(1) }}</td><td class="n">{{ m.baseline_return_rate | pct(1) }}</td><td class="n">{{ m.failed_share | pct }}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% endif %}
+
+<h2><span class="num">5</span>Robustness</h2>
+<p>The same audit with different reasonable choices. If these disagree a lot, read the result with care.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Check</th><th class="n">Claims checked</th><th class="n">Did not hold</th></tr></thead>
+<tbody>{% for s in r.sensitivity %}<tr><td>{{ s.check }}{% if s.main %} <span class="chip chip-pass">main result</span>{% endif %}</td><td class="n">{{ s.claims | num(0) }}</td><td class="n">{{ s.failed_share | pct(1) }}</td></tr>{% endfor %}</tbody>
+</table></div>
+
+<h2><span class="num">6</span>Audit confidence: {{ r.confidence.level }}</h2>
+<ul>{% for reason in r.confidence.reasons %}<li>{{ reason }}</li>{% endfor %}</ul>
+<div class="table-wrap"><table>
+<thead><tr><th>Coverage</th><th class="n">Value</th></tr></thead>
+<tbody>
+<tr><td>Rows in the AI's file</td><td class="n">{{ r.claims.rows | num(0) }}</td></tr>
+{% if r.claims.not_resolutions %}<tr><td>Not claimed as resolved (escalated, abandoned…)</td><td class="n">{{ r.claims.not_resolutions | num(0) }}</td></tr>{% endif %}
+<tr><td>Claimed resolutions</td><td class="n">{{ r.claims.resolutions | num(0) }}</td></tr>
+{% if r.claims.incomplete %}<tr><td>Missing person or time</td><td class="n">{{ r.claims.incomplete | num(0) }}</td></tr>{% endif %}
+{% if r.claims.outside_ticket_dates %}<tr><td>Outside the ticket export's dates</td><td class="n">{{ r.claims.outside_ticket_dates | num(0) }}</td></tr>{% endif %}
+{% if r.claims.too_recent %}<tr><td>Too recent to check (less than {{ r.settings.window_days }} days of follow-up)</td><td class="n">{{ r.claims.too_recent | num(0) }}</td></tr>{% endif %}
+<tr><td><b>Checked</b></td><td class="n"><b>{{ r.claims.checked | num(0) }}</b></td></tr>
+<tr><td>People in the AI's records who also appear in the ticket data</td><td class="n">{{ r.coverage.id_overlap | pct }}</td></tr>
+{% if r.coverage.type_overlap is not none %}<tr><td>Claims whose issue type also appears in the ticket data</td><td class="n">{{ r.coverage.type_overlap | pct }}</td></tr>{% endif %}
+<tr><td>Human-resolved tickets in the baseline</td><td class="n">{{ ret.baseline_tickets | num(0) }}</td></tr>
+</tbody></table></div>
+{% if r.notes %}<ul>{% for n in r.notes %}<li>{{ n }}</li>{% endfor %}</ul>{% endif %}
+
+<h2><span class="num">7</span>Data lineage</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>File</th><th class="n">Rows</th><th>Modified</th><th>SHA-256</th></tr></thead>
+<tbody>{% for fl in r.lineage.files %}<tr><td>{{ fl.path.split("/")[-1] }}</td><td class="n">{{ fl.rows | num(0) }}</td><td>{{ fl.modified }}</td><td class="mono">{{ fl.sha256[:16] }}…</td></tr>{% endfor %}</tbody>
+</table></div>
+<p class="meta">Probative Labs {{ r.lineage.code.probative }} (git <span class="mono">{{ (r.lineage.code.git or "n/a")[:12] }}</span>) · settings <span class="mono">{{ r.lineage.settings_sha256[:12] }}</span> · seed {{ r.settings.seed }} · run {{ r.lineage.run_at }}</p>
+
+<details>
+<summary>What this audit can and cannot tell you</summary>
+<h3>It can undercount failures</h3>
+<p>People who give up after a failed AI answer and call, email or ask a colleague instead leave no ticket, so they look like a resolution that held. Treat the result as a floor unless every channel creates a ticket.</p>
+<h3>Unrelated returns are netted out</h3>
+<p>Someone who comes back about something else is counted the same way after AI and human resolutions, so it cancels in the comparison{% if r.settings.match == "same_type" %}; matching on the type of issue removes most of it to begin with{% endif %}.</p>
+<h3>People must be the same in both systems</h3>
+<p>The check joins the AI's records to tickets by person. If the two systems use different identifiers, returns are missed; the coverage table shows how many people appear in both.</p>
+<h3>Human resolutions are the yardstick, not perfection</h3>
+<p>The question is whether the AI's resolutions hold as well as your agents' resolutions do. Reopened tickets are tracked separately as a quality guardrail in the evidence pack.</p>
+</details>
+
+<footer>Generated by Probative Labs, independent verification of what AI delivers. The audit evaluates the AI's claims, never individual people. Method: docs/resolution-audit.md.</footer>
+</main>
+</body>
+</html>

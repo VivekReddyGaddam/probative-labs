@@ -1,6 +1,6 @@
 # Validation
 
-A causal claim that turns out wrong destroys trust in the method, so the engine is checked the way it is used. Each check runs the full pipeline, from CSV export to evidence pack, on simulated service desks where the true effect is known. One of the planted effects is zero.
+A wrong claim destroys trust in an independent check, so the engine is checked the way it is used. Each check runs the full pipeline, from CSV export to evidence pack, on simulated service desks where the true effect is known. One of the planted effects is zero.
 
 Reproduce these numbers with:
 
@@ -39,7 +39,36 @@ Every simulated dataset (`probative.simulate`) has:
 
   Until this is closed, treat the edges of a range for a large effect as somewhat optimistic. We are evaluating an analytic variance estimator (Borusyak, Jaravel and Spiess, 2024) and a studentized bootstrap. Results will be published here before any change ships.
 
-## How the method was corrected during validation
+## Resolution audit
+
+The audit is checked the same way: simulated service desks where a known share of the virtual agent's resolutions are false, so those people come back with a ticket within the week. One of the planted shares is zero. Runs alternate between ServiceNow-style exports (issues typed by category and subcategory) and Zendesk-style exports (category only).
+
+Reproduce with:
+
+```bash
+probative validate --audit --rates 0,0.12,0.3 --runs 60 --reps 199
+```
+
+### Results (Probative Labs 0.2.0, 60 datasets per planted share, about 2,400 checked claims each)
+
+| Planted share that did not hold | Bias | RMSE | 95% range covers truth | Excess reported (range above zero) | Audit confidence high |
+| --- | --- | --- | --- | --- | --- |
+| 0% | +0.0002 | 0.003 | 100% | 0% | 100% |
+| 12% | +0.0004 | 0.007 | 98% | 100% | 100% |
+| 30% | −0.0012 | 0.010 | 93% | 100% | 100% |
+
+### What this shows
+
+- **Unbiased.** Estimates are within 0.2 percentage points of the planted share on average.
+- **No false accusations.** With no false resolutions planted, the audit never reported an excess.
+- **Calibrated ranges.** Coverage is 93% to 100%. A separate check of 100 Zendesk-style runs at 12% gave 95% coverage, with the reported uncertainty slightly wider than the true spread.
+
+### How the audit was corrected during validation
+
+1. **Baseline timing.** The first version compared claims with human-resolved tickets from the whole period. Claims cluster later, when the bot deflects more, so the baseline came out slightly high and the estimate slightly low (−0.1 points with nothing planted). The baseline is now standardized by month as well as issue type.
+2. **Ranges.** Resampling people alone gave 85% to 93% coverage. Months are shared by everyone in them, so the range is now widened to a leave-one-month-out jackknife when that is larger.
+
+## How the effect estimator was corrected during validation
 
 Validation changed the method before release:
 
@@ -58,3 +87,13 @@ Validation changed the method before release:
 - detection of anticipation by the pre-trend test;
 - placebo and leave-one-team-out behavior;
 - design selection and grading rules.
+
+`tests/test_audit.py` checks the resolution audit:
+
+- the failed share equals the excess return rate on hand-built data, with billing and held counts;
+- recent, out-of-range and incomplete claims are counted but not checked;
+- claims without a category fall back to matching on the person, and say so;
+- claims from a system that identifies people differently get low confidence;
+- planted shares of false resolutions (25% and 0%) are recovered from simulated exports, end to end;
+- the measurement plan reports "no number" when everyone would get the AI at once;
+- benchmark contributions contain no names, identifiers or money.

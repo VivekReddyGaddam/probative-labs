@@ -1,7 +1,7 @@
 [project]
 name = "probative-labs"
-version = "0.1.0"
-description = "Measure what AI actually changed: causal, graded, reproducible ROI evidence for enterprise AI programs."
+version = "0.2.0"
+description = "Independent verification of what enterprise AI delivers: measurement plans, causal ROI evidence and audits of AI-claimed resolutions."
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]
@@ -9,7 +9,7 @@ authors = [
     { name = "Vivek Reddy Gaddam", email = "vivekreddyvicky143@gmail.com" }
 ]
 requires-python = ">=3.12"
-keywords = ["ai-roi", "causal-inference", "difference-in-differences", "itsm", "evidence"]
+keywords = ["ai-roi", "causal-inference", "difference-in-differences", "itsm", "evidence", "ai-audit", "virtual-agent"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",

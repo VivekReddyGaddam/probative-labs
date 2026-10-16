@@ -197,6 +197,17 @@ class ClaimedValue(BaseModel):
     note: str | None = None
 
 
+class AuditConfig(BaseModel):
+    """Resolution audit settings for ``probative audit``."""
+
+    window_days: int = Field(7, ge=1, le=60, description="A return within this many days counts against a claim.")
+    match: Literal["same_type", "any"] = "same_type"
+    price_per_resolution: float | None = Field(
+        None, ge=0, description="Price paid per claimed resolution, if the AI is billed per outcome."
+    )
+    resolved_value: str = Field("resolved", description="Outcome value that marks a claimed resolution.")
+
+
 class ProjectConfig(BaseModel):
     """Everything needed to measure one AI program."""
 
@@ -210,6 +221,7 @@ class ProjectConfig(BaseModel):
     value: ValueConfig
     costs: list[CostLine] = Field(default_factory=list)
     claimed: list[ClaimedValue] = Field(default_factory=list)
+    audit: AuditConfig = Field(default_factory=AuditConfig)
     registration: Path = Path("registration.yaml")
 
     _base_dir: Path = PrivateAttr(default=Path("."))

@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Resolution audit · AI agent assist (simulated)</title>
+<style>
+:root {
+  --bg: #f7f6f2; --surface: #ffffff; --ink: #1b1c1e; --muted: #5c6066; --line: #e3e0d8;
+  --accent: #1d5c48; --accent-soft: #e2eee8;
+  --good: #1b6b41; --good-soft: #e0f1e6; --warn: #7d5300; --warn-soft: #faefd6;
+  --bad: #9a2a2a; --bad-soft: #f7e0e0; --neutral-soft: #ecebe6;
+  --chart-line: #1d5c48; --chart-band: rgba(29, 92, 72, 0.16); --chart-pre: #7b8088; --chart-grid: #e8e5de;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121314; --surface: #1a1c1e; --ink: #ecebe7; --muted: #a3a7ad; --line: #2c2f33;
+    --accent: #7fc8aa; --accent-soft: #1f322b;
+    --good: #7fd3a0; --good-soft: #1b3125; --warn: #f0c46a; --warn-soft: #362c17;
+    --bad: #f0a0a0; --bad-soft: #3a2020; --neutral-soft: #26292c;
+    --chart-line: #7fc8aa; --chart-band: rgba(127, 200, 170, 0.18); --chart-pre: #8d9299; --chart-grid: #2a2d31;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121314; --surface: #1a1c1e; --ink: #ecebe7; --muted: #a3a7ad; --line: #2c2f33;
+  --accent: #7fc8aa; --accent-soft: #1f322b;
+  --good: #7fd3a0; --good-soft: #1b3125; --warn: #f0c46a; --warn-soft: #362c17;
+  --bad: #f0a0a0; --bad-soft: #3a2020; --neutral-soft: #26292c;
+  --chart-line: #7fc8aa; --chart-band: rgba(127, 200, 170, 0.18); --chart-pre: #8d9299; --chart-grid: #2a2d31;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 var(--sans); }
+main { max-width: 980px; margin: 0 auto; padding: 32px 16px 64px; }
+h1, h2, h3 { font-family: var(--serif); font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; }
+h1 { font-size: 2rem; margin: 0.2rem 0 0.4rem; }
+h2 { font-size: 1.35rem; margin: 2.4rem 0 0.8rem; padding-top: 1.2rem; border-top: 1px solid var(--line); }
+h2 .num { color: var(--muted); font-family: var(--sans); font-size: 0.9rem; font-weight: 600; margin-right: 0.5rem; }
+p { margin: 0.5rem 0 0.9rem; }
+.eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; font-weight: 600; color: var(--accent); }
+.meta { color: var(--muted); font-size: 0.9rem; }
+header { display: flex; gap: 24px; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; }
+header > div:first-child { flex: 1 1 320px; min-width: 0; }
+.grade { flex: none; width: 96px; height: 96px; border-radius: 16px; background: var(--accent-soft); color: var(--accent);
+  display: grid; place-items: center; text-align: center; }
+.grade b { font-family: var(--serif); font-size: 2.6rem; line-height: 1; display: block; }
+.grade small { font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.grade.g-D, .grade.g-insufficient { background: var(--warn-soft); color: var(--warn); }
+.grade.g-insufficient b { font-size: 1.1rem; }
+.grade.c-medium { background: var(--warn-soft); color: var(--warn); }
+.grade.c-low { background: var(--bad-soft); color: var(--bad); }
+.grade.word b { font-size: 1.25rem; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin: 24px 0 8px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+.tile .k { font-size: 0.78rem; color: var(--muted); }
+.tile .v { font-family: var(--serif); font-size: 1.45rem; margin-top: 2px; }
+.tile .s { font-size: 0.8rem; color: var(--muted); }
+.headline { font-size: 1.08rem; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--accent);
+  border-radius: 10px; padding: 14px 18px; margin: 18px 0; }
+.rec { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+.rec b { font-family: var(--serif); font-size: 1.1rem; }
+.table-wrap { overflow-x: auto; margin: 0.6rem 0 1rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; background: var(--neutral-soft); }
+tr:last-child td { border-bottom: 0; }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.chip { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: 0.76rem; font-weight: 600; white-space: nowrap; }
+.chip-pass { background: var(--good-soft); color: var(--good); }
+.chip-watch { background: var(--warn-soft); color: var(--warn); }
+.chip-breach, .chip-fail { background: var(--bad-soft); color: var(--bad); }
+.chip-unavailable, .chip-not_run { background: var(--neutral-soft); color: var(--muted); }
+.callout { border-radius: 10px; padding: 12px 16px; margin: 12px 0; }
+.callout.bad { background: var(--bad-soft); color: var(--bad); }
+.callout.warn { background: var(--warn-soft); color: var(--warn); }
+.callout.info { background: var(--accent-soft); color: var(--ink); }
+ul { padding-left: 1.2rem; }
+li { margin: 0.25rem 0; }
+code, .mono { font-family: var(--mono); font-size: 0.82rem; }
+figure { margin: 0.6rem 0 1rem; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+figcaption { color: var(--muted); font-size: 0.82rem; margin-top: 6px; }
+.tl-chart { width: 100%; height: auto; display: block; }
+.tl-chart .grid { stroke: var(--chart-grid); stroke-width: 1; }
+.tl-chart .zero { stroke: var(--muted); stroke-width: 1; }
+.tl-chart .rollout { stroke: var(--muted); stroke-dasharray: 4 4; }
+.tl-chart .band { fill: var(--chart-band); }
+.tl-chart .bar { fill: var(--chart-line); opacity: 0.85; }
+.tl-chart .line { fill: none; stroke: var(--chart-line); stroke-width: 2; }
+.tl-chart circle.post { fill: var(--chart-line); }
+.tl-chart circle.pre { fill: var(--chart-pre); }
+.tl-chart .whisker { stroke: var(--chart-pre); stroke-width: 1.5; }
+.tl-chart text { fill: var(--muted); font: 11px var(--sans); }
+.tl-chart .axis { font-size: 12px; }
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; margin-top: 12px; }
+details summary { cursor: pointer; font-weight: 600; }
+details h3 { font-size: 1.05rem; margin: 1.2rem 0 0.4rem; }
+footer { margin-top: 48px; color: var(--muted); font-size: 0.8rem; border-top: 1px solid var(--line); padding-top: 16px; }
+@media print {
+  body { background: #fff; color: #000; font-size: 11pt; }
+  main { max-width: none; padding: 0; }
+  .tile, .table-wrap, figure, details, .headline { break-inside: avoid; }
+  details { display: block; }
+  details > *:not(summary) { display: block; }
+}
+@media (max-width: 560px) { h1 { font-size: 1.6rem; } .grade { width: 76px; height: 76px; } .grade b { font-size: 2rem; } }</style>
+</head>
+<body>
+<main>
+<header>
+  <div>
+    <div class="eyebrow">Resolution audit</div>
+    <h1>AI agent assist (simulated)</h1>
+    <div class="meta">Claims 2025-11-10 to 2026-06-28 · 3,543 claimed resolutions · tickets 2025-01-06 to 2026-07-05 · Example vendor · Agent assist + virtual agent</div>
+  </div>
+  <div class="grade word c-high" title="Audit confidence">
+    <div><b>High</b><small>Audit confidence</small></div>
+  </div>
+</header>
+
+<div class="tiles">
+  <div class="tile"><div class="k">Claimed resolutions that did not hold</div><div class="v">12%</div>
+    <div class="s">95% range 11% to 14%</div></div>
+  <div class="tile"><div class="k">Resolutions that held</div><div class="v">3,108</div>
+    <div class="s">of 3,543 claimed · range 3,064 to 3,143</div></div>
+  <div class="tile"><div class="k">People who came back within 7 days</div><div class="v">14%</div>
+    <div class="s">after the AI · 1.8% after human-resolved tickets</div></div>
+  <div class="tile"><div class="k">Paid for resolutions that did not hold</div><div class="v">$435</div>
+    <div class="s">range $400 to $479 · of $3,543 billed</div></div>
+</div>
+
+<p class="headline">Of 3,543 resolutions the AI claimed, an estimated 12% (95% range 11% to 14%) did not hold: the person came back within 7 days, beyond the normal return rate after human-resolved tickets of the same types. At $1.00 per resolution, about $435 ($400 to $479) was paid for resolutions that did not hold. Audit confidence: high.</p>
+
+<h2><span class="num">1</span>What was checked</h2>
+<p>A claimed resolution holds if the person does not need help again with the same type of issue soon after. For each resolution the AI claimed, the audit looked for a ticket from the same person in the following 7 days about the same type of issue.</p>
+<p>Some people come back after any resolution, for reasons that have nothing to do with the AI. So the same check is run on tickets resolved by people, weighted to the same mix of issue types, in the same weeks. Only the excess return rate counts against the AI:</p>
+<p class="callout info">Did not hold = (return rate after the AI − return rate after people) ÷ (1 − return rate after people)</p>
+<p class="meta">Ranges come from resampling people 999 times, because one person's contacts are not independent. People are pseudonymized: the audit never sees names.</p>
+
+<h2><span class="num">2</span>Result</h2>
+<div class="table-wrap"><table>
+<thead><tr><th></th><th class="n">Estimate</th><th class="n">95% range</th></tr></thead>
+<tbody>
+<tr><td>Came back within 7 days after an AI-claimed resolution</td><td class="n">13.9%</td><td class="n">12.8% to 15.0%</td></tr>
+<tr><td>Came back within 7 days after a human-resolved ticket (same issue mix)</td><td class="n">1.8%</td><td class="n">1.5% to 2.0%</td></tr>
+<tr><td><b>Claimed resolutions that did not hold</b></td><td class="n"><b>12.3%</b></td><td class="n">11.3% to 13.5%</td></tr>
+<tr><td>Resolutions that held, of 3,543 claimed</td><td class="n">3,108</td><td class="n">3,064 to 3,143</td></tr>
+<tr><td>Billed at $1.00 per claimed resolution</td><td class="n">$3,543</td><td class="n"></td></tr>
+<tr><td><b>Paid for resolutions that did not hold</b></td><td class="n"><b>$435</b></td><td class="n">$400 to $479</td></tr>
+</tbody></table></div>
+
+<h2><span class="num">3</span>By type of issue</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Type</th><th class="n">Claimed</th><th class="n">Came back</th><th class="n">After AI</th><th class="n">After people</th><th>Baseline</th><th class="n">Did not hold</th></tr></thead>
+<tbody><tr><td>Account Access / Password Reset</td><td class="n">1,725</td><td class="n">236</td><td class="n">13.7%</td><td class="n">1.9%</td><td>same type</td><td class="n">12%</td></tr><tr><td>Inquiry / Help / General</td><td class="n">705</td><td class="n">97</td><td class="n">13.8%</td><td class="n">1.0%</td><td>same type</td><td class="n">13%</td></tr><tr><td>Account Access / Permissions</td><td class="n">675</td><td class="n">94</td><td class="n">13.9%</td><td class="n">2.0%</td><td>same type</td><td class="n">12%</td></tr><tr><td>Software / Email</td><td class="n">161</td><td class="n">25</td><td class="n">15.5%</td><td class="n">1.9%</td><td>same type</td><td class="n">14%</td></tr><tr><td>Software / Installation</td><td class="n">105</td><td class="n">15</td><td class="n">14.3%</td><td class="n">2.7%</td><td>same type</td><td class="n">12%</td></tr></tbody>
+</table></div>
+<p class="meta">Types with at least 30 checked claims. Point estimates; the overall range is in section 2.</p>
+
+<h2><span class="num">4</span>Over time</h2>
+<figure><svg class="tl-chart" viewBox="0 0 720 260" role="img" aria-labelledby="bars-title" xmlns="http://www.w3.org/2000/svg"><title id="bars-title">Claimed resolutions that did not hold, by month</title><line x1="56" x2="704" y1="212.0" y2="212.0" class="grid"/><text x="48" y="216.0" class="tick" text-anchor="end">0%</text><line x1="56" x2="704" y1="164.0" y2="164.0" class="grid"/><text x="48" y="168.0" class="tick" text-anchor="end">5%</text><line x1="56" x2="704" y1="116.0" y2="116.0" class="grid"/><text x="48" y="120.0" class="tick" text-anchor="end">10%</text><line x1="56" x2="704" y1="68.0" y2="68.0" class="grid"/><text x="48" y="72.0" class="tick" text-anchor="end">15%</text><line x1="56" x2="704" y1="20.0" y2="20.0" class="grid"/><text x="48" y="24.0" class="tick" text-anchor="end">20%</text><line x1="56" x2="704" y1="212.0" y2="212.0" class="zero"/><rect x="70.6" y="67.1" width="51.8" height="144.9" class="bar"><title>2025-11: 15%</title></rect><text x="96.5" y="230" class="tick" text-anchor="middle">2025-11</text><rect x="151.6" y="64.6" width="51.8" height="147.4" class="bar"><title>2025-12: 15%</title></rect><text x="177.5" y="230" class="tick" text-anchor="middle">2025-12</text><rect x="232.6" y="110.9" width="51.8" height="101.1" class="bar"><title>2026-01: 11%</title></rect><text x="258.5" y="230" class="tick" text-anchor="middle">2026-01</text><rect x="313.6" y="106.5" width="51.8" height="105.5" class="bar"><title>2026-02: 11%</title></rect><text x="339.5" y="230" class="tick" text-anchor="middle">2026-02</text><rect x="394.6" y="108.3" width="51.8" height="103.7" class="bar"><title>2026-03: 11%</title></rect><text x="420.5" y="230" class="tick" text-anchor="middle">2026-03</text><rect x="475.6" y="96.2" width="51.8" height="115.8" class="bar"><title>2026-04: 12%</title></rect><text x="501.5" y="230" class="tick" text-anchor="middle">2026-04</text><rect x="556.6" y="78.7" width="51.8" height="133.3" class="bar"><title>2026-05: 14%</title></rect><text x="582.5" y="230" class="tick" text-anchor="middle">2026-05</text><rect x="637.6" y="87.9" width="51.8" height="124.1" class="bar"><title>2026-06: 13%</title></rect><text x="663.5" y="230" class="tick" text-anchor="middle">2026-06</text><text x="380.0" y="252" class="axis" text-anchor="middle">Month of the claimed resolution</text></svg><figcaption>Share of claimed resolutions that did not hold, by month of the claim. Months with fewer than 30 checked claims are left out.</figcaption></figure>
+<div class="table-wrap"><table>
+<thead><tr><th>Month</th><th class="n">Claims checked</th><th class="n">After AI</th><th class="n">After people</th><th class="n">Did not hold</th></tr></thead>
+<tbody><tr><td>2025-11</td><td class="n">46</td><td class="n">17.4%</td><td class="n">2.7%</td><td class="n">15%</td></tr><tr><td>2025-12</td><td class="n">142</td><td class="n">17.6%</td><td class="n">2.7%</td><td class="n">15%</td></tr><tr><td>2026-01</td><td class="n">292</td><td class="n">13.0%</td><td class="n">2.8%</td><td class="n">11%</td></tr><tr><td>2026-02</td><td class="n">427</td><td class="n">12.4%</td><td class="n">1.6%</td><td class="n">11%</td></tr><tr><td>2026-03</td><td class="n">507</td><td class="n">12.6%</td><td class="n">2.0%</td><td class="n">11%</td></tr><tr><td>2026-04</td><td class="n">680</td><td class="n">13.2%</td><td class="n">1.3%</td><td class="n">12%</td></tr><tr><td>2026-05</td><td class="n">637</td><td class="n">15.2%</td><td class="n">1.6%</td><td class="n">14%</td></tr><tr><td>2026-06</td><td class="n">640</td><td class="n">14.4%</td><td class="n">1.7%</td><td class="n">13%</td></tr></tbody>
+</table></div>
+
+<h2><span class="num">5</span>Robustness</h2>
+<p>The same audit with different reasonable choices. If these disagree a lot, read the result with care.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Check</th><th class="n">Claims checked</th><th class="n">Did not hold</th></tr></thead>
+<tbody><tr><td>Return window 3 days</td><td class="n">3,509</td><td class="n">4.6%</td></tr><tr><td>Return window 7 days <span class="chip chip-pass">main result</span></td><td class="n">3,371</td><td class="n">12.3%</td></tr><tr><td>Return window 14 days</td><td class="n">3,217</td><td class="n">12.2%</td></tr><tr><td>Any ticket counts as a return</td><td class="n">3,371</td><td class="n">11.2%</td></tr><tr><td>Baseline from the same people only</td><td class="n">3,371</td><td class="n">12.2%</td></tr></tbody>
+</table></div>
+
+<h2><span class="num">6</span>Audit confidence: high</h2>
+<ul><li>Enough claims and human-resolved tickets, a tight range, and the same people appear in both systems.</li></ul>
+<div class="table-wrap"><table>
+<thead><tr><th>Coverage</th><th class="n">Value</th></tr></thead>
+<tbody>
+<tr><td>Rows in the AI's file</td><td class="n">4,741</td></tr>
+<tr><td>Not claimed as resolved (escalated, abandoned…)</td><td class="n">1,198</td></tr><tr><td>Claimed resolutions</td><td class="n">3,543</td></tr>
+<tr><td>Too recent to check (less than 7 days of follow-up)</td><td class="n">172</td></tr><tr><td><b>Checked</b></td><td class="n"><b>3,371</b></td></tr>
+<tr><td>People in the AI's records who also appear in the ticket data</td><td class="n">100%</td></tr>
+<tr><td>Claims whose issue type also appears in the ticket data</td><td class="n">100%</td></tr><tr><td>Human-resolved tickets in the baseline</td><td class="n">29,151</td></tr>
+</tbody></table></div>
+<ul><li>172 claims from the last 7 days could not be checked yet; the billing estimate assumes they held at the same rate.</li></ul>
+<h2><span class="num">7</span>Data lineage</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>File</th><th class="n">Rows</th><th>Modified</th><th>SHA-256</th></tr></thead>
+<tbody><tr><td>incidents.csv</td><td class="n">74,477</td><td>2026-10-16T15:09:26+00:00</td><td class="mono">a5dd9e825b4798c2…</td></tr><tr><td>virtual_agent.csv</td><td class="n">4,741</td><td>2026-10-16T15:09:26+00:00</td><td class="mono">45589c60796fe765…</td></tr></tbody>
+</table></div>
+<p class="meta">Probative Labs 0.2.0 (git <span class="mono">e6ca2e331e78</span>) · settings <span class="mono">81a896999fd9</span> · seed 20261014 · run 2026-10-16T15:09:42+00:00</p>
+
+<details>
+<summary>What this audit can and cannot tell you</summary>
+<h3>It can undercount failures</h3>
+<p>People who give up after a failed AI answer and call, email or ask a colleague instead leave no ticket, so they look like a resolution that held. Treat the result as a floor unless every channel creates a ticket.</p>
+<h3>Unrelated returns are netted out</h3>
+<p>Someone who comes back about something else is counted the same way after AI and human resolutions, so it cancels in the comparison; matching on the type of issue removes most of it to begin with.</p>
+<h3>People must be the same in both systems</h3>
+<p>The check joins the AI's records to tickets by person. If the two systems use different identifiers, returns are missed; the coverage table shows how many people appear in both.</p>
+<h3>Human resolutions are the yardstick, not perfection</h3>
+<p>The question is whether the AI's resolutions hold as well as your agents' resolutions do. Reopened tickets are tracked separately as a quality guardrail in the evidence pack.</p>
+</details>
+
+<footer>Generated by Probative Labs, independent verification of what AI delivers. The audit evaluates the AI's claims, never individual people. Method: docs/resolution-audit.md.</footer>
+</main>
+</body>
+</html>

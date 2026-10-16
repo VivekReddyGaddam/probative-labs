@@ -4,15 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Method · Probative Labs</title>
-<meta name="description" content="How Probative Labs estimates what would have happened without the AI: comparison designs, mix adjustment, diagnostics, evidence grades and ROI ranges.">
+<meta name="description" content="How Probative Labs verifies AI: measurement plans, comparison designs, mix adjustment, diagnostics, evidence grades, ROI ranges and resolution audits.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Probative Labs">
 <meta property="og:title" content="Method · Probative Labs">
-<meta property="og:description" content="How Probative Labs estimates what would have happened without the AI: comparison designs, mix adjustment, diagnostics, evidence grades and ROI ranges.">
+<meta property="og:description" content="How Probative Labs verifies AI: measurement plans, comparison designs, mix adjustment, diagnostics, evidence grades, ROI ranges and resolution audits.">
 <meta property="og:image" content="https://vivekreddygaddam.github.io/probative-labs/static/img/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="627">
-<meta property="og:image:alt" content="Probative Labs: know what your AI actually changed.">
+<meta property="og:image:alt" content="Probative Labs: independent proof of what your AI delivered.">
 <meta property="og:url" content="https://vivekreddygaddam.github.io/probative-labs/method/">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/probative-labs/static/img/logo.svg" type="image/svg+xml">
@@ -26,11 +26,12 @@
     <a class="brand" href="/probative-labs/"><img src="/probative-labs/static/img/logo.svg" alt="" width="28" height="28">Probative Labs</a>
     <button class="btn btn-ghost btn-sm nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-controls="site-nav">Menu</button>
     <nav class="site-nav" id="site-nav" data-nav aria-label="Main">
+      <a href="/probative-labs/resolution-audit/" >Resolution audit</a>
       <a href="/probative-labs/method/" aria-current="page">Method</a>
-      <a href="/probative-labs/sample/evidence-pack.html">Sample evidence pack</a>
+      <a href="/probative-labs/benchmarks/" >Benchmarks</a>
+      <a href="/probative-labs/independence/" >Independence</a>
       <a href="/probative-labs/open-source/" >Open source</a>
       <a href="/probative-labs/pricing/" >Pricing</a>
-      <a href="/probative-labs/security/" >Security</a>
       
       <a class="btn btn-primary btn-sm" href="/probative-labs/pilot/">Book a pilot</a>
     </nav>
@@ -42,8 +43,8 @@
 <section class="hero">
   <div class="wrap narrow">
     <div class="eyebrow">Method</div>
-    <h1>What would have happened without the AI?</h1>
-    <p class="lead">That is the only question that turns AI usage into evidence. Probative Labs answers it with the strongest comparison your data allows, and says so plainly when no comparison is good enough.</p>
+    <h1>Two questions, answered independently.</h1>
+    <p class="lead"><b>What changed?</b> We compare with what would have happened without the AI, using the strongest comparison your data allows, and say so plainly when no comparison is good enough. <b>Did the AI's claims hold?</b> We check the resolutions it reports against what happened next.</p>
   </div>
 </section>
 <section class="tight">
@@ -82,8 +83,16 @@
     <h2>Value and ROI</h2>
     <p>ROI = (value − total cost) ÷ total cost. It is always a range: the measured effect's uncertainty is combined with your finance team's assumptions (loaded hourly cost, realization share) in 10,000 simulations. Capacity ROI counts freed hours. Cash ROI counts only money that provably moved.</p>
 
+    <h2 id="audit">Resolution audit</h2>
+    <p>For every resolution an AI claims, we look for a ticket from the same person within 7 days about the same type of issue. People come back after human-resolved tickets too, so the same check runs on your agents' resolutions in the same months, weighted to the same issue mix. Only the excess counts against the AI:</p>
+    <p class="formula">Did not hold = (return rate after the AI − return rate after people) ÷ (1 − return rate after people)</p>
+    <p>Ranges come from resampling people, widened to a leave-one-month-out jackknife when that is larger. The audit reruns with 3- and 14-day windows, any-ticket matching and a same-people baseline, and reports a high, medium or low confidence with its reasons. It needs no comparison group of teams. It is a floor: failures that end in a phone call leave no ticket.</p>
+
+    <h2 id="plan">Measurement plan</h2>
+    <p>Before go-live, the plan fixes who gets the AI when and who waits, simulates the chance of detecting the expected effect with your own history, and records the guardrails, the diagnostics and decision rules that map each outcome to renew, expand, fix or stop. A lottery-based wave order registered before the first wave earns grade A.</p>
+
     <h2>Validated on known answers</h2>
-    <p>The engine is tested on simulated service desks with planted effects, including zero, using the same pipeline customers use. The results are published.</p>
+    <p>The engine and the audit are tested on simulated service desks with planted truths, including zero, using the same pipeline customers use. With no false resolutions planted, the audit never reported an excess; with 12% and 30% planted, its 95% ranges contained the truth in 98% and 93% of runs. The results are published.</p>
     <div class="cta-row">
       <a class="btn" href="https://github.com/VivekReddyGaddam/probative-labs/blob/main/docs/methodology.md">Full methodology</a>
       <a class="btn" href="https://github.com/VivekReddyGaddam/probative-labs/blob/main/docs/validation.md">Validation results</a>
@@ -97,13 +106,16 @@
   <div class="wrap footer-grid">
     <div>
       <a class="brand" href="/probative-labs/"><img src="/probative-labs/static/img/logo.svg" alt="" width="28" height="28">Probative Labs</a>
-      <p class="muted small" style="margin-top:0.8rem;max-width:22rem">Neutral, graded evidence of what each AI investment changed. Probative Labs sells no AI and is not part of any platform it measures.</p>
+      <p class="muted small" style="margin-top:0.8rem;max-width:22rem">Independent proof of what each AI investment delivered. Probative Labs sells no AI, takes no money from AI vendors and is not part of any platform it measures.</p>
     </div>
     <div>
       <h4>Product</h4>
       <ul>
+        <li><a href="/probative-labs/resolution-audit/">Resolution audit</a></li>
         <li><a href="/probative-labs/method/">Method</a></li>
+        <li><a href="/probative-labs/benchmarks/">Benchmarks</a></li>
         <li><a href="/probative-labs/sample/evidence-pack.html">Sample evidence pack</a></li>
+        <li><a href="/probative-labs/sample/resolution-audit.html">Sample resolution audit</a></li>
         <li><a href="/probative-labs/pricing/">Pricing</a></li>
         <li><a href="/probative-labs/pilot/">Book a pilot</a></li>
       </ul>
@@ -120,6 +132,7 @@
     <div>
       <h4>Company</h4>
       <ul>
+        <li><a href="/probative-labs/independence/">Independence</a></li>
         <li><a href="/probative-labs/security/">Security and privacy</a></li>
         <li><a href="/probative-labs/privacy/">Privacy notice</a></li>
         

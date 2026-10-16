@@ -20,16 +20,19 @@ from probative.ingest import Pseudonymizer, apply_mapping, check_work_units, rea
 from probative.ingest.mapping import PRESET_INFO, PRESETS
 from probative.pipeline import AnalysisError, analyze
 from probative.playbooks import get_playbook
-from probative.report import write_pack
+from probative.report import write_audit_pack, write_pack
 from probative.rollout import NoiseModel, lock_registration, noise_from_units, plan_waves, power_table
 from probative.simulate import EXPORT_FORMATS
 
 app = typer.Typer(
-    help="Probative Labs: measure what AI actually changed, with graded, reproducible evidence.",
+    help="Probative Labs: independent verification of what AI delivers. Plan rollouts that can be proven, "
+    "measure what changed, and audit the resolutions an AI claims.",
     no_args_is_help=True,
     add_completion=False,
 )
-plan_app = typer.Typer(help="Rollout designer: plan measurement before go-live.", no_args_is_help=True)
+plan_app = typer.Typer(
+    help="Plan before go-live: power, rollout waves and a measurement plan to sign off.", no_args_is_help=True
+)
 app.add_typer(plan_app, name="plan")
 
 ConfigOpt = Annotated[Path, typer.Option("--config", "-c", help="Project configuration file.")]
@@ -99,6 +102,8 @@ def demo(
         typer.secho(f"Analysis failed: {exc}", fg="red")
         raise typer.Exit(1) from exc
     paths = write_pack(result, directory / "out")
+    audit_result = _demo_audit(cfg, reps=max(reps, 199))
+    audit_paths = write_audit_pack(audit_result, directory / "out" / "audit")
     t = sim.truth
     typer.echo("")
     typer.secho(result["headline"], bold=True)
@@ -114,9 +119,49 @@ def demo(
             f"({fmt} exports carry no agent time)"
         )
     typer.echo(f"\nPlanted truth: {truth}. Estimate: {p['estimate']:+.3f} h [{p['ci_low']:+.3f}, {p['ci_high']:+.3f}].")
-    typer.echo(f"\nEvidence pack: {paths['html']}\nMarkdown:      {paths['markdown']}\nResults JSON:  {paths['json']}")
+    fa = audit_result["failed_share"]
+    planted = t["false_deflections"] / max(1, t["false_deflections"] + t["verified_deflections"])
+    typer.echo("")
+    typer.secho(audit_result["headline"], bold=True)
+    typer.echo(
+        f"\nPlanted: {planted:.1%} of the virtual agent's resolutions came back. "
+        f"Audit: {fa['estimate']:.1%} [{fa['ci_low']:.1%}, {fa['ci_high']:.1%}]."
+    )
+    typer.echo(
+        f"\nEvidence pack:    {paths['html']}\nResolution audit: {audit_paths['html']}\n"
+        f"Markdown:         {paths['markdown']}\nResults JSON:     {paths['json']}"
+    )
     if open_report:
         webbrowser.open(paths["html"].resolve().as_uri())
+
+
+def _program_info(cfg: ProjectConfig | None) -> dict:
+    if cfg is None:
+        return {}
+    p = cfg.program
+    return {"name": p.name, "vendor": p.vendor, "tool": p.tool, "function": p.function}
+
+
+def _demo_audit(cfg: ProjectConfig, reps: int) -> dict:
+    from probative.audit import load_audit_inputs, run_audit
+
+    assert cfg.data.self_service is not None
+    inputs = load_audit_inputs(
+        [cfg.resolve(p) for p in cfg.data.work_units],
+        cfg.resolve(cfg.data.self_service),
+        preset=cfg.data.mapping_preset,
+        typing_fields=cfg.typing.fields,
+        pseudonymizer=Pseudonymizer.from_env_or_file(cfg.base_dir / ".probative" / "pseudonym.key"),
+    )
+    return run_audit(
+        inputs,
+        window_days=cfg.audit.window_days,
+        match=cfg.audit.match,
+        price=cfg.audit.price_per_resolution,
+        currency=cfg.value.currency,
+        reps=reps,
+        program=_program_info(cfg),
+    ).to_dict()
 
 
 TEMPLATE = """\
@@ -144,7 +189,7 @@ data:
   mapping_preset: {preset}             # see `probative presets`
   mapping: {{}}                          # override: canonical_field: source_column
   exposure: data/rollout.csv          # team_id, start_date[, end_date, kind, randomized]
-  self_service: null                  # optional: virtual agent sessions
+  self_service: null                  # optional: virtual agent sessions or the AI's claimed resolutions
   teams: null                         # optional: team_id, parent_unit, function, size_band
   staffing: null                      # optional: team_id, week_start, hours (if time worked is not recorded)
 
@@ -171,6 +216,11 @@ costs:
     basis: annual                     # period | annual | monthly | one_time
 
 claimed: []                           # vendor or dashboard estimates, shown beside the measured value
+
+audit:                                # `probative audit`: did the AI's claimed resolutions hold?
+  window_days: 7                      # a ticket from the same person within this many days counts as a return
+  match: same_type                    # or any: count a ticket about anything
+  price_per_resolution: null          # e.g. 0.99 if the AI is billed per resolution
 """
 
 
@@ -366,6 +416,35 @@ def _noise_from_history(cfg: ProjectConfig) -> NoiseModel:
     return noise_from_units(units, cfg.hypothesis.primary_metric)
 
 
+@plan_app.command("pack")
+def plan_pack(
+    config: ConfigOpt = Path("probative.yaml"),
+    sims: Annotated[int, typer.Option(help="Power simulations per row.")] = 200,
+    weeks_post: Annotated[str, typer.Option(help="Weeks after the last wave to check, comma-separated.")] = "8,12,16",
+    out: Annotated[Path, typer.Option("--out", "-o", help="Output directory.")] = Path("out") / "plan",
+    open_report: Annotated[bool, typer.Option("--open", help="Open the HTML plan.")] = False,
+) -> None:
+    """Write the measurement plan to sign before go-live: waves, power, guardrails, decision rules."""
+    from probative.report import write_plan_pack
+    from probative.rollout import build_plan
+
+    cfg = _load(config)
+    _say("Simulating detectability for the planned rollout")
+    plan = build_plan(cfg, _guardrails(cfg), sims=sims, weeks_post=tuple(_ints(weeks_post)))
+    out_dir = out if out.is_absolute() else cfg.base_dir / out
+    paths = write_plan_pack(plan, out_dir)
+    typer.secho(
+        f"Expected evidence grade {plan['expected_grade']['grade']}: {plan['expected_grade']['text']}", bold=True
+    )
+    if plan.get("readout"):
+        typer.echo(f"Earliest reliable readout: {plan['readout']['date']}")
+    for n in plan["notes"]:
+        typer.echo(f"  note: {n}")
+    typer.echo(f"\nMeasurement plan: {paths['html']}")
+    if open_report:
+        webbrowser.open(paths["html"].resolve().as_uri())
+
+
 @plan_app.command("waves")
 def plan_waves_cmd(
     teams_file: Annotated[Path, typer.Argument(help="CSV with a team_id column (and optional strata).")],
@@ -401,6 +480,150 @@ def plan_waves_cmd(
     typer.echo(f"\nWrote {out} (seed {seed}). Register the analysis now: `probative register`.")
 
 
+def _pairs(items: list[str] | None, option: str) -> dict[str, str]:
+    out: dict[str, str] = {}
+    for item in items or []:
+        if "=" not in item:
+            typer.secho(f'{option} takes field="Source column", got {item!r}', fg="red")
+            raise typer.Exit(2)
+        key, value = item.split("=", 1)
+        out[key.strip()] = value.strip().strip('"')
+    return out
+
+
+@app.command()
+def audit(
+    config: Annotated[
+        Path | None, typer.Option("--config", "-c", help="Take files, mappings and settings from this project.")
+    ] = None,
+    claims: Annotated[
+        Path | None, typer.Option(help="The AI's claimed resolutions: a conversation or automated-resolution export.")
+    ] = None,
+    tickets: Annotated[
+        list[Path] | None,
+        typer.Option(help="Ticket export covering the same dates plus a week. Repeat for more files."),
+    ] = None,
+    preset: Annotated[str | None, typer.Option(help="Ticket export preset: " + ", ".join(PRESETS) + ".")] = None,
+    window: Annotated[int | None, typer.Option(help="Days within which a return counts against a claim (7).")] = None,
+    match: Annotated[str | None, typer.Option(help="same_type (default) or any.")] = None,
+    price: Annotated[float | None, typer.Option(help="Price paid per claimed resolution, if billed that way.")] = None,
+    currency: Annotated[str | None, typer.Option(help="Currency of the price (USD).")] = None,
+    resolved_value: Annotated[
+        str | None, typer.Option(help="Outcome value that marks a claimed resolution (resolved).")
+    ] = None,
+    claims_column: Annotated[
+        list[str] | None, typer.Option("--claims-column", help='Map a claims field, e.g. requester_id="User Email".')
+    ] = None,
+    tickets_column: Annotated[
+        list[str] | None, typer.Option("--tickets-column", help='Map a ticket field, e.g. requester_id="Caller".')
+    ] = None,
+    reps: Annotated[int, typer.Option(help="Bootstrap draws.")] = 999,
+    out: Annotated[Path | None, typer.Option("--out", "-o", help="Output directory (out/audit).")] = None,
+    open_report: Annotated[bool, typer.Option("--open", help="Open the HTML audit.")] = False,
+) -> None:
+    """Audit the resolutions an AI claims: did people come back within a week?
+
+    Works without a staggered rollout, so it fits desks where everyone got the AI at once.
+    """
+    from probative.audit import AuditError, load_audit_inputs, run_audit
+
+    if config is None and claims is None and not tickets and Path("probative.yaml").exists():
+        config = Path("probative.yaml")
+    cfg = _load(config) if config else None
+    base = cfg.base_dir if cfg else Path(".")
+    a = cfg.audit if cfg else None
+    if claims is None and cfg and cfg.data.self_service:
+        claims = cfg.resolve(cfg.data.self_service)
+    if not tickets and cfg:
+        tickets = [cfg.resolve(p) for p in cfg.data.work_units]
+    if claims is None or not tickets:
+        typer.secho("Give --claims and --tickets, or a project whose data.self_service is set (--config).", fg="red")
+        raise typer.Exit(2)
+    preset = preset or (cfg.data.mapping_preset if cfg else "canonical")
+    if preset not in PRESETS:
+        typer.secho(f"Unknown preset {preset!r}. Choose from: {', '.join(PRESETS)}", fg="red")
+        raise typer.Exit(2)
+    match = match or (a.match if a else "same_type")
+    if match not in ("same_type", "any"):
+        typer.secho("--match must be same_type or any", fg="red")
+        raise typer.Exit(2)
+    pseud = (
+        None
+        if cfg and cfg.data.pseudonymized
+        else Pseudonymizer.from_env_or_file(base / ".probative" / "pseudonym.key")
+    )
+    try:
+        inputs = load_audit_inputs(
+            tickets,
+            claims,
+            preset=preset,
+            ticket_mapping={**(cfg.data.mapping if cfg else {}), **_pairs(tickets_column, "--tickets-column")},
+            claims_mapping={
+                **(cfg.data.self_service_mapping if cfg else {}),
+                **_pairs(claims_column, "--claims-column"),
+            },
+            typing_fields=cfg.typing.fields if cfg else None,
+            resolved_value=resolved_value or (a.resolved_value if a else "resolved"),
+            pseudonymizer=pseud,
+        )
+        _say(f"{len(inputs.claims):,} claimed resolutions and {len(inputs.tickets):,} tickets read")
+        result = run_audit(
+            inputs,
+            window_days=window or (a.window_days if a else 7),
+            match=match,  # type: ignore[arg-type]
+            price=price if price is not None else (a.price_per_resolution if a else None),
+            currency=currency or (cfg.value.currency if cfg else "USD"),
+            reps=reps,
+            program=_program_info(cfg),
+        ).to_dict()
+    except (AuditError, ValueError, FileNotFoundError) as exc:
+        typer.secho(f"Audit failed: {exc}", fg="red")
+        raise typer.Exit(1) from exc
+    out_dir = out or Path("out") / "audit"
+    out_dir = out_dir if out_dir.is_absolute() else base / out_dir
+    paths = write_audit_pack(result, out_dir)
+    typer.secho(result["headline"], bold=True)
+    typer.echo(f"\nResolution audit: {paths['html']}")
+    if open_report:
+        webbrowser.open(paths["html"].resolve().as_uri())
+
+
+@app.command()
+def benchmark(
+    results: Annotated[Path | None, typer.Option(help="An evidence pack's results.json.")] = None,
+    audit_file: Annotated[Path | None, typer.Option("--audit", help="A resolution audit's audit.json.")] = None,
+    platform: Annotated[str | None, typer.Option(help="Ticket platform, e.g. servicenow.")] = None,
+    out: Annotated[Path, typer.Option("--out", "-o")] = Path("benchmark-contribution.json"),
+) -> None:
+    """Write an anonymous benchmark contribution to review and, if you choose, share.
+
+    Holds rates, ranges, grades and size bands only: no names, ticket text or money.
+    """
+    import json
+
+    from probative.benchmark import contribution
+
+    if results is None and audit_file is None:
+        for candidate, kind in ((Path("out/results.json"), "results"), (Path("out/audit/audit.json"), "audit")):
+            if candidate.exists():
+                if kind == "results":
+                    results = candidate
+                else:
+                    audit_file = candidate
+    if results is None and audit_file is None:
+        typer.secho("Give --results out/results.json and/or --audit out/audit/audit.json.", fg="red")
+        raise typer.Exit(2)
+    body = contribution(
+        json.loads(results.read_text()) if results else None,
+        json.loads(audit_file.read_text()) if audit_file else None,
+        platform=platform,
+    )
+    out.write_text(json.dumps(body, indent=2))
+    typer.echo(json.dumps(body, indent=2))
+    typer.secho(f"\nWrote {out}. Review it; nothing is sent anywhere.", bold=True)
+    typer.echo("To join the benchmark, share this file with Probative Labs. See docs/benchmarks.md.")
+
+
 @app.command()
 def validate(
     runs: Annotated[int, typer.Option(help="Simulated datasets per planted effect.")] = 10,
@@ -408,9 +631,30 @@ def validate(
     effects: Annotated[str, typer.Option(help="Planted relative effects, comma-separated.")] = "-0.15,0",
     seed: Annotated[int, typer.Option()] = 1,
     out: Annotated[Path | None, typer.Option(help="Write per-run results to this CSV.")] = None,
+    audit_check: Annotated[
+        bool, typer.Option("--audit", help="Validate the resolution audit instead of the effect estimator.")
+    ] = False,
+    rates: Annotated[
+        str, typer.Option(help="With --audit: planted shares of false resolutions, comma-separated.")
+    ] = "0,0.12,0.3",
 ) -> None:
-    """Check the estimator against planted effects, including zero."""
-    from probative.validation import run_validation, summarize
+    """Check the estimator (or, with --audit, the resolution audit) against planted truths, including zero."""
+    from probative.validation import run_audit_validation, run_validation, summarize, summarize_audit
+
+    if audit_check:
+        df = run_audit_validation(
+            rates=tuple(float(r) for r in rates.split(",")), runs=runs, reps=max(reps, 99), seed=seed, progress=_say
+        )
+        if out:
+            df.to_csv(out, index=False)
+        typer.secho("\nResolution audit validation", bold=True)
+        with pd.option_context("display.float_format", "{:.4f}".format, "display.width", 140):
+            typer.echo(summarize_audit(df).to_string(index=False))
+        typer.echo(
+            "\ncoverage should be near 0.95; flags_excess should be near 0.025 when the planted rate is 0 "
+            "and near 1 otherwise."
+        )
+        return
 
     df = run_validation(
         effects=tuple(float(e) for e in effects.split(",")), runs=runs, reps=reps, seed=seed, progress=_say

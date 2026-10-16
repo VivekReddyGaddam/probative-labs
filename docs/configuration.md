@@ -29,7 +29,7 @@ One file per AI program. Relative paths resolve against the file's folder. `prob
 | `mapping_preset` | `servicenow`, `jira_service_management`, `zendesk`, `freshservice`, `bmc_helix`, `ivanti` or `canonical` (see [data-model.md](data-model.md#platform-presets)) |
 | `mapping` | Per-field overrides: `canonical: source` or `{source, transform}` |
 | `exposure` | Rollout file |
-| `self_service`, `self_service_mapping` | Optional virtual-agent sessions |
+| `self_service`, `self_service_mapping` | Optional: virtual-agent sessions, or any export of the resolutions an AI claims (used by verified deflection and `probative audit`) |
 | `teams` | Optional team list (used by `plan waves` for stratification) |
 | `staffing` | Optional staffed hours per team-week |
 
@@ -94,6 +94,17 @@ A list of `{component, description, amount, basis, source}`.
 ## `claimed`
 
 A list of `{source, hours_saved, value, note}`: vendor or dashboard estimates shown beside the measured result (grade E).
+
+## `audit`
+
+Settings for `probative audit` (see [resolution-audit.md](resolution-audit.md)). Command-line options override them.
+
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `window_days` | 7 | A ticket from the same person within this many days counts as a return |
+| `match` | `same_type` | `same_type` or `any`: whether only a ticket about the same type of issue counts |
+| `price_per_resolution` | none | Price paid per claimed resolution, if the AI is billed per outcome |
+| `resolved_value` | `resolved` | Outcome value that marks a claimed resolution |
 
 ## `registration`
 

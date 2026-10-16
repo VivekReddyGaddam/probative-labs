@@ -1,0 +1,115 @@
+{% set ro = r.rollout %}
+{% set det = r.detectability %}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Measurement plan · {{ r.program.name }}</title>
+<style>
+{% include "_style.css.j2" %}
+.sign td { height: 2.6rem; }
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div>
+    <div class="eyebrow">Measurement plan</div>
+    <h1>{{ r.program.name }}</h1>
+    <div class="meta">Prepared {{ r.lineage.created }}{% if r.program.owner %} · Owner: {{ r.program.owner }}{% endif %}{% if r.program.vendor %} · {{ r.program.vendor }}{% endif %}{% if r.program.tool %} · {{ r.program.tool }}{% endif %}</div>
+  </div>
+  <div class="grade g-{{ r.expected_grade.grade }}" title="Expected evidence grade if the plan is followed">
+    <div>{% if r.expected_grade.grade == "insufficient" %}<b>No&nbsp;number</b>{% else %}<b>{{ r.expected_grade.grade }}</b>{% endif %}<small>Expected grade</small></div>
+  </div>
+</header>
+
+<div class="tiles">
+  <div class="tile"><div class="k">Question</div><div class="v">{{ r.hypothesis.expected_effect | spct }}</div><div class="s">expected change in {{ r.hypothesis.metric_label | lower }}</div></div>
+  <div class="tile"><div class="k">Rollout</div><div class="v">{% if ro %}{{ ro.waves | length }} wave{{ "s" if ro.waves | length != 1 }}{% else %}Not planned{% endif %}</div><div class="s">{% if ro %}{{ r.teams_treated }} teams get the AI · {{ r.teams_total - r.teams_treated }} compare{% else %}create rollout.csv{% endif %}</div></div>
+  <div class="tile"><div class="k">Earliest reliable readout</div><div class="v">{% if r.readout %}{{ r.readout.date }}{% else %}n/a{% endif %}</div><div class="s">{% if r.readout %}{{ r.readout.weeks_after_last_wave }} weeks after the last wave, 80% power{% else %}see section 3{% endif %}</div></div>
+  <div class="tile"><div class="k">Registration</div><div class="v">{% if r.registration.exists and r.registration.intact %}{{ "Locked" if r.registration.before_rollout or not r.first_wave else "Locked late" }}{% else %}Not yet{% endif %}</div><div class="s">{% if r.registration.exists %}{{ r.registration.registered_at }}{% else %}run `probative register` before go-live{% endif %}</div></div>
+</div>
+
+<p class="headline">{{ r.expected_grade.text }}</p>
+
+<h2><span class="num">1</span>The question</h2>
+<ul>
+  <li><b>Hypothesis:</b> {{ r.hypothesis.statement }}</li>
+  <li><b>Primary metric:</b> {{ r.hypothesis.metric_label }}, expected {{ r.hypothesis.expected_effect | spct }}</li>
+  <li><b>Fixed in advance:</b> the metric, the guardrails and the decision rules below. Changing them after results exist is recorded as a deviation in the evidence pack.</li>
+</ul>
+
+<h2><span class="num">2</span>Rollout</h2>
+{% if ro %}
+<p>{% if ro.randomized %}The wave order was drawn by lottery{% if ro.seed %} (seed {{ ro.seed }}){% endif %}, so teams that get the AI later are a fair comparison for teams that get it first.{% else %}Teams get the AI on different dates. Teams that do not have it yet are the comparison.{% endif %}</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Group</th><th>Starts</th><th class="n">Teams</th></tr></thead>
+<tbody>
+{% for w in ro.waves %}<tr><td>Wave {{ w.wave }}</td><td>{{ w.start }}</td><td class="n">{{ w.teams }}</td></tr>{% endfor %}
+{% if ro.holdout_teams %}<tr><td>Held back (comparison)</td><td>{{ ro.holdout_release or "later" }}</td><td class="n">{{ ro.holdout_teams }}</td></tr>{% endif %}
+{% if r.teams_total - r.teams_treated - ro.holdout_teams > 0 %}<tr><td>Not getting the AI in this period</td><td></td><td class="n">{{ r.teams_total - r.teams_treated - ro.holdout_teams }}</td></tr>{% endif %}
+</tbody></table></div>
+{% if not r.comparison %}<div class="callout bad">Everyone gets the AI on the same day and nobody waits, so there is nothing to compare against. Split the rollout into at least two waves or hold some teams back.</div>{% endif %}
+{% else %}
+<div class="callout warn">No rollout file yet. Draw the waves with <code>probative plan waves teams.csv --waves 3 --holdout 0.2</code> and rebuild this plan.</div>
+{% endif %}
+
+<h2><span class="num">3</span>Can the effect be detected?</h2>
+{% if det.rows %}
+<p>Simulated {{ det.sims }} times with the planned teams and waves, using {{ det.noise_source }}, for an effect of {{ r.hypothesis.expected_effect | spct }}.</p>
+<div class="table-wrap"><table>
+<thead><tr><th class="n">Teams</th><th class="n">Weeks after the last wave</th><th class="n">Chance of detecting it</th><th class="n">Smallest detectable change</th></tr></thead>
+<tbody>{% for p in det.rows %}<tr><td class="n">{{ p.teams }}</td><td class="n">{{ p.weeks_after }}</td><td class="n">{{ p.power | pct }}{% if p.power >= 0.8 %} ✓{% endif %}</td><td class="n">{{ p.mde_relative | pct(1) }}</td></tr>{% endfor %}</tbody>
+</table></div>
+<p class="meta">✓ = at least 80% chance. If no row qualifies, add teams or weeks, or accept that only a larger effect can be confirmed.</p>
+{% else %}
+<p>Not simulated: {{ "there is no comparison group yet" if not r.comparison else "see the notes" }}.</p>
+{% endif %}
+
+<h2><span class="num">4</span>Quality guardrails</h2>
+<p>Speed only counts if quality holds. If any guardrail breaches, the program's value is withheld.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Guardrail</th><th>Allowed</th></tr></thead>
+<tbody>{% for g in r.guardrails %}<tr><td>{{ g.label }}</td><td>{{ g.threshold }}</td></tr>{% endfor %}</tbody>
+</table></div>
+
+<h2><span class="num">5</span>Checks that run on the result</h2>
+<ul>{% for d in r.diagnostics %}<li>{{ d }}</li>{% endfor %}</ul>
+<p class="meta">A failed check moves the result to grade D: shown, never added to measured value.</p>
+
+<h2><span class="num">6</span>Decision rules, agreed now</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>If the evidence shows</th><th>Then</th></tr></thead>
+<tbody>{% for d in r.decision_rules %}<tr><td>{{ d.if }}</td><td>{{ d.then }}</td></tr>{% endfor %}</tbody>
+</table></div>
+
+<h2><span class="num">7</span>Value inputs</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Input</th><th class="n">Low</th><th class="n">Most likely</th><th class="n">High</th></tr></thead>
+<tbody>
+<tr><td>Loaded cost per agent hour ({{ r.value.currency }})</td><td class="n">{{ r.value.loaded_hourly_cost.low | num(0) }}</td><td class="n">{{ r.value.loaded_hourly_cost.mid | num(0) }}</td><td class="n">{{ r.value.loaded_hourly_cost.high | num(0) }}</td></tr>
+<tr><td>Share of freed hours provably redeployed</td><td class="n">{{ r.value.realization_rate.low | pct }}</td><td class="n">{{ r.value.realization_rate.mid | pct }}</td><td class="n">{{ r.value.realization_rate.high | pct }}</td></tr>
+</tbody></table></div>
+<p class="meta">Agreed by {{ r.value.owner or "not yet recorded" }}{% if r.value.agreed_on %} on {{ r.value.agreed_on }}{% endif %}.{% if r.costs %} Costs: {% for c in r.costs %}{{ c.description }} ({{ c.basis }}){{ ", " if not loop.last else "." }}{% endfor %}{% endif %}</p>
+{% if r.audit.enabled %}
+<p>The AI's claimed resolutions will be audited every month: a claim holds if the person does not come back within {{ r.audit.window_days }} days{% if r.audit.price %}, billed at {{ r.audit.price | unit_price(r.value.currency) }} per resolution{% endif %}.</p>
+{% endif %}
+
+<h2><span class="num">8</span>Registration</h2>
+<p>{{ r.registration.summary }}</p>
+{% if r.registration.sha256 %}<p class="meta">SHA-256 <span class="mono">{{ r.registration.sha256 }}</span></p>{% endif %}
+
+<h2><span class="num">9</span>Sign-off</h2>
+<div class="table-wrap"><table class="sign">
+<thead><tr><th>Role</th><th>Why</th><th>Name</th><th>Date</th></tr></thead>
+<tbody>{% for s in r.sign_off %}<tr><td>{{ s.role }}</td><td>{{ s.why }}</td><td></td><td></td></tr>{% endfor %}</tbody>
+</table></div>
+
+{% if r.notes %}<h2><span class="num">10</span>Notes</h2><ul>{% for n in r.notes %}<li>{{ n }}</li>{% endfor %}</ul>{% endif %}
+
+<p class="meta">Probative Labs {{ r.lineage.code.probative }} · configuration <span class="mono">{{ r.lineage.config_sha256[:12] }}</span> · {{ r.lineage.run_at }}</p>
+<footer>Generated by Probative Labs, independent verification of what AI delivers. Plans evaluate AI programs, never people. Method: docs/methodology.md.</footer>
+</main>
+</body>
+</html>

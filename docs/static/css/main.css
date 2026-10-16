@@ -254,3 +254,11 @@ details.panel summary { cursor: pointer; font-weight: 600; }
   .footer-grid { grid-template-columns: 1fr; }
   section { padding: 3rem 0; }
 }
+
+.pillars { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-top: 1.8rem; }
+.pillars .card { display: flex; flex-direction: column; }
+.pillars .card p { flex: 1; }
+.pillars .when { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.pillars .out { font-size: 0.88rem; color: var(--ink-2); border-top: 1px solid var(--line); padding-top: 0.7rem; margin-top: 0.8rem; }
+.formula { font-family: var(--serif); font-size: 1.05rem; background: var(--accent-soft); border-radius: var(--radius); padding: 0.9rem 1.1rem; }
+@media (max-width: 900px) { .pillars { grid-template-columns: 1fr; } }

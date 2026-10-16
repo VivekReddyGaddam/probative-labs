@@ -92,3 +92,55 @@ def event_study_svg(rows: list[dict], *, unit: str = "", title: str = "Effect by
     )
     parts.append("</svg>")
     return "".join(parts)
+
+
+def share_bars_svg(rows: list[dict], *, value: str, label: str, title: str, axis: str) -> str:
+    """Bar chart of a share (0.12 = 12%) per period, e.g. claimed resolutions that did not hold, by month."""
+    pts = [r for r in rows if r.get(value) is not None and not (isinstance(r[value], float) and math.isnan(r[value]))]
+    if not pts:
+        return ""
+    w, h = 720, 260
+    ml, mr, mt, mb = 56, 16, 20, 48
+    vals = [r[value] for r in pts]
+    ymin, ymax = min(0.0, min(vals)), max(0.0, max(vals))
+    step = 0.05 if ymax - ymin <= 0.3 else 0.1
+    ymax = math.ceil(ymax / step + 1e-9) * step or step
+    ymin = math.floor(ymin / step - 1e-9) * step if ymin < 0 else 0.0
+
+    def sy(y: float) -> float:
+        return mt + (ymax - y) / (ymax - ymin) * (h - mt - mb)
+
+    slot = (w - ml - mr) / len(pts)
+    parts = [
+        f'<svg class="tl-chart" viewBox="0 0 {w} {h}" role="img" aria-labelledby="bars-title" '
+        f'xmlns="http://www.w3.org/2000/svg">',
+        f'<title id="bars-title">{escape(title)}</title>',
+    ]
+    n_ticks = int(round((ymax - ymin) / step))
+    for i in range(n_ticks + 1):
+        t = ymin + i * step
+        parts.append(f'<line x1="{ml}" x2="{w - mr}" y1="{sy(t):.1f}" y2="{sy(t):.1f}" class="grid"/>')
+        parts.append(
+            f'<text x="{ml - 8}" y="{sy(t) + 4:.1f}" class="tick" text-anchor="end">{round(t * 100):d}%</text>'
+        )
+    parts.append(f'<line x1="{ml}" x2="{w - mr}" y1="{sy(0):.1f}" y2="{sy(0):.1f}" class="zero"/>')
+    every = max(1, int(math.ceil(len(pts) / 12)))
+    for i, r in enumerate(pts):
+        x = ml + i * slot + slot * 0.18
+        y0, y1 = sy(0), sy(r[value])
+        top, height = min(y0, y1), abs(y1 - y0)
+        tip = f"{r[label]}: {r[value] * 100:.0f}%"
+        parts.append(
+            f'<rect x="{x:.1f}" y="{top:.1f}" width="{slot * 0.64:.1f}" height="{max(height, 0.5):.1f}" '
+            f'class="bar"><title>{escape(tip)}</title></rect>'
+        )
+        if i % every == 0:
+            parts.append(
+                f'<text x="{x + slot * 0.32:.1f}" y="{h - mb + 18}" class="tick" text-anchor="middle">'
+                f"{escape(str(r[label]))}</text>"
+            )
+    parts.append(
+        f'<text x="{(ml + w - mr) / 2:.1f}" y="{h - 8}" class="axis" text-anchor="middle">{escape(axis)}</text>'
+    )
+    parts.append("</svg>")
+    return "".join(parts)

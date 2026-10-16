@@ -1,30 +1,35 @@
 # Run a pilot on your own data
 
-This guide is for a service-desk analyst, data analyst or IT operations lead who wants to measure one AI program with Probative Labs. You run everything on your own computer. Your ticket data never leaves your machine, and you decide what, if anything, to share.
+This guide is for a service-desk analyst, data analyst or IT operations lead who wants an independent check of one AI program with Probative Labs. You run everything on your own computer. Your ticket data never leaves your machine, and you decide what, if anything, to share.
 
-Expect about two hours of hands-on work spread over a week: most of it exporting data and agreeing two numbers with finance.
+## Pick your path
+
+| Your situation | Start with | Effort |
+| --- | --- | --- |
+| A virtual agent or AI agent reports resolutions (and you may pay per resolution) | **Resolution audit**: did the claimed resolutions hold? | About an hour, plus getting two exports |
+| Teams got the AI on different dates, or some were held back | **Evidence pack**: what changed, and was it worth it? | About two hours over a week, mostly exports and agreeing two numbers with finance |
+| The rollout hasn't happened yet | **Measurement plan**: design the rollout so the result can be proven | An afternoon |
+
+The audit works even when every team got the AI on the same day. If you can, do the audit and the evidence pack together.
 
 ## What you get
 
-An evidence pack for one AI program. It shows:
+- **Resolution audit:** the share of the AI's claimed resolutions that did not hold, compared with your agents' own resolutions, by issue type and month, with a range and a confidence level. If you give the price per resolution, the amount paid for ones that did not hold. [Sample](https://vivekreddygaddam.github.io/probative-labs/sample/resolution-audit.html).
+- **Evidence pack:** the effect on agent hours or resolution time per ticket, with a range; an evidence grade from A to E; quality guardrails; capacity and cash ROI ranges; a renew, expand, fix or stop recommendation. [Sample](https://vivekreddygaddam.github.io/probative-labs/sample/evidence-pack.html).
+- **Measurement plan:** waves, holdout, the chance of detecting the expected effect, guardrails, decision rules and a sign-off table.
 
-- the effect on agent hours or resolution time per ticket, with a range;
-- an evidence grade from A to E;
-- quality guardrails: reopens, escalations, satisfaction, false deflection;
-- capacity and cash ROI ranges;
-- a renew, expand, fix or stop recommendation.
-
-[See a sample](https://vivekreddygaddam.github.io/probative-labs/sample/evidence-pack.html) (simulated data).
+All samples use simulated data.
 
 ## Before you start
 
 - **Permission.** Check with whoever owns the ticket data, and your privacy team if you have one, that you may analyse an export on your work computer. Probative pseudonymizes people at ingest, but that does not replace permission.
-- **A program worth measuring.** An AI tool used by your service desk, such as agent assist, summaries, a virtual agent or an AI agent, that:
+- **For the resolution audit:** a virtual agent or AI agent with a few hundred resolved conversations, and a way to export them with who the user was. The user identifier must match the one in your tickets (an email or employee ID usually does).
+- **For the evidence pack:** an AI tool used by your service desk, such as agent assist, summaries, a virtual agent or an AI agent, that:
   - reached different teams on different dates, **or** reached some teams and not others;
   - covers at least 8 teams (12 or more is better);
   - has at least three months of tickets before the first team got it, and some weeks after.
 
-  If every team got the AI on the same day and none were held back, Probative will honestly report "no number". Planning the next rollout in waves fixes that (step 6).
+  If every team got the AI on the same day and none were held back, the evidence pack honestly reports "no number". The audit still works, and planning the next rollout in waves fixes the rest (step 6).
 
 ## 1. Install
 
@@ -50,6 +55,18 @@ Export incidents or requests from about **six months before the first team got t
 | Ivanti Neurons for ITSM | Incident grid export, including IncidentNumber, OwnerTeam, CreatedDateTime and ResolvedDateTime. | `ivanti` |
 
 Your survey score and any "AI was used on this ticket" flag are often custom fields. Include them if they exist.
+
+### The AI's claimed resolutions (for the audit)
+
+From your virtual agent or AI agent's reporting, export the conversations it marked as resolved, or all conversations with their outcome. Include who the user was, when the conversation started and, if available, the topic or category. Save it as `data/virtual_agent.csv`.
+
+You can run the audit straight away, without a project file:
+
+```bash
+probative audit --tickets data/incidents.csv --preset servicenow --claims data/virtual_agent.csv --price 0.99 --open
+```
+
+Leave out `--price` if you don't pay per resolution. If the audit can't find a column, it names the one it looked for; map yours with `--claims-column requester_id="User Email"`. Read the "Audit confidence" section of the report before sharing the result: if few people appear in both files, the two systems probably identify people differently.
 
 ## 3. List who got the AI, and when
 
@@ -102,9 +119,10 @@ This is the best time to measure, because you can make the evidence stronger by 
 probative plan power -c probative.yaml --effect -0.10   # is it big enough to detect a 10% change?
 probative plan waves teams.csv --waves 3 --start 2026-11-02 --holdout 0.2
 probative register                                      # lock the question before results exist
+probative plan pack --open                              # the measurement plan to sign off
 ```
 
-A lottery-based wave order, registered before go-live, can earn grade A.
+A lottery-based wave order, registered before go-live, can earn grade A. The measurement plan puts the waves, the chance of detecting the effect, the guardrails and the decision rules on a few pages for the program owner and finance to sign.
 
 ## 7. Run it
 
@@ -113,6 +131,14 @@ probative analyze --open
 ```
 
 The evidence pack opens in your browser. It is also saved as `out/evidence-pack.html`, `out/evidence-pack.md` and `out/results.json`.
+
+If `data.self_service` points at the AI's conversations, run the audit from the same project:
+
+```bash
+probative audit --open
+```
+
+To contribute anonymously to the benchmark, run `probative benchmark` and read the file it writes. It holds rates, ranges and size bands only. Nothing is sent anywhere unless you share it.
 
 ## 8. Review it together
 

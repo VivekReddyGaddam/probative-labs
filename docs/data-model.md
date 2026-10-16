@@ -89,17 +89,19 @@ One row per team that received the program. Teams that are not listed, or that h
 
 `probative plan waves` writes this file.
 
-## Self-service sessions (optional)
+## Self-service sessions and AI claims (optional)
 
-Enables verified deflection and the false-deflection guardrail.
+Virtual-agent sessions, or any export of the resolutions an AI claims. They enable verified deflection, the false-deflection guardrail and the resolution audit (`probative audit`).
 
 | Column | Required | Notes |
 | --- | --- | --- |
 | `session_id` | | |
-| `requester_id` | yes | Pseudonymized with the same key as tickets |
+| `requester_id` | yes | The same identifier the ticket system uses for the person (email or employee ID). Pseudonymized with the same key as tickets |
 | `started_at` | yes | |
-| `outcome` | yes | `resolved`, `escalated` or `abandoned` |
-| `category`, `subcategory` | recommended | Typed like tickets, for same-topic matching |
+| `outcome` | for the analysis; optional for the audit | `resolved`, `escalated` or `abandoned`. For the audit, rows whose outcome is not `resolved` are skipped; with no outcome column, every row is a claimed resolution |
+| `category`, `subcategory` | recommended | Use the same values as tickets, so a return can be matched to the same type of issue |
+
+For the audit, common export names are recognized automatically: `Requester`, `Requester ID`, `User`, `User ID`, `Requester Email`, `User Email` or `Email` for the person; `Started`, `Start time`, `Created`, `Created at` or `Timestamp` for the time; `Topic` for the category. Map anything else with `--claims-column field="Your column"`.
 
 ## Staffing (optional)
 
