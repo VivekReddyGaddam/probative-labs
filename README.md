@@ -118,7 +118,19 @@ Full method: [docs/methodology.md](docs/methodology.md). Evidence grades: [docs/
 
 ## Open source and Probative Labs Cloud
 
-The method and this engine are open source under Apache-2.0. Probative Labs Cloud runs the same engine for a whole AI portfolio: live read-only connectors, resolution audits on fresh data, peer benchmarks, the cost ledger, single sign-on and audit logs. See [OPEN_CORE.md](OPEN_CORE.md) for what is where and why.
+<!-- editions:start -->
+<!-- Written by `probative-cloud export-site` from the list that also builds the website's open-source page. Edit that list, not this block. -->
+
+The engine is free under Apache-2.0, and every analysis is in it. Probative Labs Cloud is for having it run for you:
+
+- **An independent finding.** Our team runs it, and anyone with the data can recheck every number.
+- **It runs by itself.** Fresh data, monthly checks and alerts, without anyone pressing a button.
+- **Peers to compare with.** Your result beside other organizations running the same AI.
+- **A record auditors trust.** Registrations, sign-offs and every result in an append-only log.
+- **People who do this every day.** Setup, readouts, and help taking a dispute to the vendor.
+
+See [OPEN_CORE.md](OPEN_CORE.md) for the comparison, side by side.
+<!-- editions:end -->
 
 ## Status and roadmap
 

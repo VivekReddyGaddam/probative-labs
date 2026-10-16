@@ -86,6 +86,9 @@ input[type=text], input[type=email], input[type=password], input[type=url], inpu
 input[type=file] { font: 0.9rem var(--sans); color: var(--ink-2); }
 textarea { min-height: 7rem; resize: vertical; }
 .field { margin-bottom: 1rem; }
+fieldset { border: 0; padding: 0; margin: 0 0 1rem; min-width: 0; }
+legend { font-weight: 600; font-size: 0.9rem; padding: 0; margin: 0 0 0.35rem; }
+fieldset .checkbox { margin: 0.25rem 0; }
 .field .error { color: var(--bad); font-size: 0.85rem; margin-top: 0.25rem; }
 .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 1rem; }
 .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 1rem; }
@@ -302,6 +305,29 @@ details.panel summary { cursor: pointer; font-weight: 600; }
   background: var(--surface-2); border-radius: 14px; }
 .includes div { display: flex; gap: 0.6rem; align-items: flex-start; font-size: 0.92rem; color: var(--ink-2); }
 .includes svg { flex: none; width: 1.1rem; height: 1.1rem; color: var(--accent); margin-top: 0.15rem; }
+
+.plan .code { margin: 0; }
+.plan-link { align-self: center; margin-top: 0.8rem; font-size: 0.92rem; font-weight: 600; text-decoration: none; }
+.plan-link::after { content: " \2192"; }
+.plan .model + h3 { margin-top: 0.9rem; }
+
+/* Open source versus Cloud */
+.versus th[scope=row] { width: 26%; color: var(--ink); font-size: 0.92rem; text-transform: none; letter-spacing: 0;
+  font-weight: 600; background: transparent; }
+.versus thead th:last-child { color: var(--accent); }
+.versus td:last-child { background: color-mix(in srgb, var(--accent-soft) 45%, transparent); color: var(--ink); }
+.versus td { color: var(--ink-2); }
+
+/* Why pay when the engine is free (pricing) */
+.why { margin-top: 3rem; }
+.why-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem 1.5rem; flex-wrap: wrap;
+  border-bottom: 1px solid var(--line); padding-bottom: 0.75rem; margin-bottom: 1.5rem; }
+.why-head h2 { font-size: 1.4rem; margin: 0; }
+.why-head p { margin: 0; color: var(--muted); font-size: 0.92rem; }
+.why-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1rem 1.5rem; }
+.why-grid div { border-left: 2px solid var(--accent); padding: 0.1rem 0 0.1rem 0.9rem; }
+.why-grid b { display: block; font-size: 0.97rem; margin-bottom: 0.2rem; }
+.why-grid span { display: block; font-size: 0.9rem; color: var(--ink-2); }
 
 /* FAQ accordion */
 .faq-list { border-top: 1px solid var(--line); }
