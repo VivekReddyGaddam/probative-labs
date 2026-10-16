@@ -12,6 +12,31 @@
     });
   }
 
+  // "On this page": collapsed on small screens, and the section you are reading is highlighted.
+  var docNav = document.querySelector("[data-doc-nav]");
+  if (docNav) {
+    var small = window.matchMedia("(max-width: 900px)");
+    if (small.matches) docNav.removeAttribute("open");
+    var links = Array.prototype.slice.call(docNav.querySelectorAll('a[href^="#"]'));
+    var targets = links.map(function (a) { return document.getElementById(a.getAttribute("href").slice(1)); });
+    links.forEach(function (a) {
+      a.addEventListener("click", function () { if (small.matches) docNav.removeAttribute("open"); });
+    });
+    var spy = function () {
+      var current = 0;
+      targets.forEach(function (t, i) { if (t && t.getBoundingClientRect().top <= 120) current = i; });
+      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) current = targets.length - 1;
+      links.forEach(function (a, i) { a.classList.toggle("active", i === current); });
+    };
+    var queued = false;
+    window.addEventListener("scroll", function () {
+      if (queued) return;
+      queued = true;
+      window.requestAnimationFrame(function () { queued = false; spy(); });
+    }, { passive: true });
+    spy();
+  }
+
   // Ask before destructive actions.
   document.querySelectorAll("form[data-confirm]").forEach(function (form) {
     form.addEventListener("submit", function (event) {

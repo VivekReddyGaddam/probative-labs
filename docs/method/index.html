@@ -16,8 +16,8 @@
 <meta property="og:url" content="https://vivekreddygaddam.github.io/probative-labs/method/">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/probative-labs/static/img/logo.svg?v=0818421d7d" type="image/svg+xml">
-<link rel="stylesheet" href="/probative-labs/static/css/main.css?v=4146615e73">
-<script src="/probative-labs/static/js/app.js?v=32cc05562b" defer></script>
+<link rel="stylesheet" href="/probative-labs/static/css/main.css?v=6d8e497512">
+<script src="/probative-labs/static/js/app.js?v=0384b69a37" defer></script>
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
@@ -44,74 +44,84 @@
     <div class="eyebrow">Method</div>
     <h1>Two questions, answered independently.</h1>
     <p class="lead"><b>What changed?</b> We compare with what would have happened without the AI, and say so plainly when no comparison is good enough. <b>Did the AI's claims hold?</b> We check what it reports against what happened next.</p>
-    <nav class="toc" aria-label="On this page">
-      <a href="#designs">Comparison designs</a><a href="#mix">Mix adjustment</a><a href="#checks">Diagnostics</a><a href="#value">Value and ROI</a>
-      <a href="#audit">Resolution audit</a><a href="#reconcile">Bill reconciliation</a><a href="#watch">Regression watch</a><a href="#bakeoff">Bake-off</a><a href="#validation">Validation</a>
-    </nav>
   </div>
 </section>
 <section class="tight">
-  <div class="wrap narrow prose">
-    <h2 id="designs">Comparison designs</h2>
-    <div class="table-wrap"><table>
-      <thead><tr><th>Design</th><th>When it is used</th><th>Grade</th></tr></thead>
-      <tbody>
-        <tr><td>Randomized wave order or holdout</td><td>Teams get the AI in waves assigned by lottery, registered before go-live</td><td>A</td></tr>
-        <tr><td>Staggered rollout</td><td>Teams got the AI on different dates</td><td>B</td></tr>
-        <tr><td>Two-group difference-in-differences</td><td>One group got the AI; comparable teams did not</td><td>B</td></tr>
-        <tr><td>Synthetic control, interrupted time series</td><td>One large unit, or everyone at once with long stable history (coming next)</td><td>C</td></tr>
-        <tr><td>None</td><td>Everyone at once, no holdout, no history</td><td>No number</td></tr>
-      </tbody>
-    </table></div>
-    <p>Staggered rollouts are estimated with the imputation estimator (Borusyak, Jaravel and Spiess, 2024). Each AI team-week is compared only with data that had no AI, which avoids the known bias of ordinary regressions when effects grow over time.</p>
-
-    <h2 id="mix">Mix adjustment</h2>
-    <p>Every ticket is typed by category. Effects are estimated within type and reported beside the headline number. When AI absorbs password resets, the average remaining ticket is harder. A headline average punishes the AI for its own success; the mix-adjusted effect does not.</p>
-
-    <h2 id="checks">Uncertainty and diagnostics</h2>
-    <ul>
-      <li><b>Team-level ranges.</b> Tickets in a team are not independent, so uncertainty comes from resampling whole teams, with a small-sample correction.</li>
-      <li><b>Pre-trend test.</b> Were AI and comparison teams moving together before rollout?</li>
-      <li><b>Placebo dates.</b> A fake, earlier rollout should show no effect.</li>
-      <li><b>Placebo outcomes.</b> A metric the AI cannot touch should not move.</li>
-      <li><b>Leave-one-team-out.</b> No single team may drive the result.</li>
-      <li><b>Category drift.</b> A taxonomy change must not masquerade as an effect.</li>
-      <li><b>Power.</b> The smallest effect the data could detect, so "no effect found" is never confused with "no effect".</li>
-    </ul>
-    <p>A failed diagnostic moves the result to grade D: shown, never added to totals.</p>
-
-    <h2>Quality guardrails</h2>
-    <p>Reopen rate, reassignments, escalations, satisfaction and false deflection are estimated with the same design. If any breaches its agreed threshold, the program's value is withheld: faster but worse earns nothing.</p>
-
-    <h2 id="value">Value and ROI</h2>
-    <p>ROI = (value − total cost) ÷ total cost. It is always a range: the measured effect's uncertainty is combined with your finance team's assumptions (loaded hourly cost, realization share) in 10,000 simulations. Capacity ROI counts freed hours. Cash ROI counts only money that provably moved.</p>
-
-    <h2 id="audit">Resolution audit</h2>
-    <p>For every resolution an AI claims, we look for a ticket from the same person within 7 days about the same type of issue. People come back after human-resolved tickets too, so the same check runs on your agents' resolutions in the same months, weighted to the same issue mix. Only the excess counts against the AI:</p>
-    <p class="formula">Did not hold = (return rate after the AI − return rate after people) ÷ (1 − return rate after people)</p>
-    <p>Ranges come from resampling people, widened to a leave-one-month-out jackknife when that is larger. The audit reruns with 3- and 14-day windows, any-ticket matching and a same-people baseline, and reports a high, medium or low confidence with its reasons. It needs no comparison group of teams. It is a floor: failures that end in a phone call leave no ticket.</p>
-
-    <h2 id="reconcile">Bill reconciliation</h2>
-    <p>Every line of a per-resolution bill is matched to your conversation log by the vendor's item ID and to your tickets by person and issue type. Billing errors (billed twice, no matching conversation, not resolved, outside the period) are disputed line by line. If the contract defines a resolution as no repeat ticket within the window, each item that came back is disputed too; otherwise the audit's excess over the human baseline is reported as a negotiation figure.</p>
-
-    <h2 id="watch">Regression watch</h2>
-    <p>The latest four weeks are compared with the twelve before: the share of claimed resolutions that did not hold, against the human baseline in the same weeks, and the share of conversations the AI resolved. A regression is a worsening of at least 2 points whose 95% range excludes zero. Known release dates are tested one by one. With no change planted, it raised a false alarm in 1 of 60 simulated desks; a planted jump from 12% to 24% was caught and dated in all 60.</p>
-
-    <h2 id="actions">Action audit</h2>
-    <p>For tickets the AI closed by itself: how often they were reopened or followed by a repeat ticket, against your agents' closures of the same types in the same months, with the same estimator and ranges as the resolution audit.</p>
-
-    <h2 id="bakeoff">Bake-off</h2>
-    <p>Teams are assigned to vendors and a control group by lottery. Each vendor is measured against the control teams over the same weeks. A vendor leads only if its effect excludes zero with guardrails held, and wins clearly only if its range does not overlap the runner-up's.</p>
-
-    <h2 id="plan">Measurement plan</h2>
-    <p>Before go-live, the plan fixes who gets the AI when and who waits, simulates the chance of detecting the expected effect with your own history, and records the guardrails, the diagnostics and decision rules that map each outcome to renew, expand, fix or stop. A lottery-based wave order registered before the first wave earns grade A.</p>
-
-    <h2 id="validation">Validated on known answers</h2>
-    <p>The engine and the audit are tested on simulated service desks with planted truths, including zero, using the same pipeline customers use. With no false resolutions planted, the audit never reported an excess; with 12% and 30% planted, its 95% ranges contained the truth in 98% and 93% of runs. The results are published.</p>
-    <div class="cta-row">
-      <a class="btn" href="https://github.com/VivekReddyGaddam/probative-labs/blob/main/docs/methodology.md">Full methodology</a>
-      <a class="btn" href="https://github.com/VivekReddyGaddam/probative-labs/blob/main/docs/validation.md">Validation results</a>
-      <a class="btn btn-ghost" href="/probative-labs/sample/evidence-pack.html">Sample evidence pack</a>
+  <div class="wrap doc-layout">
+    <details class="doc-nav" open data-doc-nav>
+      <summary>On this page</summary>
+      <p class="doc-nav-group">What changed?</p>
+      <a href="#plan">Measurement plan</a>
+      <a href="#designs">Comparison designs</a>
+      <a href="#mix">Mix adjustment</a>
+      <a href="#checks">Diagnostics</a>
+      <a href="#guardrails">Quality guardrails</a>
+      <a href="#value">Value and ROI</a>
+      <p class="doc-nav-group">Did the AI's claims hold?</p>
+      <a href="#audit">Resolution audit</a>
+      <a href="#reconcile">Bill reconciliation</a>
+      <a href="#watch">Regression watch</a>
+      <a href="#actions">Action audit</a>
+      <p class="doc-nav-group">Choosing a vendor</p>
+      <a href="#bakeoff">Bake-off</a>
+      <p class="doc-nav-group">Why you can trust it</p>
+      <a href="#validation">Validation</a>
+    </details>
+    <div class="prose">
+      <p class="doc-part" id="changed">What changed?</p>
+      <h2 id="plan">Measurement plan</h2>
+      <p>Before go-live, the plan fixes who gets the AI when and who waits, simulates the chance of detecting the expected effect with your own history, and records the guardrails, the diagnostics and decision rules that map each outcome to renew, expand, fix or stop. A lottery-based wave order registered before the first wave earns grade A.</p>
+      <h2 id="designs">Comparison designs</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Design</th><th>When it is used</th><th>Grade</th></tr></thead>
+        <tbody>
+          <tr><td>Randomized wave order or holdout</td><td>Teams get the AI in waves assigned by lottery, registered before go-live</td><td>A</td></tr>
+          <tr><td>Staggered rollout</td><td>Teams got the AI on different dates</td><td>B</td></tr>
+          <tr><td>Two-group difference-in-differences</td><td>One group got the AI; comparable teams did not</td><td>B</td></tr>
+          <tr><td>Synthetic control, interrupted time series</td><td>One large unit, or everyone at once with long stable history (coming next)</td><td>C</td></tr>
+          <tr><td>None</td><td>Everyone at once, no holdout, no history</td><td>No number</td></tr>
+        </tbody>
+      </table></div>
+      <p>Staggered rollouts are estimated with the imputation estimator (Borusyak, Jaravel and Spiess, 2024). Each AI team-week is compared only with data that had no AI, which avoids the known bias of ordinary regressions when effects grow over time.</p>
+      <h2 id="mix">Mix adjustment</h2>
+      <p>Every ticket is typed by category. Effects are estimated within type and reported beside the headline number. When AI absorbs password resets, the average remaining ticket is harder. A headline average punishes the AI for its own success; the mix-adjusted effect does not.</p>
+      <h2 id="checks">Uncertainty and diagnostics</h2>
+      <ul>
+        <li><b>Team-level ranges.</b> Tickets in a team are not independent, so uncertainty comes from resampling whole teams, with a small-sample correction.</li>
+        <li><b>Pre-trend test.</b> Were AI and comparison teams moving together before rollout?</li>
+        <li><b>Placebo dates.</b> A fake, earlier rollout should show no effect.</li>
+        <li><b>Placebo outcomes.</b> A metric the AI cannot touch should not move.</li>
+        <li><b>Leave-one-team-out.</b> No single team may drive the result.</li>
+        <li><b>Category drift.</b> A taxonomy change must not masquerade as an effect.</li>
+        <li><b>Power.</b> The smallest effect the data could detect, so "no effect found" is never confused with "no effect".</li>
+      </ul>
+      <p>A failed diagnostic moves the result to grade D: shown, never added to totals.</p>
+      <h2 id="guardrails">Quality guardrails</h2>
+      <p>Reopen rate, reassignments, escalations, satisfaction and false deflection are estimated with the same design. If any breaches its agreed threshold, the program's value is withheld: faster but worse earns nothing.</p>
+      <h2 id="value">Value and ROI</h2>
+      <p>ROI = (value − total cost) ÷ total cost. It is always a range: the measured effect's uncertainty is combined with your finance team's assumptions (loaded hourly cost, realization share) in 10,000 simulations. Capacity ROI counts freed hours. Cash ROI counts only money that provably moved.</p>
+      <p class="doc-part" id="claims">Did the AI's claims hold?</p>
+      <h2 id="audit">Resolution audit</h2>
+      <p>For every resolution an AI claims, we look for a ticket from the same person within 7 days about the same type of issue. People come back after human-resolved tickets too, so the same check runs on your agents' resolutions in the same months, weighted to the same issue mix. Only the excess counts against the AI:</p>
+      <p class="formula">Did not hold = (return rate after the AI − return rate after people) ÷ (1 − return rate after people)</p>
+      <p>Ranges come from resampling people, widened to a leave-one-month-out jackknife when that is larger. The audit reruns with 3- and 14-day windows, any-ticket matching and a same-people baseline, and reports a high, medium or low confidence with its reasons. It needs no comparison group of teams. It is a floor: failures that end in a phone call leave no ticket.</p>
+      <h2 id="reconcile">Bill reconciliation</h2>
+      <p>Every line of a per-resolution bill is matched to your conversation log by the vendor's item ID and to your tickets by person and issue type. Billing errors (billed twice, no matching conversation, not resolved, outside the period) are disputed line by line. If the contract defines a resolution as no repeat ticket within the window, each item that came back is disputed too; otherwise the audit's excess over the human baseline is reported as a negotiation figure.</p>
+      <h2 id="watch">Regression watch</h2>
+      <p>The latest four weeks are compared with the twelve before: the share of claimed resolutions that did not hold, against the human baseline in the same weeks, and the share of conversations the AI resolved. A regression is a worsening of at least 2 points whose 95% range excludes zero. Known release dates are tested one by one. With no change planted, it raised a false alarm in 1 of 60 simulated desks; a planted jump from 12% to 24% was caught and dated in all 60.</p>
+      <h2 id="actions">Action audit</h2>
+      <p>For tickets the AI closed by itself: how often they were reopened or followed by a repeat ticket, against your agents' closures of the same types in the same months, with the same estimator and ranges as the resolution audit.</p>
+      <p class="doc-part" id="vendors">Choosing a vendor</p>
+      <h2 id="bakeoff">Bake-off</h2>
+      <p>Teams are assigned to vendors and a control group by lottery. Each vendor is measured against the control teams over the same weeks. A vendor leads only if its effect excludes zero with guardrails held, and wins clearly only if its range does not overlap the runner-up's.</p>
+      <p class="doc-part" id="trust">Why you can trust it</p>
+      <h2 id="validation">Validated on known answers</h2>
+      <p>The engine and the audit are tested on simulated service desks with planted truths, including zero, using the same pipeline customers use. With no false resolutions planted, the audit never reported an excess; with 12% and 30% planted, its 95% ranges contained the truth in 98% and 93% of runs. The results are published.</p>
+      <div class="cta-row">
+        <a class="btn" href="https://github.com/VivekReddyGaddam/probative-labs/blob/main/docs/methodology.md">Full methodology</a>
+        <a class="btn" href="https://github.com/VivekReddyGaddam/probative-labs/blob/main/docs/validation.md">Validation results</a>
+        <a class="btn btn-ghost" href="/probative-labs/sample/evidence-pack.html">Sample evidence pack</a>
+      </div>
     </div>
   </div>
 </section>

@@ -16,8 +16,8 @@
 <meta property="og:url" content="https://vivekreddygaddam.github.io/probative-labs/">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/probative-labs/static/img/logo.svg?v=0818421d7d" type="image/svg+xml">
-<link rel="stylesheet" href="/probative-labs/static/css/main.css?v=4146615e73">
-<script src="/probative-labs/static/js/app.js?v=32cc05562b" defer></script>
+<link rel="stylesheet" href="/probative-labs/static/css/main.css?v=6d8e497512">
+<script src="/probative-labs/static/js/app.js?v=0384b69a37" defer></script>
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
@@ -55,24 +55,35 @@
     
     
     <aside class="proof" aria-labelledby="proof-title">
-      <h3 id="proof-title">Claimed versus proven</h3>
-      <p class="muted small">A simulated 40-team service desk.</p>
-      <div class="bar-row">
-        <div class="label"><span>Hours saved, vendor dashboard</span><b>9,000</b></div>
-        <div class="bar" role="img" aria-label="Claimed 9,000 hours"><span class="claimed" style="width: 100%"></span></div>
+      <h3 id="proof-title">What the vendor claims, and what held up</h3>
+      <p class="muted small">An example: a simulated 40-team service desk.</p>
+      <div class="key" aria-hidden="true"><span><i class="claimed"></i>Vendor's claim</span><span><i class="measured"></i>Measured by us</span></div>
+
+      <div class="proof-group">
+        <h4>Hours saved by the AI</h4>
+        <div class="bar-row">
+          <div class="label"><span>Vendor's dashboard</span><b>9,000</b></div>
+          <div class="bar" role="img" aria-label="The vendor's dashboard claims 9,000 hours saved"><span class="claimed" style="width: 100%"></span></div>
+        </div>
+        <div class="bar-row">
+          <div class="label"><span>Measured</span><b>about 2,600</b></div>
+          <div class="bar" role="img" aria-label="Measured: about 2,600 hours saved"><span class="measured" style="width: 28.8%"></span></div>
+        </div>
+        <p class="takeaway">Only about 29% of the claim was real (likely between 2,343 and 2,849 hours).</p>
       </div>
-      <div class="bar-row">
-        <div class="label"><span>Hours saved, measured</span><b>2,343–2,849</b></div>
-        <div class="bar" role="img" aria-label="Measured 2,343 to 2,849 hours"><span class="range" style="left: 26.0%; width: 5.6%"></span></div>
-      </div>
+
       
-      <div class="bar-row">
-        <div class="label"><span>Resolutions the bot claimed</span><b>3,543</b></div>
-        <div class="bar" role="img" aria-label="3,543 claimed"><span class="claimed" style="width: 100%"></span></div>
-      </div>
-      <div class="bar-row">
-        <div class="label"><span>Resolutions that held</span><b>3,108</b></div>
-        <div class="bar" role="img" aria-label="3,108 held"><span class="range" style="left: 0; width: 87.7%"></span></div>
+      <div class="proof-group">
+        <h4>Tickets the AI says it resolved</h4>
+        <div class="bar-row">
+          <div class="label"><span>Claimed resolved</span><b>3,543</b></div>
+          <div class="bar" role="img" aria-label="The AI claimed 3,543 resolutions"><span class="claimed" style="width: 100%"></span></div>
+        </div>
+        <div class="bar-row">
+          <div class="label"><span>Actually stayed resolved</span><b>3,108</b></div>
+          <div class="bar" role="img" aria-label="3,108 stayed resolved"><span class="measured" style="width: 87.7%"></span></div>
+        </div>
+        <p class="takeaway">About 1 in 8 came back: the person needed help again within 7 days.</p>
       </div>
       
       <p class="foot">Simulated data with planted effects, measured by the open engine. <a href="/probative-labs/sample/evidence-pack.html">Evidence pack</a> · <a href="/probative-labs/sample/resolution-audit.html">Resolution audit</a></p>

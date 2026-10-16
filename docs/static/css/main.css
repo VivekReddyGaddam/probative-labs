@@ -148,8 +148,18 @@ section.tight { padding: 3rem 0; }
 .bar { height: 14px; border-radius: 7px; background: var(--surface-2); position: relative; overflow: hidden; }
 .bar > span { position: absolute; inset: 0 auto 0 0; border-radius: 7px; }
 .bar .claimed { background: var(--accent-2); }
-.bar .range { background: var(--accent); opacity: 0.85; }
-.proof .foot { font-size: 0.8rem; color: var(--muted); margin-top: 0.8rem; }
+.bar .range, .bar .measured { background: var(--accent); }
+.proof h3 { margin-bottom: 0.2rem; }
+.proof .key { display: flex; flex-wrap: wrap; gap: 0.3rem 1.1rem; font-size: 0.8rem; color: var(--ink-2); margin: 0.7rem 0 0.2rem; }
+.proof .key span { display: inline-flex; align-items: center; gap: 0.4rem; }
+.proof .key i { width: 0.8rem; height: 0.8rem; border-radius: 3px; }
+.proof .key .claimed { background: var(--accent-2); }
+.proof .key .measured { background: var(--accent); }
+.proof-group { border-top: 1px solid var(--line); margin-top: 1rem; padding-top: 0.9rem; }
+.proof-group h4 { margin: 0; font-size: 0.74rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); }
+.proof-group .bar-row { margin: 0.65rem 0; }
+.proof .takeaway { margin: 0.4rem 0 0; font-size: 0.86rem; color: var(--ink); }
+.proof .foot { font-size: 0.8rem; color: var(--muted); margin-top: 1rem; }
 .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; margin-top: 2rem; }
 .stat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.2rem; }
 .stat b { display: block; font: 600 2.1rem/1.1 var(--serif); margin-bottom: 0.35rem; }
@@ -366,11 +376,32 @@ details.panel summary { cursor: pointer; font-weight: 600; }
 .compare-table tr.group td { background: var(--surface-2); font-size: 0.74rem; font-weight: 700; text-transform: uppercase;
   letter-spacing: 0.06em; color: var(--muted); padding-top: 0.5rem; padding-bottom: 0.5rem; }
 
-/* On this page */
-.toc { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; margin-top: 1.6rem; }
-.toc a { font-size: 0.88rem; padding: 0.3rem 0.85rem; border: 1px solid var(--line); border-radius: 999px; color: var(--ink-2);
-  background: var(--surface); text-decoration: none; }
-.toc a:hover { border-color: var(--accent); color: var(--accent); }
+/* Long pages: a sidebar "On this page" that follows you, collapsed into a menu on small screens */
+[id] { scroll-margin-top: 84px; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+.doc-layout { display: grid; grid-template-columns: 220px minmax(0, 760px); gap: 3.5rem; align-items: start; }
+.doc-nav { position: sticky; top: 88px; max-height: calc(100vh - 108px); overflow-y: auto; font-size: 0.9rem; }
+.doc-nav summary { list-style: none; font-size: 0.74rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 0.4rem; }
+.doc-nav summary::-webkit-details-marker { display: none; }
+.doc-nav-group { margin: 1rem 0 0.35rem; font-size: 0.82rem; font-weight: 600; color: var(--ink); }
+.doc-nav a { display: block; padding: 0.3rem 0 0.3rem 0.9rem; border-left: 2px solid var(--line); color: var(--ink-2); text-decoration: none; }
+.doc-nav a:hover { color: var(--accent); }
+.doc-nav a.active { color: var(--accent); border-left-color: var(--accent); font-weight: 600; }
+.doc-part { margin: 3.2rem 0 0; padding-top: 1.2rem; border-top: 1px solid var(--line); font-size: 0.75rem; font-weight: 700;
+  letter-spacing: 0.09em; text-transform: uppercase; color: var(--accent); }
+.doc-part:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+.doc-part + h2 { margin-top: 0.5rem; }
+@media (max-width: 900px) {
+  .doc-layout { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
+  .doc-nav { position: static; max-height: none; border: 1px solid var(--line); border-radius: 12px; background: var(--surface);
+    padding: 0.8rem 1rem; }
+  .doc-nav summary { cursor: pointer; margin: 0; display: flex; justify-content: space-between; }
+  .doc-nav summary::after { content: "+"; font-size: 1.1rem; line-height: 1; }
+  .doc-nav[open] summary::after { content: "\2212"; }
+  .doc-nav[open] summary { margin-bottom: 0.4rem; }
+}
+@media (min-width: 901px) { .doc-nav summary { pointer-events: none; } }
 
 /* Pillars with deliverables */
 .pillars .links { list-style: none; padding: 0.8rem 0 0; margin: 1rem 0 0; border-top: 1px solid var(--line); font-size: 0.92rem; }
