@@ -1,12 +1,12 @@
 [project]
 name = "probative-labs"
-version = "0.3.0"
+version = "0.3.1"
 description = "Independent verification of what enterprise AI delivers: causal ROI evidence, audits of AI-claimed resolutions and per-resolution bills, regression watch and vendor bake-offs."
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]
 authors = [
-    { name = "Vivek Reddy Gaddam", email = "vivekreddyvicky143@gmail.com" }
+    { name = "Vivek Reddy Gaddam" }
 ]
 requires-python = ">=3.12"
 keywords = ["ai-roi", "causal-inference", "difference-in-differences", "itsm", "evidence", "ai-audit", "virtual-agent"]
