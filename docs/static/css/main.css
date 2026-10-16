@@ -310,6 +310,11 @@ details.panel summary { cursor: pointer; font-weight: 600; }
 .plan-link { align-self: center; margin-top: 0.8rem; font-size: 0.92rem; font-weight: 600; text-decoration: none; }
 .plan-link::after { content: " \2192"; }
 .plan .model + h3 { margin-top: 0.9rem; }
+.plan-note { margin: 0.7rem 0 0; text-align: center; font-size: 0.86rem; color: var(--muted); }
+.offer { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem 1.5rem; flex-wrap: wrap;
+  margin-bottom: 2.5rem; padding: 0.85rem 1rem 0.85rem 1.4rem; background: var(--accent-soft); border-radius: 14px; }
+.offer p { margin: 0; color: var(--ink); font-weight: 600; }
+.cta-note { margin: 0.9rem 0 0; font-size: 0.88rem; color: var(--muted); }
 
 /* Open source versus Cloud */
 .versus th[scope=row] { width: 26%; color: var(--ink); font-size: 0.92rem; text-transform: none; letter-spacing: 0;
@@ -347,6 +352,7 @@ details.panel summary { cursor: pointer; font-weight: 600; }
 .rules .card:last-child:nth-child(odd) { grid-column: 1 / -1; justify-self: center; width: calc(50% - 0.5rem); }
 .rules h3 { font-size: 1.08rem; margin-bottom: 0.3rem; }
 .rules p { margin: 0; color: var(--ink-2); font-size: 0.95rem; }
+.rules .card-includes { margin-top: 0.75rem; font-size: 0.82rem; font-weight: 600; color: var(--accent); }
 .features { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
 .features .card h3 { font-size: 1.1rem; }
 .features .card p, .features .card li { font-size: 0.94rem; color: var(--ink-2); }

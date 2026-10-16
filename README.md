@@ -121,13 +121,13 @@ Full method: [docs/methodology.md](docs/methodology.md). Evidence grades: [docs/
 <!-- editions:start -->
 <!-- Written by `probative-cloud export-site` from the list that also builds the website's open-source page. Edit that list, not this block. -->
 
-The engine is free under Apache-2.0, and every analysis is in it. Probative Labs Cloud is for having it run for you:
+The engine is free under Apache-2.0, and every analysis is in it: use it to see, privately, whether your AI works. Probative Labs Cloud proves it to the people who act on it, every month:
 
-- **An independent finding.** Our team runs it, and anyone with the data can recheck every number.
-- **It runs by itself.** Fresh data, monthly checks and alerts, without anyone pressing a button.
-- **Peers to compare with.** Your result beside other organizations running the same AI.
-- **A record auditors trust.** Registrations, sign-offs and every result in an append-only log.
-- **People who do this every day.** Setup, readouts, and help taking a dispute to the vendor.
+- **Money back on your AI bill.** Every bill checked line by line, with a dispute pack for the vendor.
+- **Proof for the renewal.** An independent finding the vendor can't dismiss as your own numbers.
+- **An early warning when the AI slips.** Checks on fresh data every month, and an alert when something changes.
+- **Answers for your CFO and board.** Every AI program's cost and return in one view, in numbers finance signed off.
+- **Nothing for your team to run.** We set it up and present the findings, and the data arrives by itself.
 
 See [OPEN_CORE.md](OPEN_CORE.md) for the comparison, side by side.
 <!-- editions:end -->

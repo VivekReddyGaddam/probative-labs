@@ -5,32 +5,29 @@ Probative Labs is an independent check on what AI vendors claim. A checker that 
 <!-- editions:start -->
 <!-- Written by `probative-cloud export-site` from the list that also builds the website's open-source page. Edit that list, not this block. -->
 
-Open source is for running it yourself. Probative Labs Cloud is for having it run for you, and adds what running it yourself can't give you:
+The open-source engine shows you, privately, whether your AI works. Probative Labs Cloud proves it to the people who act on it, from your CFO to the vendor, and turns what it finds into money back and a better deal at renewal, every month:
 
-- **An independent finding.** Run the engine yourself and a vendor can dismiss the result as your own numbers. With Cloud, our team runs the analysis, the question is locked with a timestamp before any result exists, and anyone with the data, the vendor included, can rerun every number with the open engine.
-- **It runs by itself.** Read-only connectors pull fresh tickets, and any system can send conversations and bills to the program's upload address. The checks run every month, and an alert reaches Slack, Google Chat or any webhook when the AI gets worse, a bill has items to dispute, or data goes stale.
-- **Peers to compare with.** See your result beside the median and middle range for the same AI product. Contributions are anonymous, and a figure appears once five organizations contribute: nobody can build this alone.
-- **A record auditors trust.** Who locked the question, who signed off the unit values, every result and every download, kept in an append-only audit log. Finance owns the numbers that turn hours into money.
-- **People who do this every day.** A methodologist sets up each program with you, presents the findings to finance and procurement, and helps you take a dispute pack to the vendor.
+- **Money back on your AI bill.** Send each bill to the program's upload address and it is checked against your own records as it arrives: resolutions billed twice, with no matching conversation, not resolved, outside the period or, under a contract definition, that did not hold. You get a dispute pack the vendor can recheck, and we help you take it to them.
+- **Proof for the renewal.** Our team runs the analysis, and the question is locked with a server timestamp before any result exists, so nobody can move the goalposts. The vendor can rerun every number with the open engine, but can't pay to change it. Once five organizations contribute, you also see your result beside your peers'.
+- **An early warning when the AI slips.** Read-only connectors pull fresh tickets, and the checks run by themselves every month. An alert reaches Slack, Google Chat or any webhook when claimed resolutions stop holding, a bill has items to dispute, or the data goes stale, so a vendor update nobody announced shows up at the next check, not at the renewal.
+- **Answers for your CFO and board.** A portfolio view across every AI program and a cost ledger, with the unit values that turn hours into money signed off by finance, not by the vendor. Every registration, sign-off, result and download is kept in an append-only audit log.
+- **Nothing for your team to run.** A methodologist sets up each program with you and presents the findings to IT, finance and procurement. Read-only connectors pull tickets, and any system can send the AI's conversations and bills to the program's upload address, so after setup nobody on your team has to run anything.
 
 ## The split
 
-**Every analysis is in both:** evidence pack, resolution audit, bill reconciliation and dispute pack, regression watch, action audit, vendor bake-off, measurement plan, benchmark contributions and re-performance. The method and the numbers are the same everywhere. In Cloud, our team runs the action audit and bake-offs with you.
+**Every analysis is in both:** evidence pack, resolution audit, bill reconciliation and dispute pack, regression watch, action audit, vendor bake-off, measurement plan, benchmark contributions and re-performance. The method and the numbers are the same everywhere.
 
-| | Run it yourself (open source) | Have us run it (Cloud) |
+| | Open-source engine (free) | Probative Labs Cloud (paid) |
 | --- | --- | --- |
-| Analyses and reports | Every one, from the evidence pack to the dispute pack | The same ones, same method |
-| Who runs it | Your own analyst | Our team, independent of the AI vendor |
+| Every analysis and report | Every one, run by you | The same, run every month for you; our team runs the action audit and bake-offs |
+| Money back on per-resolution bills | Reconcile and dispute the bill yourself | A monthly dispute pack, and help taking it to the vendor |
+| Proof for the renewal | Your own numbers | An independent finding, plus peer benchmarks once five organizations contribute |
+| Early warning when the AI gets worse | When someone reruns the analysis | An alert from the next monthly check |
+| Answers for the CFO and board | A report per program | Portfolio view, finance sign-off and an audit trail |
 | Getting data in | Exports you download | Read-only connectors and an upload address |
-| How often | Whenever someone runs it | Every month, by itself |
-| When something changes | You find it in the next report | An alert in Slack, Google Chat or any webhook |
-| The question, locked in advance | A file on your computer | Stored append-only, with a server timestamp |
-| Peer benchmarks | Contribute an anonymous summary | See your result beside your peers' |
-| Many AI programs | A project folder each | Portfolio view, cost ledger and finance sign-off |
-| Access and records | Whoever has the files | Single sign-on, roles and an append-only audit log |
-| Where it runs | Your computer | Hosted by us, dedicated, or in your own cloud |
-| Help | GitHub issues | A methodologist, from setup to the vendor dispute |
-| Price | Free, Apache 2.0 | Annual plan or fixed-fee project |
+| Effort each month | Your analyst runs every check | Nothing to run after setup |
+| Where your data lives | Your computer | Pseudonymized; hosted for you or in your own cloud |
+| Price | Free, Apache 2.0 | Fixed-fee project or annual plan |
 <!-- editions:end -->
 
 ## Principles
