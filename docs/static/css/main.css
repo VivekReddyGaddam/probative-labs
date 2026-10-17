@@ -437,10 +437,27 @@ details.panel summary { cursor: pointer; font-weight: 600; }
 .callout.warn { background: var(--warn-soft); color: var(--warn); }
 .check-trust { margin-bottom: 1.4rem; }
 .check-inputs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.dropzone { display: grid; place-items: center; min-height: 5.5rem; margin: 0.8rem 0 0.4rem; padding: 1rem; text-align: center;
-  border: 2px dashed var(--line); border-radius: 12px; background: var(--surface-2); color: var(--ink-2); cursor: pointer; }
-.dropzone.over, .dropzone:hover { border-color: var(--accent); color: var(--accent); }
-.dropzone input { max-width: 100%; margin-bottom: 0.4rem; }
+.dropzone { position: relative; display: grid; place-items: center; min-height: 9.5rem; margin: 1rem 0 0.5rem; padding: 1.2rem 1rem;
+  text-align: center; border: 2px dashed var(--line); border-radius: 12px; background: var(--surface-2); color: var(--ink-2);
+  font-weight: 400; cursor: pointer; transition: border-color 0.15s, background-color 0.15s; }
+/* Only the zone takes pointer events, so dragging across its contents doesn't flicker the highlight. */
+.dropzone > span { pointer-events: none; }
+.dropzone:hover, .dropzone.over { border-color: var(--accent); background: var(--accent-soft); }
+.dropzone:hover .btn-primary { filter: brightness(1.08); }
+.dropzone:has(input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
+.dz-empty { display: grid; justify-items: center; gap: 0.6rem; }
+.dz-icon { flex: none; width: 2rem; height: 2rem; fill: none; stroke: var(--accent); stroke-width: 1.6; stroke-linecap: round;
+  stroke-linejoin: round; }
+.dz-hint { font-size: 0.85rem; color: var(--muted); }
+.dz-chosen { display: none; align-items: center; gap: 0.8rem; text-align: left; }
+.dz-text { display: grid; gap: 0.1rem; min-width: 0; }
+.dz-text b { color: var(--ink); overflow-wrap: anywhere; }
+.dropzone.chosen { min-height: 0; place-items: center start; border-style: solid; border-color: var(--accent); background: var(--accent-soft); }
+.dropzone.chosen .dz-empty { display: none; }
+.dropzone.chosen .dz-chosen { display: flex; }
+.dropzone.chosen .dz-hint { text-decoration: underline; text-underline-offset: 3px; }
+.dz-status { margin: 0; color: var(--ink-2); }
+.dz-status.error { color: var(--bad); }
 .check-map { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem 1rem; margin-top: 0.6rem; }
 .check-field { display: grid; gap: 0.2rem; font-size: 0.85rem; color: var(--ink-2); }
 .check-options { margin: 1.2rem 0 0.4rem; }

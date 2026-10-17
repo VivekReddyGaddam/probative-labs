@@ -591,15 +591,31 @@ if (typeof module === "object" && module.exports) {
 
     async function load(kind, file) {
       const status = $(`${kind}-status`);
+      status.classList.remove("error");
       status.textContent = `Reading ${file.name}…`;
       const text = await file.text();
       const table = ProbativeCheck.parseCSV(text);
+      if (!table.header.length || !table.rows.length) {
+        throw new Error(`${file.name} has no rows to read. Export the list as CSV, with its column headers.`);
+      }
       const fields = kind === "conv" ? ProbativeCheck.CONVERSATION_FIELDS : ProbativeCheck.TICKET_FIELDS;
       const cols = ProbativeCheck.detect(table.header, fields);
       state[kind] = { table, cols, fields, name: file.name };
-      status.textContent = `${file.name}: ${table.rows.length.toLocaleString()} rows, ${table.header.length} columns. Check the columns below.`;
+      $(`${kind}-name`).textContent = file.name;
+      $(`${kind}-zone`).classList.add("chosen");
+      status.textContent = `${table.rows.length.toLocaleString()} rows, ${table.header.length} columns. Check the columns below.`;
       const holder = $(`${kind}-map`);
       holder.replaceChildren(mappingTable(kind, table, cols, fields));
+      ready();
+    }
+
+    function failed(kind, error) {
+      state[kind] = null;
+      $(`${kind}-zone`).classList.remove("chosen");
+      $(`${kind}-map`).replaceChildren();
+      const status = $(`${kind}-status`);
+      status.classList.add("error");
+      status.textContent = error.message;
       ready();
     }
 
@@ -673,7 +689,13 @@ if (typeof module === "object" && module.exports) {
 
     for (const kind of ["conv", "tickets"]) {
       const input = $(`${kind}-file`);
-      input.addEventListener("change", () => input.files[0] && load(kind, input.files[0]).catch((e) => ($(`${kind}-status`).textContent = e.message)));
+      input.addEventListener("change", () => {
+        if (!input.files[0]) return;
+        // Cleared once read, so choosing the same file again after editing it reloads it.
+        load(kind, input.files[0])
+          .catch((e) => failed(kind, e))
+          .finally(() => (input.value = ""));
+      });
       const zone = $(`${kind}-zone`);
       zone.addEventListener("dragover", (e) => {
         e.preventDefault();
@@ -684,7 +706,7 @@ if (typeof module === "object" && module.exports) {
         e.preventDefault();
         zone.classList.remove("over");
         const f = e.dataTransfer.files[0];
-        if (f) load(kind, f).catch((err) => ($(`${kind}-status`).textContent = err.message));
+        if (f) load(kind, f).catch((e) => failed(kind, e));
       });
     }
     $("check-run").addEventListener("click", () => {

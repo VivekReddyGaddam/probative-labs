@@ -16,11 +16,11 @@
 <meta property="og:url" content="https://vivekreddygaddam.github.io/probative-labs/check/">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/probative-labs/static/img/logo.svg?v=0818421d7d" type="image/svg+xml">
-<link rel="stylesheet" href="/probative-labs/static/css/main.css?v=5359e17646">
+<link rel="stylesheet" href="/probative-labs/static/css/main.css?v=dc05a5a02a">
 <script src="/probative-labs/static/js/app.js?v=0384b69a37" defer></script>
 
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'none'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'">
-<script src="/probative-labs/static/js/check.js?v=b68b5c045a" defer></script>
+<script src="/probative-labs/static/js/check.js?v=0a5aaec3ba" defer></script>
 
 </head>
 <body>
@@ -44,10 +44,11 @@
 <main id="content">
 
 
+
 <section class="page-hero">
   <div class="wrap">
     <div class="eyebrow">Free check · runs in your browser</div>
-    <h1>Did your virtual agent's "resolved" conversations hold?</h1>
+    <h1>Did your virtual agent’s “resolved” conversations hold?</h1>
     <p class="lead">Drop two ServiceNow exports. In about a minute you'll see how many conversations counted as resolved came back as a ticket within a week, next to your agents' own resolutions. Nothing is uploaded.</p>
   </div>
 </section>
@@ -60,15 +61,41 @@
       <div class="card">
         <h3>1. Virtual Agent conversations</h3>
         <p class="small muted">In ServiceNow, open <span class="mono">interaction.list</span>, filter to Virtual agent = true for the months you want, and export as CSV with: Number, Opened for, Opened, State, State reason, Agent chat, Type.</p>
-        <label class="dropzone" id="conv-zone"><input id="conv-file" type="file" accept=".csv,.txt"><span>Drop the CSV here, or choose a file</span></label>
-        <p class="small" id="conv-status" role="status"></p>
+        
+<label class="dropzone" id="conv-zone">
+  <input class="sr-only" id="conv-file" type="file" accept=".csv,.txt" aria-describedby="conv-status">
+  <span class="dz-empty">
+    <svg class="dz-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M8.5 13h7M8.5 16.5h7M12 13v3.5"/></svg>
+    <span class="btn btn-primary">Choose the conversations CSV</span>
+    <span class="dz-hint">or drag it here. Nothing is uploaded.</span>
+  </span>
+  <span class="dz-chosen">
+    <svg class="dz-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 14.5l2 2 4-4"/></svg>
+    <span class="dz-text"><b id="conv-name"></b><span class="dz-hint">Choose a different file</span></span>
+  </span>
+</label>
+<p class="small dz-status" id="conv-status" role="status"></p>
+
         <div id="conv-map"></div>
       </div>
       <div class="card">
         <h3>2. Incidents for the same months, plus a week</h3>
         <p class="small muted">Export <span class="mono">incident.list</span> as CSV with: Number, Caller, Opened, Resolved, and Category for the fix list. Use the same kind of person field as the conversations: both names, or both Sys IDs.</p>
-        <label class="dropzone" id="tickets-zone"><input id="tickets-file" type="file" accept=".csv,.txt"><span>Drop the CSV here, or choose a file</span></label>
-        <p class="small" id="tickets-status" role="status"></p>
+        
+<label class="dropzone" id="tickets-zone">
+  <input class="sr-only" id="tickets-file" type="file" accept=".csv,.txt" aria-describedby="tickets-status">
+  <span class="dz-empty">
+    <svg class="dz-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M8.5 13h7M8.5 16.5h7M12 13v3.5"/></svg>
+    <span class="btn btn-primary">Choose the incidents CSV</span>
+    <span class="dz-hint">or drag it here. Nothing is uploaded.</span>
+  </span>
+  <span class="dz-chosen">
+    <svg class="dz-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 14.5l2 2 4-4"/></svg>
+    <span class="dz-text"><b id="tickets-name"></b><span class="dz-hint">Choose a different file</span></span>
+  </span>
+</label>
+<p class="small dz-status" id="tickets-status" role="status"></p>
+
         <div id="tickets-map"></div>
       </div>
     </div>
