@@ -114,6 +114,7 @@ const ProbativeCheck = (() => {
       "custom field (customer request type)", "issue type", "ticket type", "operational categorization tier 1",
       "categorization tier 1", "operational categorization tier 1+", "actualcategory", "type"],
     channel: ["contact_type", "contact type", "channel", "via", "source", "reported source", "reported source+"],
+    reopens: ["reopen_count", "reopen count", "reopens", "reopened"],
   };
 
   function detect(header, fields) {
@@ -232,6 +233,13 @@ const ProbativeCheck = (() => {
         .filter(Boolean),
     );
     const serviceNow = cols.state >= 0;
+    if (serviceNow && cols.agentChat < 0) {
+      throw new Error(
+        "This ServiceNow export has no Agent chat column. Without it, chats a live agent took over would count as " +
+          "resolved, and the incidents those agents opened as returns. Export the Interactions list with Agent chat, " +
+          "or pick its column under the conversations file.",
+      );
+    }
     const starts = table.rows.map((r) => r[cols.started]);
     const df = dayFirst(starts);
     const out = [];
@@ -291,6 +299,7 @@ const ProbativeCheck = (() => {
         resolved: cols.resolved >= 0 ? parseDate(r[cols.resolved], df) : NaN,
         category: cols.category >= 0 ? String(r[cols.category] || "").trim() : "",
         channel: cols.channel >= 0 ? String(r[cols.channel] == null ? "" : r[cols.channel]).trim() : "",
+        reopened: cols.reopens >= 0 && (parseFloat(r[cols.reopens]) > 0 || truthy(r[cols.reopens])),
       };
       if (!Number.isNaN(t.resolved) && !Number.isNaN(t.opened) && t.resolved < t.opened) {
         impossible++;
@@ -351,6 +360,7 @@ const ProbativeCheck = (() => {
     const W = windowDays * DAY;
     const reps = opts.reps || 400;
     const notes = [];
+    const warnings = []; // data problems to fix before trusting the result: shown above it
     const linkMinutes =
       opts.linkMinutes == null || opts.linkMinutes === "" || Number.isNaN(+opts.linkMinutes)
         ? LINK_MINUTES
@@ -366,6 +376,12 @@ const ProbativeCheck = (() => {
 
     const conv = conversations(convTable, convCols, opts.resolvedValue);
     if (conv.skipped) notes.push(`${conv.skipped.toLocaleString()} rows without the Virtual agent flag, or not chats, were left out.`);
+    if (conv.serviceNow && convCols.virtualAgent < 0) {
+      notes.push(
+        "The conversations have no Virtual agent column, so every row is taken to be a Virtual Agent conversation. " +
+          "Filter the Interactions list to Virtual agent = true before exporting.",
+      );
+    }
     const tk = tickets(ticketTable, ticketCols, notes).filter((t) => t.person && !Number.isNaN(t.opened));
     if (!tk.length) throw new Error("No tickets with a person and an opened date were found. Check the columns.");
 
@@ -416,8 +432,19 @@ const ProbativeCheck = (() => {
         starts.get(c.person).push(c.start);
       }
       for (const list of starts.values()) list.sort((a, b) => a - b);
+      let first = Infinity;
+      let last = -Infinity;
+      for (const c of conv.rows) {
+        if (Number.isNaN(c.start)) continue;
+        if (c.start < first) first = c.start;
+        if (c.start > last) last = c.start;
+      }
+      let aiTickets = 0;
+      let linked = 0;
       for (const t of tk) {
         if (!aiChannels.has(norm(t.channel))) continue;
+        const during = t.opened >= first && t.opened <= last + LINK;
+        if (during) aiTickets++;
         const list = starts.get(t.person);
         if (!list) continue;
         let lo = 0;
@@ -427,7 +454,19 @@ const ProbativeCheck = (() => {
           if (list[mid] <= t.opened) lo = mid + 1;
           else hi = mid;
         }
-        if (lo > 0 && t.opened - list[lo - 1] <= LINK) handoffKeys.add(key(t.person, list[lo - 1]));
+        if (lo > 0 && t.opened - list[lo - 1] <= LINK) {
+          handoffKeys.add(key(t.person, list[lo - 1]));
+          if (during) linked++;
+        }
+      }
+      // Tickets through the AI's channel that match no conversation usually mean the exports disagree on time
+      // zone or person IDs; then the AI's own tickets would be counted as returns.
+      if (aiTickets >= 10 && linked < 0.5 * aiTickets) {
+        warnings.push(
+          `${(aiTickets - linked).toLocaleString()} of ${aiTickets.toLocaleString()} tickets through the AI agent's channel ` +
+            `had no conversation from the same person in the ${linkMinutes} minutes before. If the two exports use ` +
+            "different time zones or person IDs, fix that first: those tickets are being counted as returns.",
+        );
       }
     }
     const allClaims = conv.rows.filter((c) => c.outcome === "resolved" && c.person && !Number.isNaN(c.start));
@@ -455,7 +494,12 @@ const ProbativeCheck = (() => {
     for (let i = 0; i < tk.length; i++) {
       const t = tk[i];
       if (Number.isNaN(t.resolved) || t.resolved < lo || t.resolved > hi) continue;
-      base.push({ person: t.person, ret: nextTicket(t.person, t.resolved, after) >= 0 ? 1 : 0, month: monthOf(t.resolved) });
+      base.push({
+        person: t.person,
+        ret: nextTicket(t.person, t.resolved, after) >= 0 ? 1 : 0,
+        month: monthOf(t.resolved),
+        reopened: t.reopened,
+      });
     }
     if (!base.length) throw new Error("No tickets resolved by your agents in the same weeks. Include the resolved date.");
 
@@ -515,6 +559,13 @@ const ProbativeCheck = (() => {
       const s = standardized(cells(eligible), cells(baseSame), pooledOf(baseSame));
       checks.push({ check: "Baseline from the same people only", didNotHold: s.failed });
     }
+    if (base.some((b) => b.reopened)) {
+      // After your agents, a person whose problem wasn't fixed often reopens the ticket instead of opening a new
+      // one; after the AI there is nothing to reopen. Counting reopens on that side shows how much that matters.
+      const baseR = base.map((b) => ({ person: b.person, month: b.month, ret: b.ret || b.reopened ? 1 : 0 }));
+      const s = standardized(cells(eligible), cells(baseR), pooledOf(baseR));
+      checks.push({ check: "Reopened tickets count as returns", didNotHold: s.failed });
+    }
     if (handoffs || (!channelKnown && LINK > 0)) {
       let lo2 = Infinity;
       let hi2 = -Infinity;
@@ -536,6 +587,17 @@ const ProbativeCheck = (() => {
       }
     }
 
+    const perPerson = new Map();
+    for (const c of eligible) perPerson.set(c.person, (perPerson.get(c.person) || 0) + 1);
+    let topCount = 0;
+    for (const n of perPerson.values()) if (n > topCount) topCount = n;
+    const topShare = eligible.length ? topCount / eligible.length : 0;
+    if (eligible.length >= 100 && topShare > 0.05) {
+      warnings.push(
+        `One person accounts for ${Math.round(topShare * 100)}% of the conversations checked. If it's a test or shared ` +
+          "account, leave it out of the export: one person can sway the result.",
+      );
+    }
     if (handoffs) {
       notes.push(
         `${handoffs.toLocaleString()} conversations counted as resolved created a ticket themselves: a ticket through ` +
@@ -570,7 +632,8 @@ const ProbativeCheck = (() => {
           `Tickets opened within ${linkMinutes} minutes of a conversation counted as resolved came through ` +
             fastChannels.map(([c, n]) => `${c} (${n.toLocaleString()})`).join(", ") +
             ". If the AI agent opens tickets through one of these channels, add it under Options, so those tickets " +
-            "count as handoffs, not returns.",
+            "count as handoffs, not returns. Some may come from topics that send people to the desk on purpose: " +
+            "those conversations were never resolutions, whatever the AI's reporting says.",
         );
       }
     } else if (LINK > 0) {
@@ -632,7 +695,7 @@ const ProbativeCheck = (() => {
     const ticketPeople = new Set(tk.map((t) => t.person));
     const overlap = eligible.filter((c) => ticketPeople.has(c.person)).length / eligible.length;
     if (overlap < 0.5) {
-      notes.push(
+      warnings.push(
         `Only ${Math.round(overlap * 100)}% of the people in the conversations appear in the tickets, so the two ` +
           "files probably identify people differently (for example a name in one and an ID in the other).",
       );
@@ -672,6 +735,7 @@ const ProbativeCheck = (() => {
       checks,
       fastChannels,
       caveat,
+      warnings,
       notes,
     };
   }
@@ -715,6 +779,7 @@ if (typeof module === "object" && module.exports) {
       id: "Ticket number",
       category: "Category",
       channel: "Channel (Contact type)",
+      reopens: "Reopen count",
     };
     const REQUIRED = { conv: ["person", "started"], tickets: ["person", "opened", "resolved"] };
 
@@ -732,7 +797,7 @@ if (typeof module === "object" && module.exports) {
           cols[key] = Number(select.value);
           ready();
         });
-        const need = REQUIRED[kind].includes(key);
+        const need = REQUIRED[kind].includes(key) || (kind === "conv" && key === "agentChat" && cols.state >= 0);
         wrap.append(el("label", { class: "check-field" }, el("span", {}, LABELS[key] + (need ? "" : " (optional)")), select));
       }
       return wrap;
@@ -746,6 +811,16 @@ if (typeof module === "object" && module.exports) {
       const table = ProbativeCheck.parseCSV(text);
       if (!table.header.length || !table.rows.length) {
         throw new Error(`${file.name} has no rows to read. Export the list as CSV, with its column headers.`);
+      }
+      // A file in the wrong box: incidents have a caller and a resolved date; conversations have neither.
+      const has = (names) => table.header.some((h) => names.includes(String(h).trim().toLowerCase().replace(/[_\s]+/g, " ")));
+      const looksLikeIncidents = has(["caller id", "caller", "resolved at", "resolved"]) && !has(["agent chat", "state reason", "opened for"]);
+      const looksLikeConversations = has(["agent chat", "state reason"]) && !has(["caller id", "caller", "resolved at", "resolved"]);
+      if (kind === "conv" && looksLikeIncidents) {
+        throw new Error(`${file.name} looks like the incidents export. Drop it in box 2, and the conversations in box 1.`);
+      }
+      if (kind === "tickets" && looksLikeConversations) {
+        throw new Error(`${file.name} looks like the conversations export. Drop it in box 1, and the incidents in box 2.`);
       }
       const fields = kind === "conv" ? ProbativeCheck.CONVERSATION_FIELDS : ProbativeCheck.TICKET_FIELDS;
       const cols = ProbativeCheck.detect(table.header, fields);
@@ -799,6 +874,9 @@ if (typeof module === "object" && module.exports) {
         el("h2", {}, "Result", el("span", { class: "check-badge" }, "Screening estimate")),
         ...(state.sample
           ? [el("p", { class: "callout warn" }, "Example only: made-up data from a simulated service desk, to show what you'll get. Drop your own exports above to check yours.")]
+          : []),
+        ...(r.warnings.length
+          ? [el("div", { class: "callout warn" }, el("b", {}, "Check this before you rely on the result."), el("ul", {}, ...r.warnings.map((w) => el("li", {}, w))))]
           : []),
         el("p", { class: "headline" }, headline),
         el("p", { class: "small muted" }, r.caveat),

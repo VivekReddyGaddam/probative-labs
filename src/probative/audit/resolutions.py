@@ -477,7 +477,10 @@ def confidence_level(
     base: str,
     id_overlap: float | None = None,
     match_fallback: bool = False,
+    low: list[str] | None = None,
+    medium: list[str] | None = None,
 ) -> dict[str, Any]:
+    """How much weight a result can bear. ``low`` and ``medium`` add data problems found along the way."""
     level_i = 2
     reasons: list[str] = []
 
@@ -508,6 +511,10 @@ def confidence_level(
         lower(0, f"The range is wide (±{half_width:.0%}).")
     elif half_width == half_width and half_width > 0.08:
         lower(1, f"The range is fairly wide (±{half_width:.0%}).")
+    for why in low or []:
+        lower(0, why)
+    for why in medium or []:
+        lower(1, why)
     if not reasons:
         reasons.append(f"Enough {items} and {base}, a tight range, and the data lines up across systems.")
     return {"level": LEVELS[level_i], "reasons": reasons}
@@ -585,6 +592,8 @@ def audit_resolutions(  # noqa: C901 - one ordered story, like the main analysis
     if window_days < 1:
         raise AuditError("the return window must be at least one day")
     notes: list[str] = []
+    low_confidence: list[str] = []  # data problems that make the result unreliable
+    medium_confidence: list[str] = []
     window = pd.Timedelta(days=window_days)
     link = pd.Timedelta(minutes=max(int(link_minutes), 0))
     if link >= window:
@@ -605,7 +614,24 @@ def audit_resolutions(  # noqa: C901 - one ordered story, like the main analysis
     channel_known = S.CHANNEL in tk.columns and bool(tk[S.CHANNEL].notna().any())
     handed_off = pd.Series(False, index=cl.index)
     if channel_known and link > pd.Timedelta(0):
-        made = created_in_conversation(tk, conversations if conversations is not None else cl, link, ai_channels)
+        convs = conversations if conversations is not None else cl
+        made = created_in_conversation(tk, convs, link, ai_channels)
+        # Tickets through the AI's channel that match no conversation usually mean the two exports disagree on
+        # time zone or person IDs; then the AI's own tickets would be counted as returns.
+        c_times = convs[S.SESSION_STARTED].dropna()
+        if not c_times.empty:
+            is_ai = _channel_key(tk[S.CHANNEL]).isin(_channel_set(ai_channels)).fillna(False).astype(bool)
+            during = tk[S.OPENED].between(c_times.min(), c_times.max() + link)
+            n_ai = int((is_ai & during).sum())
+            n_linked = int(made[S.OPENED].between(c_times.min(), c_times.max() + link).sum())
+            if n_ai >= 10 and n_linked < 0.5 * n_ai:
+                warning = (
+                    f"{n_ai - n_linked:,} of {n_ai:,} tickets through the AI agent's channel had no conversation from "
+                    f"the same person in the {link_minutes} minutes before. If the two exports use different time "
+                    "zones or person IDs, fix that first: those tickets are being counted as returns."
+                )
+                notes.append(warning)
+                low_confidence.append(warning)
         if not made.empty:
             keys = set(zip(made[S.REQUESTER].astype(str), made["_conv_started"], strict=True))
             starts = cl[S.SESSION_STARTED].astype("datetime64[ns]")
@@ -743,6 +769,25 @@ def audit_resolutions(  # noqa: C901 - one ordered story, like the main analysis
                 "main": False,
             }
         )
+    has_reopens = S.REOPENS in tk.columns and S.UNIT_ID in tk.columns
+    if has_reopens and pd.to_numeric(tk[S.REOPENS], errors="coerce").fillna(0).gt(0).any():
+        # After your agents, a person whose problem wasn't fixed often reopens the ticket instead of opening a
+        # new one; after the AI there is nothing to reopen. Counting reopens on that side shows how much the
+        # result depends on it.
+        reopened = set(tk.loc[pd.to_numeric(tk[S.REOPENS], errors="coerce").fillna(0).gt(0), S.UNIT_ID].astype(str))
+        e_r, b_r = eligible.copy(), base.copy()
+        b_r["_ret"] = b_r["_ret"] | b_r[S.UNIT_ID].astype(str).isin(reopened).to_numpy()
+        if S.UNIT_ID in e_r.columns:  # claims that are tickets themselves, as in the validation on real data
+            e_r["_ret"] = e_r["_ret"] | e_r[S.UNIT_ID].astype(str).isin(reopened).to_numpy()
+        s = _rates(e_r, b_r, min_cell)
+        sensitivity.append(
+            {
+                "check": "Reopened tickets count as returns",
+                "failed_share": s["failed"],
+                "claims": s["claims"],
+                "main": False,
+            }
+        )
     if n_handed_off or not channel_known:
         e_x, b_x = prepare(window, by, frame=cl_all, after_=pd.Timedelta(0))
         if not e_x.empty and not b_x.empty:
@@ -756,6 +801,14 @@ def audit_resolutions(  # noqa: C901 - one ordered story, like the main analysis
                 }
             )
 
+    top = eligible[S.REQUESTER].astype(str).value_counts()
+    if len(eligible) >= 100 and not top.empty and top.iloc[0] > 0.05 * len(eligible):
+        warning = (
+            f"One person accounts for {top.iloc[0] / len(eligible):.0%} of the claims checked. If it's a test or "
+            "shared account, leave it out of the export: one person can sway the result."
+        )
+        notes.append(warning)
+        medium_confidence.append(warning)
     if n_handed_off:
         notes.append(
             f"{n_handed_off:,} conversations the AI counted as resolved created a ticket themselves: a ticket "
@@ -770,7 +823,8 @@ def audit_resolutions(  # noqa: C901 - one ordered story, like the main analysis
                 f"Tickets opened within {link_minutes} minutes of a claimed resolution came through "
                 + ", ".join(f"{c} ({n:,})" for c, n in fast)
                 + ". If the AI agent creates tickets through one of these channels, list it as an AI channel, so "
-                "those tickets count as handoffs, not returns."
+                "those tickets count as handoffs, not returns. Some may come from topics that send people to the "
+                "desk on purpose: those conversations were never resolutions, whatever the AI's reporting says."
             )
     elif not channel_known and link > pd.Timedelta(0):
         notes.append(
@@ -813,6 +867,8 @@ def audit_resolutions(  # noqa: C901 - one ordered story, like the main analysis
         base="human-resolved tickets",
         id_overlap=id_overlap,
         match_fallback=match == "same_type" and used_match == "any",
+        low=low_confidence,
+        medium=medium_confidence,
     )
 
     # Headline ------------------------------------------------------------------------------------

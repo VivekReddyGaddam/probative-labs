@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <title>Validation on real ServiceNow data · Probative Labs</title>
 <meta name="description" content="The resolution audit, tested on a public log from a real ServiceNow instance: it reads the real export, shows real return rates, and finds failures planted in real data.">
 <meta property="og:type" content="website">

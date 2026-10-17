@@ -102,6 +102,11 @@ def _servicenow_va(raw: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
         if (~keep).sum():
             notes.append(f"{int((~keep).sum()):,} interactions without the Virtual agent flag were left out.")
         df = df[keep]
+    else:
+        notes.append(
+            "The export has no Virtual agent column, so every interaction in it is taken to be a Virtual Agent "
+            "conversation. Filter the Interactions list to Virtual agent = true before exporting."
+        )
     kind = find_column(df.columns, ["type", "Type"])
     if kind is not None:
         chat = _norm(df[kind]).isin({"chat", ""})
@@ -116,9 +121,17 @@ def _servicenow_va(raw: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
         )
     reason = find_column(df.columns, ["state_reason", "State reason"])
     agent = find_column(df.columns, ["agent_chat", "Agent chat"])
+    if agent is None:
+        # Without it, a chat a live agent took over can close as "Closed Complete" and count as resolved, and
+        # the incident that agent opened during the chat would count as a return: a false alarm.
+        raise MappingError(
+            "the ServiceNow export needs the Agent chat column (agent_chat). Without it, chats a live agent took "
+            "over would count as resolved, and the incidents those agents opened as returns. Export the "
+            "Interactions list with Number, Opened for, Opened, State, State reason, Agent chat and Type."
+        )
     st = _norm(df[state])
     rs = _norm(df[reason]) if reason else pd.Series("", index=df.index)
-    live = _truthy(df[agent]) if agent else pd.Series(False, index=df.index)
+    live = _truthy(df[agent])
 
     outcome = pd.Series(OTHER, index=df.index, dtype="string")
     outcome[st.eq("closed complete")] = RESOLVED
@@ -129,11 +142,6 @@ def _servicenow_va(raw: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
     df["outcome"] = outcome
     detail = _display(df[reason]) if reason else _display(df[state])
     df["outcome_detail"] = detail.where(~live, "Live agent joined")
-    if agent is None:
-        notes.append(
-            "The export has no Agent chat column, so conversations handed to a live agent were recognised "
-            "only by their state reason. Add Agent chat to the export for a complete count."
-        )
     return df, notes
 
 

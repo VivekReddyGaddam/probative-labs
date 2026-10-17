@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <title>Free resolution check · Probative Labs</title>
 <meta name="description" content="Drop two exports and see, in your browser, how many conversations your AI agent marked resolved came back as a ticket. Nothing is uploaded: this page cannot send data anywhere.">
 <meta property="og:type" content="website">
@@ -20,7 +23,7 @@
 <script src="/static/js/app.js?v=0384b69a37" defer></script>
 
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'; object-src 'none'">
-<script src="/static/js/check.js?v=4d12a09095" defer></script>
+<script src="/static/js/check.js?v=e389fd5588" defer></script>
 
 </head>
 <body>
@@ -84,7 +87,7 @@
   </div>
   <div class="card">
     <h3>2. Incidents for the same months, plus a week</h3>
-    <p class="small muted">Export <span class="mono">incident.list</span> as CSV with: Number, Caller, Opened, Resolved, Contact type, and Category for the fix list. Contact type lets the check tell incidents the virtual agent opened itself from people coming back. Use the same kind of person field as the conversations: both names, or both Sys IDs.</p>
+    <p class="small muted">Export <span class="mono">incident.list</span> as CSV with: Number, Caller, Opened, Resolved, Contact type, Reopen count, and Category for the fix list. Contact type lets the check tell incidents the virtual agent opened itself from people coming back; Reopen count shows how often your agents' fixes didn't hold. Use the same kind of person field as the conversations: both names, or both Sys IDs.</p>
     
 <label class="dropzone" id="tickets-zone">
   <input class="sr-only" id="tickets-file" type="file" accept=".csv,.txt" aria-describedby="tickets-status">
@@ -125,7 +128,7 @@
       <thead><tr><th>File</th><th>Columns</th><th>Leave out</th></tr></thead>
       <tbody>
         <tr><td><b>Conversations</b><br><span class="small muted">interaction.list, Virtual agent = true</span></td><td data-label="Columns">Number, Opened for, Opened, State, State reason, Agent chat, Type</td><td data-label="Leave out">Short description, transcripts, work notes</td></tr>
-        <tr><td><b>Incidents</b><br><span class="small muted">incident.list</span></td><td data-label="Columns">Number, Caller, Opened, Resolved, Contact type; Category (optional)</td><td data-label="Leave out">Short description, description, comments, work notes, assigned to</td></tr>
+        <tr><td><b>Incidents</b><br><span class="small muted">incident.list</span></td><td data-label="Columns">Number, Caller, Opened, Resolved, Contact type, Reopen count; Category (optional)</td><td data-label="Leave out">Short description, description, comments, work notes, assigned to</td></tr>
       </tbody>
     </table></div>
     <p class="small muted" style="margin-top:1rem">To keep names out of the exports, use the person's Sys ID instead of the name: in the list layout, expand Opened for (or Caller) and choose Sys ID. Do the same in both files so the people match.</p>
@@ -136,7 +139,7 @@
   <div class="wrap narrow">
     <div class="section-head"><h2>Questions</h2></div>
     <div class="faq-list">
-      <details><summary>Is this the full audit?</summary><div><p>No. It's a screening estimate: it uses the same definitions as the open engine's resolution audit and gives the same headline figures on the same files, but a return is any ticket from the same person, and the comparison is with all of your agents' resolutions. The full audit also matches the type of issue, runs more checks and widens the range with a month-by-month check. Run it with <code>pip install probative-labs</code>, or <a href="/pilot/">book a call</a> and I'll run it with you.</p></div></details>
+      <details><summary>Is this the full audit?</summary><div><p>No. It's a screening estimate: it uses the same definitions as the open engine's resolution audit and gives the same rates on the same files, but a return is any ticket from the same person, and the comparison is with all of your agents' resolutions. The full audit also matches the type of issue, runs more checks and widens the range with a month-by-month check. Run it with <code>pip install probative-labs</code>, or <a href="/pilot/">book a call</a> and I'll run it with you.</p></div></details>
       <details><summary>What counts as "came back"?</summary><div><p>The same person opened an incident within the window after the conversation started. Some people come back after any help, so the same check runs on incidents your agents resolved in the same months, and only the excess counts as "did not hold".</p><p>An incident the virtual agent opened itself doesn't count. ServiceNow's Create Incident topic sets Contact type to Virtual Agent, so an incident through that channel within 30 minutes of the person's conversation came from it: that conversation was a handoff, and it's left out. Without Contact type, incidents opened in the first 30 minutes after a conversation or a resolution don't count on either side, and the result shows what changes if they do.</p></div></details>
       <details><summary>What exactly does the security policy block?</summary><div><p>Everything except this site's own script, stylesheet and images (<span class="mono">default-src 'none'</span>). Scripts can't fetch, upload, open sockets or send beacons (<span class="mono">connect-src 'none'</span>), forms can't post (<span class="mono">form-action 'none'</span>), and nothing loads from another site. No policy can stop a page from navigating away, which is why the code is open and why the offline test is the real proof. The downloaded copy is stricter still: it can run only the code inside the file.</p></div></details>
       <details><summary>Can I share the result?</summary><div><p>Download the summary: rates and counts only, with no names, IDs or ticket contents. Send that, not the exports, if you'd like a second opinion.</p></div></details>

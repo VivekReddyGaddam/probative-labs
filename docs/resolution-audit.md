@@ -40,9 +40,9 @@ The same settings can live in `probative.yaml` under `audit:` (see [configuratio
 - the outcome (`outcome`), if the file also contains escalated or abandoned conversations. If there is no outcome column, every row counts as a claimed resolution;
 - ideally the issue's category and subcategory, using the same values as your tickets.
 
-Common column names (`Requester`, `User Email`, `Created`, `Topic` and so on) are recognized automatically. See [data-model.md](data-model.md).
+Common column names (`Requester`, `User Email`, `Created`, `Topic` and so on) are recognized automatically. See [data-model.md](data-model.md). A ServiceNow Interactions export (`--claims-preset servicenow_va`) must include Agent chat: without it, chats a live agent took over would count as resolved, and the incidents those agents opened as returns, so the audit refuses to run.
 
-**Your ticket export:** covering the same dates plus at least a week, with the person who raised each ticket, opened and resolved times, category, and the channel each ticket came through (Contact type in ServiceNow). Any built-in preset works (`probative presets`).
+**Your ticket export:** covering the same dates plus at least a week, with the person who raised each ticket, opened and resolved times, category, the channel each ticket came through (Contact type in ServiceNow) and, if you have it, the reopen count. Any built-in preset works (`probative presets`).
 
 ## How it works
 
@@ -55,7 +55,7 @@ Common column names (`Requester`, `User Email`, `Created`, `Topic` and so on) ar
 
    Dividing by (1 − return rate after people) scales the excess to the claims that could have come back.
 5. **State the uncertainty.** Ranges come from resampling people 999 times, because one person's contacts are not independent. If a leave-one-month-out jackknife shows more spread, the range is widened to it.
-6. **Check the result.** The audit reruns with 3- and 14-day windows, with any ticket counting as a return, with a baseline from the same people only, and with every ticket counted, even ones the AI may have opened. Large disagreement is a reason for care.
+6. **Check the result.** The audit reruns with 3- and 14-day windows, with any ticket counting as a return, with a baseline from the same people only, with every ticket counted, even ones the AI may have opened, and with reopened tickets counted as returns after your agents (a person whose fix didn't hold often reopens the ticket rather than opening a new one; after the AI there is nothing to reopen). Large disagreement is a reason for care.
 
 ## Audit confidence
 
@@ -66,6 +66,8 @@ Common column names (`Requester`, `User Email`, `Created`, `Topic` and so on) ar
 | Low | Any of: fewer than 200 claims, fewer than 300 baseline tickets, under 30% of people found in both systems, or a range wider than ±15 points |
 
 The report lists every reason that lowered the level.
+
+Two data problems also lower it: tickets through the AI agent's channel that match no conversation from the same person (usually the two exports disagree on time zone or person IDs; confidence is then low), and one person accounting for more than 5% of the claims (often a test or shared account; confidence is at most medium). Both are named in the notes.
 
 ## What it cannot tell you
 

@@ -260,3 +260,57 @@ def test_a_ticket_from_a_later_conversation_still_counts_against_an_earlier_clai
     res = res.to_dict()
     assert res["claims"]["handed_off"] == 0  # the incident came from the later conversation, not the claim
     assert res["returns"]["ai_rate"] == pytest.approx(21 / 400)
+
+
+def test_tickets_through_the_ai_channel_that_match_no_conversation_lower_confidence():
+    # The incidents were exported five hours off (another time zone), so the AI's own tickets can't be tied to the
+    # conversations that opened them: the audit says so, and won't call its answer more than low.
+    claims, tickets, convs = _bot_scenario(channel=True)
+    va = tickets[S.CHANNEL].eq("Virtual Agent")
+    tickets.loc[va, S.OPENED] += pd.Timedelta(hours=5)
+    res = audit_resolutions(claims, tickets, conversations=convs, reps=49).to_dict()
+    assert res["claims"]["handed_off"] == 0
+    assert any("had no conversation from the same person" in n for n in res["notes"])
+    assert res["confidence"]["level"] == "low"
+
+
+def test_one_person_with_many_claims_is_flagged():
+    claims, tickets, convs = _bot_scenario(channel=True, bot_creates=0)
+    tester = pd.DataFrame(
+        {S.REQUESTER: ["tester"] * 40, S.SESSION_STARTED: [T0 + pd.Timedelta(hours=i) for i in range(40)]}
+    )
+    claims = pd.concat([claims, tester], ignore_index=True)
+    res = audit_resolutions(claims, tickets, conversations=pd.concat([convs, tester]), reps=49).to_dict()
+    assert any("One person accounts for" in n for n in res["notes"])
+    assert res["confidence"]["level"] in ("low", "medium")
+
+
+def test_reopened_tickets_are_shown_as_a_check():
+    claims, tickets, convs = _bot_scenario(channel=True, bot_creates=0)
+    tickets[S.REOPENS] = 0
+    tickets.loc[tickets[S.UNIT_ID].str.startswith("h") & (tickets.index % 10 == 0), S.REOPENS] = 1
+    res = audit_resolutions(claims, tickets, conversations=convs, reps=49).to_dict()
+    row = [s for s in res["sensitivity"] if s["check"] == "Reopened tickets count as returns"]
+    # More of your agents' fixes didn't hold once reopens count, so less is held against the AI.
+    assert row and row[0]["failed_share"] < res["failed_share"]["estimate"]
+
+
+def test_a_servicenow_export_without_agent_chat_is_refused():
+    from probative.ingest.conversations import map_conversations
+    from probative.ingest.mapping import MappingError
+
+    raw = pd.DataFrame(
+        {
+            "Number": ["IMS1", "IMS2"],
+            "Opened for": ["a", "b"],
+            "Opened": ["2026-03-02 09:00:00", "2026-03-02 10:00:00"],
+            "State": ["Closed Complete", "Closed Complete"],
+            "State reason": ["User Ended", "Topic Complete"],
+            "Virtual agent": ["true", "true"],
+        }
+    )
+    with pytest.raises(MappingError, match="Agent chat"):
+        map_conversations(raw, "servicenow_va")
+    raw["Agent chat"] = ["true", "false"]
+    out, notes = map_conversations(raw.drop(columns=["Virtual agent"]), "servicenow_va")
+    assert any("no Virtual agent column" in n for n in notes)
