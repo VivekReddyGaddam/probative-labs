@@ -1,18 +1,30 @@
 {% set cur = r.settings.currency %}
 {% set a = r.audit %}
-# Dispute pack: {{ r.program.vendor or r.program.name or "per-resolution bill" }}
+{% set model = r.model or "resolution" %}
+{% set noun = ITEM_NOUNS[model] %}
+# Dispute pack: {{ r.program.vendor or r.program.name or "AI bill" }}
 
-Billing period {{ r.period.start }} to {{ r.period.end }} · {{ r.billed.count | num(0) }} billed resolutions{% if r.billed.amount is not none %} · {{ r.billed.amount | money(cur) }} billed{% endif %}
+{{ MODELS[model] }} · billing period {{ r.period.start }} to {{ r.period.end }} · {{ r.billed.count | num(0) }} billed {{ noun }}{% if r.billed.amount is not none %} · {{ r.billed.amount | money(cur) }} billed{% endif %}
 
 > {{ r.headline }}
 
-## 1. The definition used
+{% if model == "resolution" %}
+## The definition used
 
 **{{ r.settings.definition_name }}:** a conversation the AI resolved, inside the billing period, after which the same person did not open a ticket {% if r.settings.match == "same_type" %}about the same type of issue {% endif %}within {{ r.settings.window_days }} days.
 
 {{ "The contract uses this definition, so every billed item that did not meet it is disputed." if r.settings.contractual else "No contract definition was applied: only billing errors are disputed line by line, and the resolution audit gives a negotiation figure." }}
+{% elif model == "conversation" %}
+## How this bill is counted
 
-## 2. Reconciliation
+Every conversation the AI took part in is billed{% if r.settings.billable %} when its outcome is one of: {{ r.settings.billable }}{% else %}, whatever its outcome{% endif %}.
+{% else %}
+## How this bill is counted
+
+One person's conversations within {{ r.settings.session_hours | num(0) }} hours of their first count as one session.
+{% endif %}
+
+## Reconciliation
 
 | Reason | Items | Amount |
 | --- | ---: | ---: |
@@ -20,18 +32,36 @@ Billing period {{ r.period.start }} to {{ r.period.end }} · {{ r.billed.count |
 | {{ x.reason }} | {{ x.count | num(0) }} | {{ x.amount | money(cur) }} |
 {% endfor %}
 | **Disputed** | **{{ r.disputed.count | num(0) }}** | **{{ r.disputed.amount | money(cur) }}** |
+{% if model == "resolution" %}
 
 Held: {{ r.held.held | num(0) }} of {{ r.held.checked | num(0) }} checked; {{ r.held.came_back | num(0) }} came back; {{ r.held.too_recent | num(0) }} too recent to check.
+{% endif %}
+{% if r.paid_for %}
+
+## What the money bought
+
+| Outcome | {{ noun | capitalize }} | Share |
+| --- | ---: | ---: |
+{% for x in r.paid_for %}
+| {{ x.label }} | {{ x.count | num(0) }} | {{ x.share | pct(1) }} |
+{% endfor %}
+{% endif %}
 {% if a %}
 
-## 3. Compared with your agents' resolutions
+## Compared with your agents' resolutions
 
 {{ a.ai_rate | pct(1) }} came back after the AI against {{ a.baseline_rate | pct(1) }} after your agents. Did not hold beyond that normal rate: **{{ a.failed_share.estimate | pct(1) }}** (range {{ a.failed_share.ci_low | pct(1) }} to {{ a.failed_share.ci_high | pct(1) }}).{% if a.negotiation %} Negotiation figure: {{ a.negotiation.estimate | money(cur) }} ({{ a.negotiation.ci_low | money(cur) }} to {{ a.negotiation.ci_high | money(cur) }}).{% endif %}
-{% endif %}
+{% if r.per_held %}
 
-## 4. In the vendor's favour
+Cost per resolution that held: **{{ r.per_held.estimate | unit_price(cur) }}** (range {{ r.per_held.ci_low | unit_price(cur) }} to {{ r.per_held.ci_high | unit_price(cur) }}).
+{% endif %}
+{% endif %}
+{% if model == "resolution" %}
+
+## In the vendor's favour
 
 {{ r.unbilled.resolved_not_billed | num(0) }} conversations resolved in this period are not on the bill.
+{% endif %}
 {% for n in r.notes %}
 
 - {{ n }}

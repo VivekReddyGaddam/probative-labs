@@ -93,6 +93,9 @@ class DataConfig(BaseModel):
     exposure: Path
     self_service: Path | None = None
     self_service_mapping: dict[str, str | MappingEntry] = Field(default_factory=dict)
+    self_service_preset: Literal["generic", "servicenow_va"] = Field(
+        "generic", description="Conversation export preset: generic, or servicenow_va (ServiceNow Virtual Agent)."
+    )
     teams: Path | None = None
     staffing: Path | None = None
     pseudonymized: bool = Field(

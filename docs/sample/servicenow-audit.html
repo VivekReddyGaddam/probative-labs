@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Resolution audit · Simulated service desk</title>
+<style>
+:root {
+  --bg: #f7f6f2; --surface: #ffffff; --ink: #1b1c1e; --muted: #5c6066; --line: #e3e0d8;
+  --accent: #1d5c48; --accent-soft: #e2eee8;
+  --good: #1b6b41; --good-soft: #e0f1e6; --warn: #7d5300; --warn-soft: #faefd6;
+  --bad: #9a2a2a; --bad-soft: #f7e0e0; --neutral-soft: #ecebe6;
+  --chart-line: #1d5c48; --chart-band: rgba(29, 92, 72, 0.16); --chart-pre: #7b8088; --chart-grid: #e8e5de;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121314; --surface: #1a1c1e; --ink: #ecebe7; --muted: #a3a7ad; --line: #2c2f33;
+    --accent: #7fc8aa; --accent-soft: #1f322b;
+    --good: #7fd3a0; --good-soft: #1b3125; --warn: #f0c46a; --warn-soft: #362c17;
+    --bad: #f0a0a0; --bad-soft: #3a2020; --neutral-soft: #26292c;
+    --chart-line: #7fc8aa; --chart-band: rgba(127, 200, 170, 0.18); --chart-pre: #8d9299; --chart-grid: #2a2d31;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121314; --surface: #1a1c1e; --ink: #ecebe7; --muted: #a3a7ad; --line: #2c2f33;
+  --accent: #7fc8aa; --accent-soft: #1f322b;
+  --good: #7fd3a0; --good-soft: #1b3125; --warn: #f0c46a; --warn-soft: #362c17;
+  --bad: #f0a0a0; --bad-soft: #3a2020; --neutral-soft: #26292c;
+  --chart-line: #7fc8aa; --chart-band: rgba(127, 200, 170, 0.18); --chart-pre: #8d9299; --chart-grid: #2a2d31;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 var(--sans); }
+main { max-width: 980px; margin: 0 auto; padding: 32px 16px 64px; }
+h1, h2, h3 { font-family: var(--serif); font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; }
+h1 { font-size: 2rem; margin: 0.2rem 0 0.4rem; }
+h2 { font-size: 1.35rem; margin: 2.4rem 0 0.8rem; padding-top: 1.2rem; border-top: 1px solid var(--line); }
+h2 .num { color: var(--muted); font-family: var(--sans); font-size: 0.9rem; font-weight: 600; margin-right: 0.5rem; }
+p { margin: 0.5rem 0 0.9rem; }
+.eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; font-weight: 600; color: var(--accent); }
+.meta { color: var(--muted); font-size: 0.9rem; }
+header { display: flex; gap: 24px; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; }
+header > div:first-child { flex: 1 1 320px; min-width: 0; }
+.grade { flex: none; width: 96px; height: 96px; border-radius: 16px; background: var(--accent-soft); color: var(--accent);
+  display: grid; place-items: center; text-align: center; }
+.grade b { font-family: var(--serif); font-size: 2.6rem; line-height: 1; display: block; }
+.grade small { font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.grade.g-D, .grade.g-insufficient { background: var(--warn-soft); color: var(--warn); }
+.grade.g-insufficient b { font-size: 1.1rem; }
+.grade.c-medium { background: var(--warn-soft); color: var(--warn); }
+.grade.c-low { background: var(--bad-soft); color: var(--bad); }
+.grade.word b { font-size: 1.25rem; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin: 24px 0 8px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+.tile .k { font-size: 0.78rem; color: var(--muted); }
+.tile .v { font-family: var(--serif); font-size: 1.45rem; margin-top: 2px; }
+.tile .s { font-size: 0.8rem; color: var(--muted); }
+.headline { font-size: 1.08rem; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--accent);
+  border-radius: 10px; padding: 14px 18px; margin: 18px 0; }
+.rec { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+.rec b { font-family: var(--serif); font-size: 1.1rem; }
+.table-wrap { overflow-x: auto; margin: 0.6rem 0 1rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; background: var(--neutral-soft); }
+tr:last-child td { border-bottom: 0; }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.chip { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: 0.76rem; font-weight: 600; white-space: nowrap; }
+.chip-pass { background: var(--good-soft); color: var(--good); }
+.chip-watch { background: var(--warn-soft); color: var(--warn); }
+.chip-breach, .chip-fail { background: var(--bad-soft); color: var(--bad); }
+.chip-unavailable, .chip-not_run { background: var(--neutral-soft); color: var(--muted); }
+.callout { border-radius: 10px; padding: 12px 16px; margin: 12px 0; }
+.callout.bad { background: var(--bad-soft); color: var(--bad); }
+.callout.warn { background: var(--warn-soft); color: var(--warn); }
+.callout.info { background: var(--accent-soft); color: var(--ink); }
+ul { padding-left: 1.2rem; }
+li { margin: 0.25rem 0; }
+code, .mono { font-family: var(--mono); font-size: 0.82rem; }
+figure { margin: 0.6rem 0 1rem; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+figcaption { color: var(--muted); font-size: 0.82rem; margin-top: 6px; }
+.tl-chart { width: 100%; height: auto; display: block; }
+.tl-chart .grid { stroke: var(--chart-grid); stroke-width: 1; }
+.tl-chart .zero { stroke: var(--muted); stroke-width: 1; }
+.tl-chart .rollout { stroke: var(--muted); stroke-dasharray: 4 4; }
+.tl-chart .band { fill: var(--chart-band); }
+.tl-chart .bar { fill: var(--chart-line); opacity: 0.85; }
+.tl-chart .line { fill: none; stroke: var(--chart-line); stroke-width: 2; }
+.tl-chart circle.post { fill: var(--chart-line); }
+.tl-chart circle.pre { fill: var(--chart-pre); }
+.tl-chart .whisker { stroke: var(--chart-pre); stroke-width: 1.5; }
+.tl-chart text { fill: var(--muted); font: 11px var(--sans); }
+.tl-chart .axis { font-size: 12px; }
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; margin-top: 12px; }
+details summary { cursor: pointer; font-weight: 600; }
+details h3 { font-size: 1.05rem; margin: 1.2rem 0 0.4rem; }
+footer { margin-top: 48px; color: var(--muted); font-size: 0.8rem; border-top: 1px solid var(--line); padding-top: 16px; }
+@media print {
+  body { background: #fff; color: #000; font-size: 11pt; }
+  main { max-width: none; padding: 0; }
+  .tile, .table-wrap, figure, details, .headline { break-inside: avoid; }
+  details { display: block; }
+  details > *:not(summary) { display: block; }
+}
+@media (max-width: 560px) { h1 { font-size: 1.6rem; } .grade { width: 76px; height: 76px; } .grade b { font-size: 2rem; } }</style>
+</head>
+<body>
+<main>
+<header>
+  <div>
+    <div class="eyebrow">Resolution audit</div>
+    <h1>Simulated service desk</h1>
+    <div class="meta">Claims 2025-11-10 to 2026-06-28 · 3,780 claimed resolutions · tickets 2025-01-06 to 2026-07-05 · ServiceNow Virtual Agent (simulated)</div>
+  </div>
+  <div class="grade word c-medium" title="Audit confidence">
+    <div><b>Medium</b><small>Audit confidence</small></div>
+  </div>
+</header>
+
+<div class="tiles">
+  <div class="tile"><div class="k">Claimed resolutions that did not hold</div><div class="v">17%</div>
+    <div class="s">95% range 15% to 19%</div></div>
+  <div class="tile"><div class="k">Resolutions that held</div><div class="v">3,131</div>
+    <div class="s">of 3,780 claimed · range 3,061 to 3,198</div></div>
+  <div class="tile"><div class="k">People who came back within 7 days</div><div class="v">29%</div>
+    <div class="s">after the AI · 13.9% after human-resolved tickets</div></div>
+</div>
+
+<p class="headline">Of 3,780 resolutions the AI claimed, an estimated 17% (95% range 15% to 19%) did not hold: the person came back within 7 days, beyond the normal return rate after human-resolved tickets. Audit confidence: medium.</p>
+
+<h2><span class="num">1</span>What was checked</h2>
+<p>A claimed resolution holds if the person does not need help again with the same kind of problem soon after. For each resolution the AI claimed, the audit looked for a ticket from the same person in the following 7 days.</p>
+<p>Some people come back after any resolution, for reasons that have nothing to do with the AI. So the same check is run on tickets resolved by people, in the same weeks. Only the excess return rate counts against the AI:</p>
+<p class="callout info">Did not hold = (return rate after the AI − return rate after people) ÷ (1 − return rate after people)</p>
+<p class="meta">Ranges come from resampling people 999 times, because one person's contacts are not independent. People are pseudonymized: the audit never sees names.</p>
+
+<h2><span class="num">2</span>Result</h2>
+<div class="table-wrap"><table>
+<thead><tr><th></th><th class="n">Estimate</th><th class="n">95% range</th></tr></thead>
+<tbody>
+<tr><td>Came back within 7 days after an AI-claimed resolution</td><td class="n">28.7%</td><td class="n">27.2% to 30.4%</td></tr>
+<tr><td>Came back within 7 days after a human-resolved ticket</td><td class="n">13.9%</td><td class="n">13.5% to 14.4%</td></tr>
+<tr><td><b>Claimed resolutions that did not hold</b></td><td class="n"><b>17.2%</b></td><td class="n">15.4% to 19.0%</td></tr>
+<tr><td>Resolutions that held, of 3,780 claimed</td><td class="n">3,131</td><td class="n">3,061 to 3,198</td></tr>
+</tbody></table></div>
+
+<h3>How the platform closed the conversations it counted as resolved</h3>
+<p class="meta">The platform's own reason for closing each claimed resolution, with how often the person came back. A conversation the person walked away from is not the same as one where the topic finished.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Platform's reason</th><th class="n">Claimed</th><th class="n">Share</th><th class="n">Came back</th><th class="n">Did not hold</th></tr></thead>
+<tbody><tr><td>Topic Complete</td><td class="n">1,335</td><td class="n">37.1%</td><td class="n">19.8%</td><td class="n">7%</td></tr><tr><td>Auto Closed</td><td class="n">887</td><td class="n">24.7%</td><td class="n">16.2%</td><td class="n">3%</td></tr><tr><td>No User Response</td><td class="n">797</td><td class="n">22.2%</td><td class="n">55.8%</td><td class="n">49%</td></tr><tr><td>User Ended</td><td class="n">455</td><td class="n">12.7%</td><td class="n">29.5%</td><td class="n">18%</td></tr><tr><td>Left for search</td><td class="n">122</td><td class="n">3.4%</td><td class="n">37.7%</td><td class="n">28%</td></tr></tbody>
+</table></div>
+
+
+<h2><span class="num">3</span>Over time</h2>
+<figure><svg class="tl-chart" viewBox="0 0 720 260" role="img" aria-labelledby="bars-title" xmlns="http://www.w3.org/2000/svg"><title id="bars-title">Claimed resolutions that did not hold, by month</title><line x1="56" x2="704" y1="212.0" y2="212.0" class="grid"/><text x="48" y="216.0" class="tick" text-anchor="end">0%</text><line x1="56" x2="704" y1="173.6" y2="173.6" class="grid"/><text x="48" y="177.6" class="tick" text-anchor="end">5%</text><line x1="56" x2="704" y1="135.2" y2="135.2" class="grid"/><text x="48" y="139.2" class="tick" text-anchor="end">10%</text><line x1="56" x2="704" y1="96.8" y2="96.8" class="grid"/><text x="48" y="100.8" class="tick" text-anchor="end">15%</text><line x1="56" x2="704" y1="58.4" y2="58.4" class="grid"/><text x="48" y="62.4" class="tick" text-anchor="end">20%</text><line x1="56" x2="704" y1="20.0" y2="20.0" class="grid"/><text x="48" y="24.0" class="tick" text-anchor="end">25%</text><line x1="56" x2="704" y1="212.0" y2="212.0" class="zero"/><rect x="70.6" y="50.1" width="51.8" height="161.9" class="bar"><title>2025-11: 21%</title></rect><text x="96.5" y="230" class="tick" text-anchor="middle">2025-11</text><rect x="151.6" y="41.2" width="51.8" height="170.8" class="bar"><title>2025-12: 22%</title></rect><text x="177.5" y="230" class="tick" text-anchor="middle">2025-12</text><rect x="232.6" y="94.4" width="51.8" height="117.6" class="bar"><title>2026-01: 15%</title></rect><text x="258.5" y="230" class="tick" text-anchor="middle">2026-01</text><rect x="313.6" y="67.1" width="51.8" height="144.9" class="bar"><title>2026-02: 19%</title></rect><text x="339.5" y="230" class="tick" text-anchor="middle">2026-02</text><rect x="394.6" y="96.3" width="51.8" height="115.7" class="bar"><title>2026-03: 15%</title></rect><text x="420.5" y="230" class="tick" text-anchor="middle">2026-03</text><rect x="475.6" y="72.9" width="51.8" height="139.1" class="bar"><title>2026-04: 18%</title></rect><text x="501.5" y="230" class="tick" text-anchor="middle">2026-04</text><rect x="556.6" y="83.7" width="51.8" height="128.3" class="bar"><title>2026-05: 17%</title></rect><text x="582.5" y="230" class="tick" text-anchor="middle">2026-05</text><rect x="637.6" y="84.3" width="51.8" height="127.7" class="bar"><title>2026-06: 17%</title></rect><text x="663.5" y="230" class="tick" text-anchor="middle">2026-06</text><text x="380.0" y="252" class="axis" text-anchor="middle">Month of the claimed resolution</text></svg><figcaption>Share of claimed resolutions that did not hold, by month of the claim. Months with fewer than 30 checked claims are left out.</figcaption></figure>
+<div class="table-wrap"><table>
+<thead><tr><th>Month</th><th class="n">Claims checked</th><th class="n">After AI</th><th class="n">After people</th><th class="n">Did not hold</th></tr></thead>
+<tbody><tr><td>2025-11</td><td class="n">48</td><td class="n">33.3%</td><td class="n">15.5%</td><td class="n">21%</td></tr><tr><td>2025-12</td><td class="n">154</td><td class="n">32.5%</td><td class="n">13.1%</td><td class="n">22%</td></tr><tr><td>2026-01</td><td class="n">318</td><td class="n">27.7%</td><td class="n">14.6%</td><td class="n">15%</td></tr><tr><td>2026-02</td><td class="n">453</td><td class="n">30.5%</td><td class="n">14.3%</td><td class="n">19%</td></tr><tr><td>2026-03</td><td class="n">542</td><td class="n">27.5%</td><td class="n">14.6%</td><td class="n">15%</td></tr><tr><td>2026-04</td><td class="n">729</td><td class="n">29.4%</td><td class="n">13.7%</td><td class="n">18%</td></tr><tr><td>2026-05</td><td class="n">672</td><td class="n">28.1%</td><td class="n">13.7%</td><td class="n">17%</td></tr><tr><td>2026-06</td><td class="n">680</td><td class="n">27.8%</td><td class="n">13.4%</td><td class="n">17%</td></tr></tbody>
+</table></div>
+
+<h2><span class="num">4</span>Robustness</h2>
+<p>The same audit with different reasonable choices. If these disagree a lot, read the result with care.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Check</th><th class="n">Claims checked</th><th class="n">Did not hold</th></tr></thead>
+<tbody><tr><td>Return window 3 days</td><td class="n">3,744</td><td class="n">10.5%</td></tr><tr><td>Return window 7 days <span class="chip chip-pass">main result</span></td><td class="n">3,596</td><td class="n">17.2%</td></tr><tr><td>Return window 14 days</td><td class="n">3,434</td><td class="n">18.1%</td></tr><tr><td>Baseline from the same people only</td><td class="n">3,596</td><td class="n">17.0%</td></tr></tbody>
+</table></div>
+
+<h2><span class="num">5</span>Audit confidence: medium</h2>
+<ul><li>Returns could not be matched by type of issue, so unrelated tickets count as returns.</li></ul>
+<div class="table-wrap"><table>
+<thead><tr><th>Coverage</th><th class="n">Value</th></tr></thead>
+<tbody>
+<tr><td>Rows in the AI's file</td><td class="n">4,741</td></tr>
+<tr><td>Not claimed as resolved (escalated, abandoned…)</td><td class="n">961</td></tr><tr><td>Claimed resolutions</td><td class="n">3,780</td></tr>
+<tr><td>Too recent to check (less than 7 days of follow-up)</td><td class="n">184</td></tr><tr><td><b>Checked</b></td><td class="n"><b>3,596</b></td></tr>
+<tr><td>People in the AI's records who also appear in the ticket data</td><td class="n">100%</td></tr>
+<tr><td>Human-resolved tickets in the baseline</td><td class="n">29,169</td></tr>
+</tbody></table></div>
+<ul><li>237 interactions without the Virtual agent flag were left out.</li><li>The claims carry no category, so a return was any ticket from the same person.</li></ul>
+<h2><span class="num">6</span>Data lineage</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>File</th><th class="n">Rows</th><th>Modified</th><th>SHA-256</th></tr></thead>
+<tbody><tr><td>incidents.csv</td><td class="n">74,477</td><td>2026-10-17T05:00:27+00:00</td><td class="mono">a5dd9e825b4798c2…</td></tr><tr><td>interactions.csv</td><td class="n">4,978</td><td>2026-10-17T05:00:27+00:00</td><td class="mono">6ece6678ea983285…</td></tr></tbody>
+</table></div>
+<p class="meta">Probative Labs 0.4.0 (git <span class="mono">699d0675540a</span>) · settings <span class="mono">52141614756d</span> · seed 20261014 · run 2026-10-17T05:00:48+00:00</p>
+
+<details>
+<summary>What this audit can and cannot tell you</summary>
+<h3>It can undercount failures</h3>
+<p>People who give up after a failed AI answer and call, email or ask a colleague instead leave no ticket, so they look like a resolution that held. Treat the result as a floor unless every channel creates a ticket.</p>
+<h3>Unrelated returns are netted out</h3>
+<p>Someone who comes back about something else is counted the same way after AI and human resolutions, so it cancels in the comparison.</p>
+<h3>People must be the same in both systems</h3>
+<p>The check joins the AI's records to tickets by person. If the two systems use different identifiers, returns are missed; the coverage table shows how many people appear in both.</p>
+<h3>Human resolutions are the yardstick, not perfection</h3>
+<p>The question is whether the AI's resolutions hold as well as your agents' resolutions do. Reopened tickets are tracked separately as a quality guardrail in the evidence pack.</p>
+</details>
+
+<footer>Generated by Probative Labs, independent verification of what AI delivers. The audit evaluates the AI's claims, never individual people. Method: docs/resolution-audit.md.</footer>
+</main>
+</body>
+</html>

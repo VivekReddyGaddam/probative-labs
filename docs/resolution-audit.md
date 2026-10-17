@@ -10,6 +10,8 @@ It needs no comparison group of teams, so it works even when every team got the 
 probative audit --tickets incidents.csv --preset servicenow --claims virtual_agent.csv --price 0.99 --open
 ```
 
+For ServiceNow Virtual Agent, export the Interactions table and add `--claims-preset servicenow_va`. The report then lists each way ServiceNow closed the conversations it counts as resolved (Topic Complete, No User Response and the rest) with how often each came back, so a chat the person walked away from is not counted the same as a finished topic. `--resolved-value` also takes several values separated by commas, for exports with more than one kind of resolution (for example `"Assumed resolution,Confirmed resolution"`).
+
 Or, in a project that already has `data.self_service` set:
 
 ```bash

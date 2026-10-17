@@ -2,6 +2,8 @@
 
 When an AI agent is billed per resolution, `probative reconcile` checks every billed item against your own records and writes a dispute pack you can send to the vendor.
 
+Billed per conversation or per session instead? Add `--model conversation` or `--model session`. Usage units (assists, credits) and seats have their own checks, `probative usage` and `probative seats`. Every model ends in the same number, the cost of each resolution that held: see [billing models](billing-models.md).
+
 ```bash
 probative reconcile vendor-bill.csv --period 2026-09 --contractual --open
 ```

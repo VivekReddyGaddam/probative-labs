@@ -8,6 +8,7 @@ from probative.report.pack import (
     write_pack,
     write_plan_pack,
     write_reconciliation_pack,
+    write_spend_pack,
     write_watch_pack,
 )
 
@@ -20,5 +21,6 @@ __all__ = [
     "write_pack",
     "write_plan_pack",
     "write_reconciliation_pack",
+    "write_spend_pack",
     "write_watch_pack",
 ]

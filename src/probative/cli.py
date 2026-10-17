@@ -41,6 +41,14 @@ app.add_typer(plan_app, name="plan")
 app.add_typer(bakeoff_app, name="bakeoff")
 
 ConfigOpt = Annotated[Path, typer.Option("--config", "-c", help="Project configuration file.")]
+ClaimsPresetOpt = Annotated[
+    str | None,
+    typer.Option(
+        "--claims-preset",
+        help="Conversation export: generic (default), or servicenow_va for ServiceNow Virtual Agent "
+        "interactions (interaction.list, Virtual agent = true).",
+    ),
+]
 
 
 def _say(msg: str) -> None:
@@ -289,6 +297,11 @@ def presets() -> None:
         note = "" if info["basis"] == "documented" else "  (typical export: check your column names)"
         typer.echo(f"{name:26s} {info['label']}{note}")
     typer.echo("\nUse one with `probative init --preset NAME` or `data.mapping_preset` in probative.yaml.")
+    from probative.ingest.conversations import PRESET_LABELS
+
+    typer.echo("\nConversation exports (--claims-preset, or data.self_service_preset):")
+    for name, label in PRESET_LABELS.items():
+        typer.echo(f"{name:26s} {label}")
 
 
 @app.command()
@@ -522,6 +535,7 @@ def audit(
     tickets_column: Annotated[
         list[str] | None, typer.Option("--tickets-column", help='Map a ticket field, e.g. requester_id="Caller".')
     ] = None,
+    claims_preset: ClaimsPresetOpt = None,
     reps: Annotated[int, typer.Option(help="Bootstrap draws.")] = 999,
     out: Annotated[Path | None, typer.Option("--out", "-o", help="Output directory (out/audit).")] = None,
     open_report: Annotated[bool, typer.Option("--open", help="Open the HTML audit.")] = False,
@@ -540,7 +554,9 @@ def audit(
         typer.secho("--match must be same_type or any", fg="red")
         raise typer.Exit(2)
     try:
-        inputs = _audit_inputs(cfg, claims, tickets, preset, claims_column, tickets_column, resolved_value)
+        inputs = _audit_inputs(
+            cfg, claims, tickets, preset, claims_column, tickets_column, resolved_value, claims_preset
+        )
         _say(f"{len(inputs.claims):,} claimed resolutions and {len(inputs.tickets):,} tickets read")
         result = run_audit(
             inputs,
@@ -571,9 +587,11 @@ def _audit_inputs(
     claims_column: list[str] | None,
     tickets_column: list[str] | None,
     resolved_value: str | None,
+    claims_preset: str | None = None,
 ):
     """Load the AI's conversations and the tickets, from a project and/or command-line options."""
     from probative.audit import load_audit_inputs
+    from probative.ingest.conversations import CONVERSATION_PRESETS
 
     base = cfg.base_dir if cfg else Path(".")
     a = cfg.audit if cfg else None
@@ -587,6 +605,12 @@ def _audit_inputs(
     preset = preset or (cfg.data.mapping_preset if cfg else "canonical")
     if preset not in PRESETS:
         typer.secho(f"Unknown preset {preset!r}. Choose from: {', '.join(PRESETS)}", fg="red")
+        raise typer.Exit(2)
+    claims_preset = claims_preset or (cfg.data.self_service_preset if cfg else "generic")
+    if claims_preset not in CONVERSATION_PRESETS:
+        typer.secho(
+            f"Unknown conversation preset {claims_preset!r}. Choose from: {', '.join(CONVERSATION_PRESETS)}", fg="red"
+        )
         raise typer.Exit(2)
     pseud = (
         None
@@ -602,7 +626,17 @@ def _audit_inputs(
         typing_fields=cfg.typing.fields if cfg else None,
         resolved_value=resolved_value or (a.resolved_value if a else "resolved"),
         pseudonymizer=pseud,
+        claims_preset=claims_preset,
     )
+
+
+def _optional_inputs(cfg, claims, tickets, preset, claims_column, tickets_column, resolved_value, claims_preset):
+    """The conversations and tickets when given; spend checks also run without them."""
+    has_claims = claims is not None or bool(cfg and cfg.data.self_service)
+    has_tickets = bool(tickets) or bool(cfg and cfg.data.work_units)
+    if not (has_claims and has_tickets):
+        return None
+    return _audit_inputs(cfg, claims, tickets, preset, claims_column, tickets_column, resolved_value, claims_preset)
 
 
 def _default_config(config: Path | None, claims: Path | None, tickets: list[Path] | None) -> ProjectConfig | None:
@@ -621,7 +655,16 @@ def reconcile(
     tickets: Annotated[list[Path] | None, typer.Option(help="Ticket export covering the period plus a week.")] = None,
     preset: Annotated[str | None, typer.Option(help="Ticket export preset.")] = None,
     period: Annotated[str | None, typer.Option(help="Billing period: YYYY-MM, or YYYY-MM-DD:YYYY-MM-DD.")] = None,
-    price: Annotated[float | None, typer.Option(help="Price per resolution, if the bill has no amounts.")] = None,
+    model: Annotated[
+        str, typer.Option(help="How the AI is billed: resolution, conversation or session.")
+    ] = "resolution",
+    price: Annotated[float | None, typer.Option(help="Price per billed item, if the bill has no amounts.")] = None,
+    billable: Annotated[
+        str | None,
+        typer.Option(help="Outcomes the contract bills, comma-separated (e.g. resolved,escalated). Default: all."),
+    ] = None,
+    session_hours: Annotated[float, typer.Option(help="Hours one billing session lasts (per-session bills).")] = 24.0,
+    included: Annotated[int, typer.Option(help="Items the plan includes each month before charges start.")] = 0,
     currency: Annotated[str | None, typer.Option(help="Currency (USD).")] = None,
     contractual: Annotated[
         bool | None,
@@ -638,11 +681,16 @@ def reconcile(
     ] = None,
     claims_column: Annotated[list[str] | None, typer.Option("--claims-column")] = None,
     tickets_column: Annotated[list[str] | None, typer.Option("--tickets-column")] = None,
+    claims_preset: ClaimsPresetOpt = None,
     reps: Annotated[int, typer.Option(help="Bootstrap draws for the comparison with your agents.")] = 499,
     out: Annotated[Path | None, typer.Option("--out", "-o", help="Output directory (out/reconcile).")] = None,
     open_report: Annotated[bool, typer.Option("--open", help="Open the dispute pack.")] = False,
 ) -> None:
-    """Reconcile a per-resolution bill: billing errors, resolutions that did not hold, and a dispute pack."""
+    """Reconcile an AI bill per resolution, conversation or session, and write a dispute pack.
+
+    Finds billing errors, shows what the money bought and what each resolution that held cost. Usage-priced
+    AI (assists, credits) is checked with `probative usage`, and seats with `probative seats`.
+    """
     from probative.audit import AuditError, load_bill, reconcile_bill
 
     cfg = _default_config(config, claims, tickets)
@@ -652,7 +700,12 @@ def reconcile(
         typer.secho("--match must be same_type or any", fg="red")
         raise typer.Exit(2)
     try:
-        inputs = _audit_inputs(cfg, claims, tickets, preset, claims_column, tickets_column, resolved_value)
+        if model not in ("resolution", "conversation", "session"):
+            typer.secho("--model must be resolution, conversation or session", fg="red")
+            raise typer.Exit(2)
+        inputs = _audit_inputs(
+            cfg, claims, tickets, preset, claims_column, tickets_column, resolved_value, claims_preset
+        )
         bill_df, bill_meta = load_bill(bill, _pairs(bill_column, "--bill-column"))
         result = reconcile_bill(
             bill_df,
@@ -666,6 +719,10 @@ def reconcile(
             contractual=contractual if contractual is not None else (a.contractual if a else False),
             definition_name=a.definition_name if a else "Verified resolution",
             resolved_value=resolved_value or (a.resolved_value if a else "resolved"),
+            model=model,
+            billable=billable,
+            session_hours=session_hours,
+            included=included,
             reps=reps,
             program=_program_info(cfg),
             files=[*inputs.files, bill_meta],
@@ -683,6 +740,175 @@ def reconcile(
     typer.echo(f"\nDispute pack:   {paths['html']}\nDisputed items: {paths['csv']}")
     if open_report:
         webbrowser.open(paths["html"].resolve().as_uri())
+
+
+def _spend_out(result: dict, cfg, out: Path | None, default: str, open_report: bool) -> None:
+    from probative.report import write_spend_pack
+
+    base = cfg.base_dir if cfg else Path(".")
+    out_dir = out or Path("out") / default
+    out_dir = out_dir if out_dir.is_absolute() else base / out_dir
+    paths = write_spend_pack(result, out_dir)
+    typer.secho(result["headline"], bold=True)
+    typer.echo(f"\nSpend check: {paths['html']}")
+    if open_report:
+        webbrowser.open(paths["html"].resolve().as_uri())
+
+
+@app.command()
+def usage(
+    files: Annotated[
+        list[Path], typer.Argument(help="Usage export: units (assists, credits or actions) by date and feature.")
+    ],
+    nonprod: Annotated[
+        list[Path] | None,
+        typer.Option("--nonprod", help="Usage export from a development or test instance. Repeat for more."),
+    ] = None,
+    config: Annotated[
+        Path | None, typer.Option("--config", "-c", help="Take files and settings from a project.")
+    ] = None,
+    claims: Annotated[Path | None, typer.Option(help="The AI's conversations, to see what the units bought.")] = None,
+    tickets: Annotated[list[Path] | None, typer.Option(help="Ticket export covering the period plus a week.")] = None,
+    preset: Annotated[str | None, typer.Option(help="Ticket export preset.")] = None,
+    claims_preset: ClaimsPresetOpt = None,
+    period: Annotated[str | None, typer.Option(help="Period: YYYY-MM, or YYYY-MM-DD:YYYY-MM-DD.")] = None,
+    unit: Annotated[str, typer.Option(help="What the units are called: assists, credits, actions.")] = "units",
+    unit_price: Annotated[float | None, typer.Option(help="Price per unit.")] = None,
+    pool: Annotated[float | None, typer.Option(help="Units bought for the term (pool or entitlement).")] = None,
+    pool_price: Annotated[float | None, typer.Option(help="What the pool cost.")] = None,
+    term_start: Annotated[str | None, typer.Option(help="First day of the contract term, YYYY-MM-DD.")] = None,
+    term_months: Annotated[int, typer.Option(help="Length of the term in months.")] = 12,
+    overage_price: Annotated[float | None, typer.Option(help="Price per unit beyond the pool.")] = None,
+    currency: Annotated[str | None, typer.Option(help="Currency (USD).")] = None,
+    window: Annotated[int | None, typer.Option(help="Days within which a return counts (7).")] = None,
+    match: Annotated[str | None, typer.Option(help="same_type (default) or any.")] = None,
+    resolved_value: Annotated[str | None, typer.Option(help="Outcome value(s) that mark a resolution.")] = None,
+    usage_column: Annotated[
+        list[str] | None, typer.Option("--usage-column", help='Map a usage field, e.g. units="Assists".')
+    ] = None,
+    claims_column: Annotated[list[str] | None, typer.Option("--claims-column")] = None,
+    tickets_column: Annotated[list[str] | None, typer.Option("--tickets-column")] = None,
+    reps: Annotated[int, typer.Option(help="Bootstrap draws.")] = 499,
+    out: Annotated[Path | None, typer.Option("--out", "-o", help="Output directory (out/usage).")] = None,
+    open_report: Annotated[bool, typer.Option("--open", help="Open the report.")] = False,
+) -> None:
+    """Check usage-priced AI (assists, credits, actions): where the units went and what they bought.
+
+    For ServiceNow Now Assist assists, Copilot Studio or Agentforce credits: units by feature and instance, what
+    the conversations they ran delivered, the cost of each resolution that held, and how fast the pool is going.
+    """
+    from probative.audit import AuditError, check_usage, load_usage
+
+    cfg = _default_config(config, claims, tickets)
+    a = cfg.audit if cfg else None
+    try:
+        inputs = _optional_inputs(
+            cfg, claims, tickets, preset, claims_column, tickets_column, resolved_value, claims_preset
+        )
+        base = cfg.base_dir if cfg else Path(".")
+        pseud = Pseudonymizer.from_env_or_file(base / ".probative" / "pseudonym.key")
+        log, log_files, notes = load_usage(
+            files, nonprod=nonprod, mapping=_pairs(usage_column, "--usage-column"), pseudonymizer=pseud
+        )
+        result = check_usage(
+            log,
+            inputs.conversations if inputs else None,
+            inputs.tickets if inputs else None,
+            period=period,
+            unit_name=unit,
+            unit_price=unit_price,
+            pool_units=pool,
+            pool_price=pool_price,
+            term_start=term_start,
+            term_months=term_months,
+            overage_price=overage_price,
+            currency=currency or (cfg.value.currency if cfg else "USD"),
+            window_days=window or (a.window_days if a else 7),
+            match=(match or (a.match if a else "same_type")),  # type: ignore[arg-type]
+            resolved_value=resolved_value or (a.resolved_value if a else "resolved"),
+            reps=reps,
+            program=_program_info(cfg),
+            files=[*(inputs.files if inputs else []), *log_files],
+            notes=[*(inputs.notes if inputs else []), *notes],
+        ).to_dict()
+    except (AuditError, ValueError, FileNotFoundError) as exc:
+        typer.secho(f"Usage check failed: {exc}", fg="red")
+        raise typer.Exit(1) from exc
+    _spend_out(result, cfg, out, "usage", open_report)
+
+
+@app.command("seats")
+def seats_cmd(
+    fee: Annotated[float | None, typer.Option(help="Fee for the whole term.")] = None,
+    fee_per_seat: Annotated[float | None, typer.Option(help="Price per seat for the term (with --seats).")] = None,
+    seats: Annotated[int | None, typer.Option(help="Seats, users or employees licensed.")] = None,
+    seat_label: Annotated[
+        str, typer.Option(help="What the seats are: employees, agents, licensed users.")
+    ] = "licensed users",
+    term_start: Annotated[str | None, typer.Option(help="First day of the contract term, YYYY-MM-DD.")] = None,
+    term_months: Annotated[int, typer.Option(help="Length of the term in months.")] = 12,
+    period: Annotated[str | None, typer.Option(help="Period: YYYY-MM (default: latest full month).")] = None,
+    usage_file: Annotated[
+        list[Path] | None, typer.Option("--usage", help="Usage export with a user column, to count active users.")
+    ] = None,
+    config: Annotated[
+        Path | None, typer.Option("--config", "-c", help="Take files and settings from a project.")
+    ] = None,
+    claims: Annotated[Path | None, typer.Option(help="The AI's conversations, to see what the fee bought.")] = None,
+    tickets: Annotated[list[Path] | None, typer.Option(help="Ticket export covering the period plus a week.")] = None,
+    preset: Annotated[str | None, typer.Option(help="Ticket export preset.")] = None,
+    claims_preset: ClaimsPresetOpt = None,
+    currency: Annotated[str | None, typer.Option(help="Currency (USD).")] = None,
+    window: Annotated[int | None, typer.Option(help="Days within which a return counts (7).")] = None,
+    match: Annotated[str | None, typer.Option(help="same_type (default) or any.")] = None,
+    resolved_value: Annotated[str | None, typer.Option(help="Outcome value(s) that mark a resolution.")] = None,
+    usage_column: Annotated[list[str] | None, typer.Option("--usage-column")] = None,
+    claims_column: Annotated[list[str] | None, typer.Option("--claims-column")] = None,
+    tickets_column: Annotated[list[str] | None, typer.Option("--tickets-column")] = None,
+    reps: Annotated[int, typer.Option(help="Bootstrap draws.")] = 499,
+    out: Annotated[Path | None, typer.Option("--out", "-o", help="Output directory (out/seats).")] = None,
+    open_report: Annotated[bool, typer.Option("--open", help="Open the report.")] = False,
+) -> None:
+    """Check AI priced per seat or per employee: what it cost, who used it, and what each held resolution cost."""
+    from probative.audit import AuditError, check_seats, load_usage
+
+    cfg = _default_config(config, claims, tickets)
+    a = cfg.audit if cfg else None
+    try:
+        inputs = _optional_inputs(
+            cfg, claims, tickets, preset, claims_column, tickets_column, resolved_value, claims_preset
+        )
+        log, log_files = None, []
+        if usage_file:
+            base = cfg.base_dir if cfg else Path(".")
+            pseud = Pseudonymizer.from_env_or_file(base / ".probative" / "pseudonym.key")
+            log, log_files, _ = load_usage(
+                usage_file, mapping=_pairs(usage_column, "--usage-column"), pseudonymizer=pseud
+            )
+        result = check_seats(
+            inputs.conversations if inputs else None,
+            inputs.tickets if inputs else None,
+            fee=fee,
+            fee_per_seat=fee_per_seat,
+            seats=seats,
+            seat_label=seat_label,
+            term_start=term_start,
+            term_months=term_months,
+            period=period,
+            usage=log,
+            currency=currency or (cfg.value.currency if cfg else "USD"),
+            window_days=window or (a.window_days if a else 7),
+            match=(match or (a.match if a else "same_type")),  # type: ignore[arg-type]
+            resolved_value=resolved_value or (a.resolved_value if a else "resolved"),
+            reps=reps,
+            program=_program_info(cfg),
+            files=[*(inputs.files if inputs else []), *log_files],
+            notes=inputs.notes if inputs else None,
+        ).to_dict()
+    except (AuditError, ValueError, FileNotFoundError) as exc:
+        typer.secho(f"Seat check failed: {exc}", fg="red")
+        raise typer.Exit(1) from exc
+    _spend_out(result, cfg, out, "seats", open_report)
 
 
 @app.command("watch")
@@ -704,6 +930,7 @@ def watch_cmd(
     resolved_value: Annotated[str | None, typer.Option(help="Outcome value that marks a resolution.")] = None,
     claims_column: Annotated[list[str] | None, typer.Option("--claims-column")] = None,
     tickets_column: Annotated[list[str] | None, typer.Option("--tickets-column")] = None,
+    claims_preset: ClaimsPresetOpt = None,
     reps: Annotated[int, typer.Option(help="Bootstrap draws.")] = 499,
     out: Annotated[Path | None, typer.Option("--out", "-o", help="Output directory (out/watch).")] = None,
     open_report: Annotated[bool, typer.Option("--open", help="Open the report.")] = False,
@@ -717,7 +944,9 @@ def watch_cmd(
     cfg = _default_config(config, claims, tickets)
     a = cfg.audit if cfg else None
     try:
-        inputs = _audit_inputs(cfg, claims, tickets, preset, claims_column, tickets_column, resolved_value)
+        inputs = _audit_inputs(
+            cfg, claims, tickets, preset, claims_column, tickets_column, resolved_value, claims_preset
+        )
         result = watch(
             inputs.conversations,
             inputs.tickets,

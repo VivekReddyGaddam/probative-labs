@@ -7,7 +7,7 @@ Probative Labs is an independent check on what AI vendors claim. A checker that 
 
 The open-source engine shows you, privately, whether your AI works. Probative Labs Cloud proves it to the people who act on it, from your CFO to the vendor, and turns what it finds into money back and a better deal at renewal, every month:
 
-- **Money back on your AI bill.** Send each bill to the program's upload address and it is checked against your own records as it arrives: resolutions billed twice, with no matching conversation, not resolved, outside the period or, under a contract definition, that did not hold. You get a dispute pack the vendor can recheck, and we help you take it to them.
+- **Money back on your AI bill.** Per resolution, per conversation, per session, in assists or credits, or per seat: send each bill or usage export to the program's upload address and it is checked against your own records as it arrives. Billing errors become a dispute pack the vendor can recheck; usage shows units spent in test instances and on conversations that failed. Every model ends in what each resolution that held cost, and we help you take the findings to the vendor.
 - **Proof for the renewal.** Our team runs the analysis, and the question is locked with a server timestamp before any result exists, so nobody can move the goalposts. The vendor can rerun every number with the open engine, but can't pay to change it. Once five organizations contribute, you also see your result beside your peers'.
 - **An early warning when the AI slips.** Read-only connectors pull fresh tickets, and the checks run by themselves every month. An alert reaches Slack, Google Chat or any webhook when claimed resolutions stop holding, a bill has items to dispute, or the data goes stale, so a vendor update nobody announced shows up at the next check, not at the renewal.
 - **Answers for your CFO and board.** A portfolio view across every AI program and a cost ledger, with the unit values that turn hours into money signed off by finance, not by the vendor. Every registration, sign-off, result and download is kept in an append-only audit log.
@@ -20,7 +20,7 @@ The open-source engine shows you, privately, whether your AI works. Probative La
 | | Open-source engine (free) | Probative Labs Cloud (paid) |
 | --- | --- | --- |
 | Every analysis and report | Every one, run by you | The same, run every month for you; our team runs the action audit and bake-offs |
-| Money back on per-resolution bills | Reconcile and dispute the bill yourself | A monthly dispute pack, and help taking it to the vendor |
+| Money back on your AI bill | Check any bill or usage export yourself | Every bill or usage export checked as it arrives, and help taking disputes to the vendor |
 | Proof for the renewal | Your own numbers | An independent finding, plus peer benchmarks once five organizations contribute |
 | Early warning when the AI gets worse | When someone reruns the analysis | An alert from the next monthly check |
 | Answers for the CFO and board | A report per program | Portfolio view, finance sign-off and an audit trail |

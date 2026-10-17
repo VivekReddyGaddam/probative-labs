@@ -1,0 +1,135 @@
+{% set cur = r.settings.currency %}
+{% set a = r.audit %}
+{% set u = r.usage %}
+{% set p = r.pool %}
+{% set st = r.seats %}
+{% set h = r.per_held %}
+{% set ns = namespace(n=0) %}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spend check · {{ r.program.name or "AI spend" }} · {{ r.period.start }} to {{ r.period.end }}</title>
+<style>
+{% include "_style.css.j2" %}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div>
+    <div class="eyebrow">Spend check · {{ MODELS[r.model] | lower }}</div>
+    <h1>{{ r.program.vendor or r.program.name or "AI spend" }}</h1>
+    <div class="meta">{{ r.period.start }} to {{ r.period.end }}{% if r.program.tool %} · {{ r.program.tool }}{% endif %}{% if r.spend.amount is not none %} · {{ r.spend.amount | money(cur) }}{% endif %}{% if r.spend.basis %} · {{ r.spend.basis }}{% endif %}</div>
+  </div>
+  <div class="grade word" title="Cost per resolution that held">
+    <div><b>{% if h %}{{ h.estimate | unit_price(cur) }}{% else %}n/a{% endif %}</b><small>Per held resolution</small></div>
+  </div>
+</header>
+
+<div class="tiles">
+  <div class="tile"><div class="k">Spend in the period</div><div class="v">{{ r.spend.amount | money(cur) }}</div><div class="s">{{ r.spend.basis or "" }}</div></div>
+  {% if u %}
+  <div class="tile"><div class="k">{{ u.unit_name | capitalize }} used</div><div class="v">{{ u.total | num(0) }}</div><div class="s">{{ (u.non_production / u.total) | pct(1) }} outside production</div></div>
+  {% endif %}
+  {% if st %}
+  <div class="tile"><div class="k">Used it</div><div class="v">{{ st.active | num(0) }}</div><div class="s">of {{ st.seats | num(0) }} {{ st.label }} · {{ st.utilization | pct }}</div></div>
+  {% endif %}
+  {% if a %}
+  <div class="tile"><div class="k">Resolutions that held</div><div class="v">{{ a.held.estimate | num(0) }}</div><div class="s">of {{ a.claims | num(0) }} claimed · {{ a.failed_share.estimate | pct }} did not hold</div></div>
+  {% endif %}
+  {% if h %}
+  <div class="tile"><div class="k">Cost per resolution that held</div><div class="v">{{ h.estimate | unit_price(cur) }}</div><div class="s">range {{ h.ci_low | unit_price(cur) }} to {{ h.ci_high | unit_price(cur) }}</div></div>
+  {% endif %}
+  {% if p %}
+  <div class="tile"><div class="k">Pool used</div><div class="v">{{ p.used_share | pct }}</div><div class="s">{% if p.runs_out_on == "used up" %}used up{% elif p.runs_out_on %}runs out {{ p.runs_out_on }}{% else %}{{ (p.unused_units / p.units) | pct }} left at term end{% endif %}</div></div>
+  {% endif %}
+</div>
+
+<p class="headline">{{ r.headline }}</p>
+
+{% if r.review %}
+{% set ns.n = ns.n + 1 %}
+<h2><span class="num">{{ ns.n }}</span>What to raise</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Finding</th><th class="n">{{ (u.unit_name if u else "Seats") | capitalize }}</th><th class="n">Amount</th><th>Detail</th></tr></thead>
+<tbody>{% for x in r.review %}<tr><td><b>{{ x.title }}</b></td><td class="n">{{ x.units | num(0) }}</td><td class="n">{{ x.amount | money(cur) }}</td><td>{{ x.detail }}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% endif %}
+
+{% if u %}
+{% set ns.n = ns.n + 1 %}
+<h2><span class="num">{{ ns.n }}</span>Where the {{ u.unit_name }} went</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Feature</th><th class="n">{{ u.unit_name | capitalize }}</th><th class="n">Share</th><th class="n">Amount</th><th class="n">Outside production</th></tr></thead>
+<tbody>{% for f in u.by_feature %}<tr><td>{{ f.feature }}</td><td class="n">{{ f.units | num(0) }}</td><td class="n">{{ f.share | pct(1) }}</td><td class="n">{{ f.amount | money(cur) }}</td><td class="n">{{ f.nonprod_units | num(0) }}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% if u.environments %}
+<p class="meta">Instances: {% for e in u.environments %}{{ e.environment }} ({{ e.units | num(0) }}{% if e.non_production %}, treated as non-production{% endif %}){% if not loop.last %} · {% endif %}{% endfor %}. Names containing dev, test, uat, qa, sandbox, staging or demo are treated as non-production; pass a file with --nonprod to mark one yourself.</p>
+{% endif %}
+{% endif %}
+
+{% if st %}
+{% set ns.n = ns.n + 1 %}
+<h2><span class="num">{{ ns.n }}</span>Seats</h2>
+<div class="table-wrap"><table>
+<tbody>
+<tr><td>Fee for the period</td><td class="n">{{ r.spend.amount | money(cur) }}</td><td>{{ r.spend.basis }}</td></tr>
+<tr><td>{{ st.label | capitalize }}</td><td class="n">{{ st.seats | num(0) }}</td><td></td></tr>
+<tr><td>Used it in the period</td><td class="n">{{ st.active | num(0) }}</td><td>{{ st.utilization | pct(1) }}, counted from {{ st.active_source }}</td></tr>
+<tr><td>Paid for and not used</td><td class="n">{{ st.idle | num(0) }}</td><td>{{ st.idle_cost | money(cur) }} of the period's fee</td></tr>
+</tbody></table></div>
+{% endif %}
+
+{% if r.outcomes %}
+{% set ns.n = ns.n + 1 %}
+<h2><span class="num">{{ ns.n }}</span>What the AI's conversations delivered</h2>
+<p>The AI's conversations in the period, by what happened next. "Came back" means the same person opened a ticket {% if r.settings.match == "same_type" %}about the same type of issue {% endif %}within {{ r.settings.window_days }} days.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Outcome</th><th class="n">Conversations</th><th class="n">Share</th>{% if u and u.linked %}<th class="n">{{ u.unit_name | capitalize }}</th><th class="n">Amount</th>{% endif %}</tr></thead>
+<tbody>{% for x in r.outcomes %}{% set l = (u.linked | selectattr("code", "equalto", x.code) | first) if u and u.linked else none %}<tr><td>{{ x.label }}</td><td class="n">{{ x.count | num(0) }}</td><td class="n">{{ x.share | pct(1) }}</td>{% if u and u.linked %}<td class="n">{{ l.units | num(0) if l else "0" }}</td><td class="n">{{ (l.amount | money(cur)) if l else "" }}</td>{% endif %}</tr>{% endfor %}</tbody>
+</table></div>
+{% endif %}
+
+{% if a %}
+{% set ns.n = ns.n + 1 %}
+<h2><span class="num">{{ ns.n }}</span>Each resolution that held</h2>
+<p>Of the period's {{ a.claims | num(0) }} claimed resolutions, {{ a.ai_rate | pct(1) }} came back within {{ r.settings.window_days }} days, against {{ a.baseline_rate | pct(1) }} after your agents' resolutions{% if a.standardized %} of the same types{% endif %}. Beyond that normal rate, <b>{{ a.failed_share.estimate | pct(1) }}</b> did not hold (range {{ a.failed_share.ci_low | pct(1) }} to {{ a.failed_share.ci_high | pct(1) }}; audit confidence {{ a.confidence }}), so about <b>{{ a.held.estimate | num(0) }}</b> held.</p>
+{% if h %}<p>{{ h.spend | money(cur) }} ({{ h.basis }}) ÷ {{ h.held | num(0) }} resolutions that held = <b>{{ h.estimate | unit_price(cur) }} per resolution that held</b> (range {{ h.ci_low | unit_price(cur) }} to {{ h.ci_high | unit_price(cur) }}). It is the number to compare across vendors and billing models.</p>{% endif %}
+{% if a.by_detail %}
+<h3>How the platform closed the conversations it counted as resolved</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>Platform's reason</th><th class="n">Claimed</th><th class="n">Share</th><th class="n">Came back</th><th class="n">Did not hold</th></tr></thead>
+<tbody>{% for d in a.by_detail %}<tr><td>{{ d.detail }}</td><td class="n">{{ d.claims | num(0) }}</td><td class="n">{{ d.share | pct(1) }}</td><td class="n">{{ d.ai_return_rate | pct(1) }}</td><td class="n">{{ d.failed_share | pct }}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% endif %}
+{% endif %}
+
+{% if p %}
+{% set ns.n = ns.n + 1 %}
+<h2><span class="num">{{ ns.n }}</span>The {{ p.unit_name }} pool</h2>
+<div class="table-wrap"><table>
+<tbody>
+<tr><td>Pool for the term {{ p.term_start }} to {{ p.term_end }}</td><td class="n">{{ p.units | num(0) }}</td></tr>
+<tr><td>Used from {{ p.data_from }} to {{ p.through }} (all instances)</td><td class="n">{{ p.used | num(0) }} ({{ p.used_share | pct }})</td></tr>
+<tr><td>Pace over the last 30 days</td><td class="n">{{ p.daily_rate | num(0) }} a day</td></tr>
+{% if p.overage_units %}<tr><td><b>{% if p.runs_out_on == "used up" %}Already used up{% else %}Runs out on {{ p.runs_out_on }}{% endif %}</b>, then over the pool by the term's end</td><td class="n">{{ p.overage_units | num(0) }}{% if p.overage_cost is not none %} · {{ p.overage_cost | money(cur) }}{% endif %}</td></tr>
+{% else %}<tr><td>Left unused at the term's end at this pace</td><td class="n">{{ p.unused_units | num(0) }}{% if p.unused_value is not none %} · {{ p.unused_value | money(cur) }}{% endif %}</td></tr>{% endif %}
+</tbody></table></div>
+{% if p.data_from != p.term_start %}<p class="meta">Usage data starts on {{ p.data_from }}, after the term began; use before that is not counted, so the pool may be further along than shown.</p>{% endif %}
+{% endif %}
+
+{% if r.notes %}{% set ns.n = ns.n + 1 %}<h2><span class="num">{{ ns.n }}</span>Notes</h2><ul>{% for n in r.notes %}<li>{{ n }}</li>{% endfor %}</ul>{% endif %}
+
+{% set ns.n = ns.n + 1 %}
+<h2><span class="num">{{ ns.n }}</span>Data lineage</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>File</th><th class="n">Rows</th><th>SHA-256</th></tr></thead>
+<tbody>{% for fl in r.lineage.files %}<tr><td>{{ fl.path.split("/")[-1] }}</td><td class="n">{{ fl.rows | num(0) }}</td><td class="mono">{{ fl.sha256[:16] }}…</td></tr>{% else %}<tr><td colspan="3">No files: the fee and seats were given as settings.</td></tr>{% endfor %}</tbody>
+</table></div>
+<p class="meta">Probative Labs {{ r.lineage.code.probative }} · settings <span class="mono">{{ r.lineage.settings_sha256[:12] }}</span> · run {{ r.lineage.run_at }}. Anyone with the same files and settings can rerun this check and get the same result.</p>
+<footer>Generated by Probative Labs, independent verification of what AI delivers. Method: docs/billing-models.md.</footer>
+</main>
+</body>
+</html>

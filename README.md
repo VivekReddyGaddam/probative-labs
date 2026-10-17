@@ -47,13 +47,19 @@ These need no staggered rollout: they work even when everyone got the AI on the 
 
 ```bash
 probative audit --tickets incidents.csv --preset servicenow --claims virtual_agent.csv --price 0.99
+probative audit --tickets incidents.csv --preset servicenow --claims interactions.csv --claims-preset servicenow_va
 probative reconcile vendor-bill.csv --period 2026-09 --contractual   # a dispute pack for the vendor
+probative reconcile vendor-bill.csv --model conversation             # per-conversation or per-session bills
+probative usage now_assist_usage.csv --unit assists --pool 500000    # assists or credits: where they went
+probative seats --fee 150000 --seats 1000                            # per-seat or per-employee pricing
 probative watch --events vendor-releases.csv                         # silent regressions after updates
 probative closures --ai-resolver "AI Agent"                          # tickets the AI closed by itself
 ```
 
 - **Resolution audit:** a claimed resolution holds if the person does not open a ticket about the same type of issue within 7 days. The return rate after the AI is compared with the return rate after human-resolved tickets of the same types in the same months; the excess is the share that did not hold, with a range and a confidence level. [docs/resolution-audit.md](docs/resolution-audit.md)
 - **Bill reconciliation:** every billed resolution is checked against your records: billed twice, no matching conversation, not resolved, outside the period, and, if your contract defines a resolution, did not hold. Writes a dispute pack and a line-by-line CSV. [docs/reconciliation.md](docs/reconciliation.md), with model contract terms in [docs/outcome-terms.md](docs/outcome-terms.md)
+- **Every billing model:** per resolution, per conversation, per session, usage units (ServiceNow assists, Copilot or Agentforce credits) or per seat, each brought to the same number: what each resolution that held cost. Usage checks also show units used outside production and how fast the pool is going; seat checks show licensed against active users. [docs/billing-models.md](docs/billing-models.md)
+- **ServiceNow Virtual Agent:** the `servicenow_va` preset reads the Interactions table and shows how ServiceNow closed each conversation it counts as resolved, including those closed because the person stopped responding, with how often each kind came back.
 - **Regression watch:** compares the latest weeks with the weeks before and tests known release dates, so an unannounced model change shows up in your own data. [docs/regression-watch.md](docs/regression-watch.md)
 - **Action audit:** how often tickets the AI closed by itself were reopened or repeated, against your agents' closures. [docs/action-audit.md](docs/action-audit.md)
 
@@ -123,7 +129,7 @@ Full method: [docs/methodology.md](docs/methodology.md). Evidence grades: [docs/
 
 The engine is free under Apache-2.0, and every analysis is in it: use it to see, privately, whether your AI works. Probative Labs Cloud proves it to the people who act on it, every month:
 
-- **Money back on your AI bill.** Every bill checked line by line, with a dispute pack for the vendor.
+- **Money back on your AI bill.** Every bill or usage export checked as it arrives, however the AI is billed.
 - **Proof for the renewal.** An independent finding the vendor can't dismiss as your own numbers.
 - **An early warning when the AI slips.** Checks on fresh data every month, and an alert when something changes.
 - **Answers for your CFO and board.** Every AI program's cost and return in one view, in numbers finance signed off.
@@ -134,12 +140,12 @@ See [OPEN_CORE.md](OPEN_CORE.md) for the comparison, side by side.
 
 ## Status and roadmap
 
-v0.3 is alpha. It covers the IT service desk. Planned next:
+v0.4 is alpha. It covers the IT service desk. Planned next:
 
 - Agent-level staggered adoption, for desks where every team got the AI at once but people started using it at different times
 - Action audits beyond ticket closures (access approvals, refunds, record changes) from system change history
 - Synthetic control and interrupted time series
-- Ready-made mappings for conversation, automated-resolution and billing exports
+- More conversation and usage presets (Zendesk, Intercom, Copilot Studio), checked on real exports
 - Software engineering, customer service, security and finance playbooks
 
 Breaking changes are possible before 1.0.

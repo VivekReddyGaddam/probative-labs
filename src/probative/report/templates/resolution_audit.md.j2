@@ -1,3 +1,4 @@
+{% set ns = namespace(n=0) %}
 {% set f = r.failed_share %}
 {% set ret = r.returns %}
 {% set b = r.billing %}
@@ -8,7 +9,7 @@ Claims {{ r.period.claims_from }} to {{ r.period.claims_to }} · {{ r.claims.in_
 
 > {{ r.headline }}
 
-## 1. What was checked
+{% set ns.n = ns.n + 1 %}## {{ ns.n }}. What was checked
 
 For each resolution the AI claimed, the audit looked for a ticket from the same person in the following {{ r.settings.window_days }} days{% if r.settings.match == "same_type" %} about the same type of issue{% endif %}. The same check on tickets resolved by people{% if ret.standardized %}, weighted to the same issue mix{% endif %}, in the same weeks, gives the normal return rate. Only the excess counts against the AI:
 
@@ -16,7 +17,7 @@ did not hold = (return rate after the AI − return rate after people) ÷ (1 −
 
 {{ lvl }}% ranges come from resampling people {{ r.settings.reps | num(0) }} times.
 
-## 2. Result
+{% set ns.n = ns.n + 1 %}## {{ ns.n }}. Result
 
 | | Estimate | {{ lvl }}% range |
 | --- | ---: | ---: |
@@ -32,9 +33,19 @@ did not hold = (return rate after the AI − return rate after people) ÷ (1 −
 
 The range includes zero: the AI's resolutions are not shown to fail more often than human resolutions.
 {% endif %}
+{% if r.by_detail %}
+
+How the platform closed the conversations it counted as resolved:
+
+| Platform's reason | Claimed | Came back | Did not hold |
+| --- | ---: | ---: | ---: |
+{% for d in r.by_detail %}
+| {{ d.detail }} | {{ d.claims | num(0) }} | {{ d.ai_return_rate | pct(1) }} | {{ d.failed_share | pct }} |
+{% endfor %}
+{% endif %}
 {% if r.by_type %}
 
-## 3. By type of issue
+{% set ns.n = ns.n + 1 %}## {{ ns.n }}. By type of issue
 
 | Type | Claimed | Came back | After AI | After people | Baseline | Did not hold |
 | --- | ---: | ---: | ---: | ---: | --- | ---: |
@@ -44,7 +55,7 @@ The range includes zero: the AI's resolutions are not shown to fail more often t
 {% endif %}
 {% if r.by_month %}
 
-## 4. Over time
+{% set ns.n = ns.n + 1 %}## {{ ns.n }}. Over time
 
 | Month | Claims checked | After AI | After people | Did not hold |
 | --- | ---: | ---: | ---: | ---: |
@@ -53,7 +64,7 @@ The range includes zero: the AI's resolutions are not shown to fail more often t
 {% endfor %}
 {% endif %}
 
-## 5. Robustness
+{% set ns.n = ns.n + 1 %}## {{ ns.n }}. Robustness
 
 | Check | Claims checked | Did not hold |
 | --- | ---: | ---: |
@@ -61,7 +72,7 @@ The range includes zero: the AI's resolutions are not shown to fail more often t
 | {{ s.check }}{% if s.main %} (main result){% endif %} | {{ s.claims | num(0) }} | {{ s.failed_share | pct(1) }} |
 {% endfor %}
 
-## 6. Audit confidence: {{ r.confidence.level }}
+{% set ns.n = ns.n + 1 %}## {{ ns.n }}. Audit confidence: {{ r.confidence.level }}
 
 {% for reason in r.confidence.reasons %}
 - {{ reason }}
@@ -74,7 +85,7 @@ The range includes zero: the AI's resolutions are not shown to fail more often t
 - {{ n }}
 {% endfor %}
 
-## 7. Data lineage
+{% set ns.n = ns.n + 1 %}## {{ ns.n }}. Data lineage
 
 | File | Rows | SHA-256 |
 | --- | ---: | --- |

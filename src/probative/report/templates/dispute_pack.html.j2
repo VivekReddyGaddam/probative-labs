@@ -1,11 +1,15 @@
 {% set cur = r.settings.currency %}
 {% set a = r.audit %}
+{% set model = r.model or "resolution" %}
+{% set noun = ITEM_NOUNS[model] %}
+{% set per_resolution = model == "resolution" %}
+{% set ns = namespace(n=0) %}
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dispute pack · {{ r.program.name or "Per-resolution bill" }} · {{ r.period.start }} to {{ r.period.end }}</title>
+<title>Dispute pack · {{ r.program.name or "AI bill" }} · {{ r.period.start }} to {{ r.period.end }}</title>
 <style>
 {% include "_style.css.j2" %}
 .sign td { height: 2.6rem; }
@@ -15,9 +19,9 @@
 <main>
 <header>
   <div>
-    <div class="eyebrow">Bill reconciliation · dispute pack</div>
-    <h1>{{ r.program.vendor or r.program.name or "Per-resolution bill" }}</h1>
-    <div class="meta">Billing period {{ r.period.start }} to {{ r.period.end }}{% if r.program.tool %} · {{ r.program.tool }}{% endif %} · {{ r.billed.count | num(0) }} billed resolutions{% if r.billed.amount is not none %} · {{ r.billed.amount | money(cur) }} billed{% endif %}</div>
+    <div class="eyebrow">Bill reconciliation · {{ MODELS[model] | lower }}</div>
+    <h1>{{ r.program.vendor or r.program.name or "AI bill" }}</h1>
+    <div class="meta">Billing period {{ r.period.start }} to {{ r.period.end }}{% if r.program.tool %} · {{ r.program.tool }}{% endif %} · {{ r.billed.count | num(0) }} billed {{ noun }}{% if r.billed.amount is not none %} · {{ r.billed.amount | money(cur) }} billed{% endif %}</div>
   </div>
   <div class="grade word" title="Amount disputed">
     <div><b>{% if r.disputed.amount is not none %}{{ r.disputed.amount | money(cur) }}{% else %}{{ r.disputed.count | num(0) }}{% endif %}</b><small>Disputed</small></div>
@@ -25,37 +29,66 @@
 </header>
 
 <div class="tiles">
-  <div class="tile"><div class="k">Billed</div><div class="v">{{ r.billed.count | num(0) }}</div><div class="s">{% if r.billed.amount is not none %}{{ r.billed.amount | money(cur) }}{% else %}resolutions{% endif %}</div></div>
+  <div class="tile"><div class="k">Billed</div><div class="v">{{ r.billed.count | num(0) }}</div><div class="s">{{ noun }}{% if r.billed.amount is not none %} · {{ r.billed.amount | money(cur) }}{% endif %}</div></div>
   <div class="tile"><div class="k">Billing errors</div><div class="v">{{ r.disputed.billing_errors | num(0) }}</div><div class="s">{{ r.disputed.billing_error_share | pct(1) }} of billed items{% if r.disputed.billing_error_amount %} · {{ r.disputed.billing_error_amount | money(cur) }}{% endif %}</div></div>
-  {% if r.settings.contractual %}
+  {% if per_resolution and r.settings.contractual %}
   <div class="tile"><div class="k">Did not hold (contract definition)</div><div class="v">{{ (r.reasons | selectattr("code", "equalto", "did_not_hold") | map(attribute="count") | first) or 0 }}</div><div class="s">repeat ticket within {{ r.settings.window_days }} days</div></div>
   {% elif a and a.negotiation %}
   <div class="tile"><div class="k">Negotiation figure</div><div class="v">{{ a.negotiation.estimate | money(cur) }}</div><div class="s">range {{ a.negotiation.ci_low | money(cur) }} to {{ a.negotiation.ci_high | money(cur) }}, from the resolution audit</div></div>
   {% endif %}
+  {% if r.per_held %}
+  <div class="tile"><div class="k">Cost per resolution that held</div><div class="v">{{ r.per_held.estimate | unit_price(cur) }}</div><div class="s">range {{ r.per_held.ci_low | unit_price(cur) }} to {{ r.per_held.ci_high | unit_price(cur) }}</div></div>
+  {% endif %}
+  {% if per_resolution %}
   <div class="tile"><div class="k">Held</div><div class="v">{{ r.held.held | num(0) }}</div><div class="s">of {{ r.held.checked | num(0) }} checked{% if r.held.too_recent %} · {{ r.held.too_recent | num(0) }} too recent{% endif %}</div></div>
+  {% endif %}
 </div>
 
 <p class="headline">{{ r.headline }}</p>
 
-<h2><span class="num">1</span>The definition used</h2>
+{% set ns.n = ns.n + 1 %}
+{% if per_resolution %}
+<h2><span class="num">{{ ns.n }}</span>The definition used</h2>
 <p><b>{{ r.settings.definition_name }}:</b> a conversation the AI resolved, inside the billing period, after which the same person did not open a ticket {% if r.settings.match == "same_type" %}about the same type of issue {% endif %}within {{ r.settings.window_days }} days.</p>
 {% if r.settings.contractual %}
 <p class="callout info">The contract uses this definition, so every billed item that did not meet it is disputed below.</p>
 {% else %}
 <p class="callout warn">No contract definition was applied, so only billing errors are disputed line by line. Items that came back are counted, and the resolution audit's comparison with your agents' resolutions gives a negotiation figure. To dispute them line by line, put the definition in the contract (docs/outcome-terms.md).</p>
 {% endif %}
+{% else %}
+<h2><span class="num">{{ ns.n }}</span>How this bill is counted</h2>
+{% if model == "conversation" %}
+<p>Every conversation the AI took part in is billed{% if r.settings.billable %} when its outcome is one of: {{ r.settings.billable }}{% else %}, whatever its outcome: resolved, handed to a person or abandoned{% endif %}. Each billed item is matched to your own conversation log, and each conversation is followed into your ticket system to see what it delivered.</p>
+{% else %}
+<p>One person's conversations within {{ r.settings.session_hours | num(0) }} hours of their first count as one session{% if r.settings.billable %}, when the outcome is one of: {{ r.settings.billable }}{% endif %}. {% if r.settings.item_level %}Each billed item is matched to your conversation log, and a second item billed for the same person inside one session is disputed.{% else %}Each day's billed sessions are compared with the sessions in your own conversation log.{% endif %}</p>
+{% endif %}
+{% if r.settings.included %}<p class="meta">The plan includes {{ r.settings.included | num(0) }} {{ noun }} a month; amounts count only what is charged beyond that.</p>{% endif %}
+{% endif %}
 
-<h2><span class="num">2</span>Reconciliation</h2>
+{% set ns.n = ns.n + 1 %}
+<h2><span class="num">{{ ns.n }}</span>Reconciliation</h2>
 <div class="table-wrap"><table>
 <thead><tr><th>Reason</th><th class="n">Items</th><th class="n">Amount</th></tr></thead>
 <tbody>
 {% for x in r.reasons %}<tr><td>{{ x.reason }}</td><td class="n">{{ x.count | num(0) }}</td><td class="n">{{ x.amount | money(cur) }}</td></tr>{% else %}<tr><td colspan="3">No billing errors found.</td></tr>{% endfor %}
 <tr><td><b>Disputed</b></td><td class="n"><b>{{ r.disputed.count | num(0) }}</b></td><td class="n"><b>{{ r.disputed.amount | money(cur) }}</b></td></tr>
 </tbody></table></div>
-{% if not r.settings.contractual and r.held.came_back %}<p class="meta">{{ r.held.came_back | num(0) }} billed resolutions were followed by a repeat ticket within {{ r.settings.window_days }} days. Not disputed line by line without a contract definition.</p>{% endif %}
+{% if per_resolution and not r.settings.contractual and r.held.came_back %}<p class="meta">{{ r.held.came_back | num(0) }} billed resolutions were followed by a repeat ticket within {{ r.settings.window_days }} days. Not disputed line by line without a contract definition.</p>{% endif %}
+
+{% if r.paid_for %}
+{% set ns.n = ns.n + 1 %}
+<h2><span class="num">{{ ns.n }}</span>What the money bought</h2>
+<p>{% if r.settings.item_level %}The {{ noun }} on the bill that match your records{% else %}Your records' {{ noun }} for the period{% endif %}, by what happened next. "Came back" means the same person opened a ticket {% if r.settings.match == "same_type" %}about the same type of issue {% endif %}within {{ r.settings.window_days }} days.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Outcome</th><th class="n">{{ noun | capitalize }}</th><th class="n">Share</th>{% if r.settings.item_level and r.billed.amount is not none %}<th class="n">Billed</th>{% endif %}</tr></thead>
+<tbody>{% for x in r.paid_for %}<tr><td>{{ x.label }}</td><td class="n">{{ x.count | num(0) }}</td><td class="n">{{ x.share | pct(1) }}</td>{% if r.settings.item_level and r.billed.amount is not none %}<td class="n">{{ x.amount | money(cur) }}</td>{% endif %}</tr>{% endfor %}</tbody>
+</table></div>
+{% if not per_resolution %}<p class="meta">Per-{{ model }} pricing charges for these whatever happened. They are not billing errors; they are why the cost of each resolution that held is higher than the price of one {{ model }}.</p>{% endif %}
+{% endif %}
 
 {% if r.lines %}
-<h2><span class="num">3</span>Disputed items</h2>
+{% set ns.n = ns.n + 1 %}
+<h2><span class="num">{{ ns.n }}</span>Disputed items</h2>
 <p class="meta">The first {{ [r.lines | length, 50] | min }} of {{ r.lines | length | num(0) }}. The full list is in <span class="mono">disputed-items.csv</span>, ready to send to the vendor. It contains the vendor's own item IDs only: no names and no ticket contents.</p>
 <div class="table-wrap"><table>
 <thead><tr><th class="n">Line</th><th>Item</th><th>Billed</th><th class="n">Amount</th><th>Reason</th><th>Detail</th></tr></thead>
@@ -64,28 +97,35 @@
 {% endif %}
 
 {% if a %}
-<h2><span class="num">4</span>Compared with your agents' resolutions</h2>
-<p>Across the period's {{ a.checked | num(0) }} checkable claims, {{ a.ai_rate | pct(1) }} came back within {{ r.settings.window_days }} days after the AI, against {{ a.baseline_rate | pct(1) }} after your agents' resolutions of the same types. Share that did not hold beyond that normal rate: <b>{{ a.failed_share.estimate | pct(1) }}</b> (range {{ a.failed_share.ci_low | pct(1) }} to {{ a.failed_share.ci_high | pct(1) }}). Audit confidence: {{ a.confidence }}.</p>
+{% set ns.n = ns.n + 1 %}
+<h2><span class="num">{{ ns.n }}</span>Compared with your agents' resolutions</h2>
+<p>Across the period's {{ a.checked | num(0) }} checkable claims, {{ a.ai_rate | pct(1) }} came back within {{ r.settings.window_days }} days after the AI, against {{ a.baseline_rate | pct(1) }} after your agents' resolutions{% if a.standardized %} of the same types{% endif %}. Share that did not hold beyond that normal rate: <b>{{ a.failed_share.estimate | pct(1) }}</b> (range {{ a.failed_share.ci_low | pct(1) }} to {{ a.failed_share.ci_high | pct(1) }}). Audit confidence: {{ a.confidence }}.</p>
+{% if r.per_held %}<p>About <b>{{ r.per_held.held | num(0) }}</b> of the period's {{ r.per_held.claims | num(0) }} claimed resolutions held (range {{ r.per_held.held_low | num(0) }} to {{ r.per_held.held_high | num(0) }}). The bill comes to <b>{{ r.per_held.estimate | unit_price(cur) }} per resolution that held</b> (range {{ r.per_held.ci_low | unit_price(cur) }} to {{ r.per_held.ci_high | unit_price(cur) }}): the number to compare across vendors and billing models.</p>{% endif %}
 {% endif %}
 
-<h2><span class="num">5</span>In the vendor's favour</h2>
+{% if per_resolution %}
+{% set ns.n = ns.n + 1 %}
+<h2><span class="num">{{ ns.n }}</span>In the vendor's favour</h2>
 <p>{{ r.unbilled.resolved_not_billed | num(0) }} conversations your records show as resolved in this period are not on the bill. They are reported so the reconciliation is fair to both sides.</p>
+{% endif %}
 
-{% if r.notes %}<h2><span class="num">6</span>Notes</h2><ul>{% for n in r.notes %}<li>{{ n }}</li>{% endfor %}</ul>{% endif %}
+{% if r.notes %}{% set ns.n = ns.n + 1 %}<h2><span class="num">{{ ns.n }}</span>Notes</h2><ul>{% for n in r.notes %}<li>{{ n }}</li>{% endfor %}</ul>{% endif %}
 
-<h2><span class="num">7</span>Sign-off</h2>
+{% set ns.n = ns.n + 1 %}
+<h2><span class="num">{{ ns.n }}</span>Sign-off</h2>
 <div class="table-wrap"><table class="sign">
 <thead><tr><th>Role</th><th>Name</th><th>Date</th></tr></thead>
 <tbody><tr><td>Prepared by</td><td></td><td></td></tr><tr><td>Reviewed by (buyer)</td><td></td><td></td></tr><tr><td>Acknowledged by (vendor)</td><td></td><td></td></tr></tbody>
 </table></div>
 
-<h2><span class="num">8</span>Data lineage</h2>
+{% set ns.n = ns.n + 1 %}
+<h2><span class="num">{{ ns.n }}</span>Data lineage</h2>
 <div class="table-wrap"><table>
 <thead><tr><th>File</th><th class="n">Rows</th><th>SHA-256</th></tr></thead>
 <tbody>{% for fl in r.lineage.files %}<tr><td>{{ fl.path.split("/")[-1] }}</td><td class="n">{{ fl.rows | num(0) }}</td><td class="mono">{{ fl.sha256[:16] }}…</td></tr>{% endfor %}</tbody>
 </table></div>
 <p class="meta">Probative Labs {{ r.lineage.code.probative }} · settings <span class="mono">{{ r.lineage.settings_sha256[:12] }}</span> · run {{ r.lineage.run_at }}. Anyone with the same files can rerun this reconciliation and get the same result.</p>
-<footer>Generated by Probative Labs, independent verification of what AI delivers. Method: docs/reconciliation.md.</footer>
+<footer>Generated by Probative Labs, independent verification of what AI delivers. Method: docs/reconciliation.md and docs/billing-models.md.</footer>
 </main>
 </body>
 </html>

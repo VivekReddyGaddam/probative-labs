@@ -114,6 +114,17 @@ th, td { text-align: left; padding: 0.65rem 0.9rem; border-bottom: 1px solid var
 th { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); background: var(--surface-2); font-weight: 700; }
 tr:last-child td { border-bottom: 0; }
 td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* Tables that turn into stacked cards on phones: each cell labelled from data-label. */
+@media (max-width: 640px) {
+  table.stack thead { display: none; }
+  table.stack, table.stack tbody, table.stack tr, table.stack td { display: block; width: 100%; }
+  table.stack tr { padding: 0.75rem 1rem; border-bottom: 1px solid var(--line); }
+  table.stack tr:last-child { border-bottom: 0; }
+  table.stack td { border: 0; padding: 0.12rem 0; text-align: left; white-space: normal; }
+  table.stack td[data-label]::before { content: attr(data-label); display: block; font-size: 0.72rem; font-weight: 700;
+    letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); margin-top: 0.45rem; }
+  table.stack td:first-child { font-size: 1rem; }
+}
 .empty { text-align: center; color: var(--muted); padding: 2rem 1rem; }
 
 /* Flash messages */

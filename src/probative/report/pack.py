@@ -85,7 +85,9 @@ def _env() -> Environment:
         lstrip_blocks=True,
     )
     env.filters.update(num=num, signed=signed, pct=pct, spct=spct, money=money, unit_price=unit_price, months=months)
-    env.globals.update(GRADE_TEXT=GRADE_TEXT, STATUS_TEXT=STATUS_TEXT)
+    from probative.audit.spend import ITEM_NOUNS, MODELS
+
+    env.globals.update(GRADE_TEXT=GRADE_TEXT, STATUS_TEXT=STATUS_TEXT, MODELS=MODELS, ITEM_NOUNS=ITEM_NOUNS)
     return env
 
 
@@ -199,6 +201,28 @@ def write_reconciliation_pack(result: dict, out_dir: str | Path) -> dict[str, Pa
         w.writeheader()
         for item in result.get("lines") or []:
             w.writerow({f: item.get(f) for f in fields})
+    return paths
+
+
+def write_spend_pack(result: dict, out_dir: str | Path) -> dict[str, Path]:
+    """Write a spend check (usage units or seats): JSON, Markdown, HTML and, for usage, units by feature as CSV."""
+    import csv
+
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    paths = {"json": out / "spend.json", "markdown": out / "spend-check.md", "html": out / "spend-check.html"}
+    env = _env()
+    paths["json"].write_text(json.dumps(result, indent=2))
+    paths["markdown"].write_text(env.get_template("spend_check.md.j2").render(r=result))
+    paths["html"].write_text(env.get_template("spend_check.html.j2").render(r=result))
+    if result.get("usage"):
+        paths["csv"] = out / "units-by-feature.csv"
+        fields = ["feature", "units", "share", "amount", "nonprod_units"]
+        with paths["csv"].open("w", newline="") as fh:
+            w = csv.DictWriter(fh, fieldnames=fields)
+            w.writeheader()
+            for row in result["usage"].get("by_feature") or []:
+                w.writerow({f: row.get(f) for f in fields})
     return paths
 
 

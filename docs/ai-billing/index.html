@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI billing · Probative Labs</title>
+<meta name="description" content="Per resolution, per conversation, per session, in assists or credits, or per seat: however the AI is billed, Probative Labs checks it against what happened next and brings it to one number, what each resolution that held cost.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Probative Labs">
+<meta property="og:title" content="AI billing · Probative Labs">
+<meta property="og:description" content="Per resolution, per conversation, per session, in assists or credits, or per seat: however the AI is billed, Probative Labs checks it against what happened next and brings it to one number, what each resolution that held cost.">
+<meta property="og:image" content="https://vivekreddygaddam.github.io/probative-labs/static/img/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="627">
+<meta property="og:image:alt" content="Probative Labs: independent proof of what your AI delivered.">
+<meta property="og:url" content="https://vivekreddygaddam.github.io/probative-labs/ai-billing/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/probative-labs/static/img/logo.svg?v=0818421d7d" type="image/svg+xml">
+<link rel="stylesheet" href="/probative-labs/static/css/main.css?v=6d9b880e8b">
+<script src="/probative-labs/static/js/app.js?v=0384b69a37" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="/probative-labs/"><img src="/probative-labs/static/img/logo.svg?v=0818421d7d" alt="" width="28" height="28">Probative Labs</a>
+    <button class="btn btn-ghost btn-sm nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <nav class="site-nav" id="site-nav" data-nav aria-label="Main">
+      <a href="/probative-labs/resolution-audit/" >Resolution audit</a>
+      <a href="/probative-labs/ai-billing/" aria-current="page">AI billing</a>
+      <a href="/probative-labs/method/" >Method</a>
+      <a href="/probative-labs/pricing/" >Pricing</a>
+      <a href="/probative-labs/independence/" >Independence</a>
+      <a href="/probative-labs/open-source/" >Open source</a>
+      
+      <a class="btn btn-primary btn-sm" href="/probative-labs/pilot/">Book a pilot</a>
+    </nav>
+  </div>
+</header>
+<main id="content">
+
+
+
+
+<section class="page-hero">
+  <div class="wrap">
+    <div class="eyebrow">AI billing</div>
+    <h1>However the AI is billed, check what you got.</h1>
+    <p class="lead">Per resolution, per conversation, per session, in assists or credits, or per seat: each model hides waste in a different place. We check every one against what happened next, and bring it to one number you can compare: what each resolution that held cost.</p>
+  </div>
+</section>
+
+<section class="tight">
+  <div class="wrap">
+    <div class="table-wrap"><table class="stack">
+      <thead><tr><th>How it is billed</th><th>Who bills this way</th><th>What we check</th></tr></thead>
+      <tbody>
+        <tr><td><b>Per resolution</b></td><td data-label="Who bills this way">Intercom Fin, Zendesk AI agents</td><td data-label="What we check">Resolutions billed twice, with no matching conversation, not resolved or outside the period, and those that did not hold</td></tr>
+        <tr><td><b>Per conversation</b></td><td data-label="Who bills this way">Salesforce Agentforce, Jira Service Management's virtual service agent</td><td data-label="What we check">Billing errors, outcomes the contract does not bill, and how many paid-for conversations ended in a hand-off, an abandonment or a repeat ticket</td></tr>
+        <tr><td><b>Per session</b></td><td data-label="Who bills this way">Freshservice Freddy AI Agent</td><td data-label="What we check">More sessions billed than your records hold, and a second charge inside one session</td></tr>
+        <tr><td><b>Usage units</b></td><td data-label="Who bills this way">ServiceNow Now Assist (assists), Copilot Studio and Agentforce (credits)</td><td data-label="What we check">Where the units went by feature, units used in test instances, units spent on conversations that failed, and when the pool runs out</td></tr>
+        <tr><td><b>Per seat or employee</b></td><td data-label="Who bills this way">Moveworks, Microsoft 365 Copilot</td><td data-label="What we check">Licensed against active users, the cost of seats nobody used, and what each held resolution cost</td></tr>
+      </tbody>
+    </table></div>
+    <p class="small muted" style="margin-top:0.8rem">Billing models from public pricing pages and guides, October 2026. Your contract may differ.</p>
+  </div>
+</section>
+
+
+<section class="band" id="samples">
+  <div class="wrap">
+    <div class="section-head center">
+      <h2>The same desk, billed five ways</h2>
+      <p>One simulated month (2026-05) of a 40-team service desk, checked under each model. Prices are illustrative, not any vendor's.</p>
+    </div>
+    <div class="table-wrap"><table class="stack">
+      <thead><tr><th>Billed</th><th>Price (illustrative)</th><th class="n">Paid</th><th class="n">Per resolution that held</th><th>What the check found</th><th></th></tr></thead>
+      <tbody><tr><td><b>Per resolution</b></td><td data-label="Price (illustrative)">$1.00 per claimed resolution</td><td class="n" data-label="Paid">$650</td><td class="n" data-label="Per resolution that held"><b>$1.19</b></td><td data-label="What the check found">110 billed resolutions disputable, and 14% of claimed resolutions did not hold</td><td><a href="/probative-labs/sample/dispute-pack.html">Report</a></td></tr><tr><td><b>Per conversation</b></td><td data-label="Price (illustrative)">$2.00 per conversation</td><td class="n" data-label="Paid">$1,742</td><td class="n" data-label="Per resolution that held"><b>$3.18</b></td><td data-label="What the check found">37% of the conversations paid for were handed to a person, abandoned, or came back as a ticket</td><td><a href="/probative-labs/sample/bill-per-conversation.html">Report</a></td></tr><tr><td><b>Per session</b></td><td data-label="Price (illustrative)">$0.90 per 24-hour session</td><td class="n" data-label="Paid">$786</td><td class="n" data-label="Per resolution that held"><b>$1.43</b></td><td data-label="What the check found">19 more sessions billed than the desk&#39;s records hold</td><td><a href="/probative-labs/sample/bill-per-session.html">Report</a></td></tr><tr><td><b>Usage units</b></td><td data-label="Price (illustrative)">$0.50 per assist, from a 45,000-assist pool</td><td class="n" data-label="Paid">$3,262</td><td class="n" data-label="Per resolution that held"><b>$2.57</b></td><td data-label="What the check found">14% of assists ran outside production, and the pool runs out on 2026-08-05</td><td><a href="/probative-labs/sample/usage-check.html">Report</a></td></tr><tr><td><b>Per seat or employee</b></td><td data-label="Price (illustrative)">$2 per employee a month, 6,000 employees</td><td class="n" data-label="Paid">$12,230</td><td class="n" data-label="Per resolution that held"><b>$22.30</b></td><td data-label="What the check found">809 of 6,000 employees used it (13%)</td><td><a href="/probative-labs/sample/seat-check.html">Report</a></td></tr></tbody>
+    </table></div>
+    <p class="small muted" style="margin-top:0.8rem">Per resolution that held: what the month cost, divided by the AI's claimed resolutions that held beyond the normal return rate after your agents' own resolutions. It is the number to compare across vendors and billing models.</p>
+  </div>
+</section>
+
+
+<section>
+  <div class="wrap split">
+    <div>
+      <div class="eyebrow">ServiceNow</div>
+      <h2>Now Assist bills in assists. Its reporting counts a walk-away as resolved.</h2>
+      <p>ServiceNow's own guides describe self-solve analytics that mark a conversation <a href="https://www.servicenow.com/community/servicenow-ai-platform-blog/assistant-analytics-self-solve-performance/ba-p/3516188">resolved when at least one AI asset ran</a>, and a resolution rate that <a href="https://www.servicenow.com/community/servicenow-otto-articles/tracking-now-assist-usage-measuring-roi-and-adoption-xanadu-and/ta-p/3460892">counts no response as positive</a>. A chat the person left without finishing closes as "Closed Complete, No User Response".</p>
+      <p>We read the Interactions table directly and show, for each way ServiceNow closed a conversation, how often the person needed help again. For assists, we show where they went by skill, how many ran in development and test instances, how many went to conversations that failed, and when the pool runs out.</p>
+      <div class="cta-row"><a class="btn" href="/probative-labs/sample/servicenow-audit.html">Sample ServiceNow audit</a><a class="btn btn-ghost" href="/probative-labs/sample/usage-check.html">Sample assist check</a></div>
+    </div>
+    
+    <div class="card">
+      <h3 style="font-size:1.05rem">Came back within 7 days, by how ServiceNow closed the chat</h3>
+      <p class="small muted">Simulated desk. After your agents' own resolutions: 13.9%.</p>
+      <div class="table-wrap"><table><thead><tr><th>State reason</th><th class="n">Counted resolved</th><th class="n">Came back</th></tr></thead>
+      <tbody><tr><td>Topic Complete</td><td class="n">1,335</td><td class="n">20%</td></tr><tr><td>Auto Closed</td><td class="n">887</td><td class="n">16%</td></tr><tr><td>No User Response</td><td class="n">797</td><td class="n">56%</td></tr><tr><td>User Ended</td><td class="n">455</td><td class="n">29%</td></tr><tr><td>Left for search</td><td class="n">122</td><td class="n">38%</td></tr></tbody></table></div>
+    </div>
+    
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap narrow">
+    <div class="section-head"><h2>Questions</h2></div>
+    <div class="faq-list">
+      <details><summary>Our contract has no per-resolution price. Is this still useful?</summary><div><p>Yes. Whatever the unit, the question at renewal is what the AI delivered for what it cost. Per-conversation, per-session, usage and seat pricing all come down to the same number here, what each resolution that held cost, with a list of what to raise with the vendor.</p></div></details>
+      <details><summary>What do you need from us?</summary><div><p>Your ticket export and the AI's conversations, plus the bill or the usage export. For seats, the fee and the number of seats. Everything runs on exports, read-only.</p></div></details>
+      <details><summary>Can we run it ourselves?</summary><div><p>Yes: <code>probative reconcile --model</code>, <code>probative usage</code> and <code>probative seats</code> are in the free engine. <a href="/probative-labs/open-source/">See what Cloud adds</a>.</p></div></details>
+    </div>
+  </div>
+</section>
+
+<section class="cta-band">
+  <div class="wrap narrow">
+    <h2>See what your AI bill bought.</h2>
+    <div class="cta-row"><a class="btn btn-primary" href="/probative-labs/pilot/">Book a pilot</a><a class="btn" href="/probative-labs/resolution-audit/">How the audit works</a></div>
+    <p class="cta-note">Pilots are free while we take on design partners, in exchange for your feedback.</p>
+  </div>
+</section>
+
+</main>
+<footer class="site-footer">
+  <div class="wrap footer-grid">
+    <div>
+      <a class="brand" href="/probative-labs/"><img src="/probative-labs/static/img/logo.svg?v=0818421d7d" alt="" width="28" height="28">Probative Labs</a>
+      <p class="muted small" style="margin-top:0.8rem;max-width:20rem">Independent proof of what each AI investment delivered. We sell no AI and take no money from AI vendors.</p>
+    </div>
+    <div>
+      <h4>Product</h4>
+      <ul>
+        <li><a href="/probative-labs/resolution-audit/">Resolution audit</a></li>
+        <li><a href="/probative-labs/ai-billing/">AI billing</a></li>
+        <li><a href="/probative-labs/method/">Method</a></li>
+        <li><a href="/probative-labs/benchmarks/">Benchmarks</a></li>
+        <li><a href="/probative-labs/pricing/">Pricing</a></li>
+        <li><a href="/probative-labs/pilot/">Book a pilot</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Samples</h4>
+      <ul>
+        <li><a href="/probative-labs/sample/evidence-pack.html">Evidence pack</a></li>
+        <li><a href="/probative-labs/sample/resolution-audit.html">Resolution audit</a></li>
+        <li><a href="/probative-labs/sample/dispute-pack.html">Dispute pack</a></li>
+        <li><a href="/probative-labs/sample/regression-watch.html">Regression watch</a></li>
+        <li><a href="/probative-labs/ai-billing/#samples">Every billing model</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Open source</h4>
+      <ul>
+        <li><a href="https://github.com/VivekReddyGaddam/probative-labs">GitHub</a></li>
+        <li><a href="https://github.com/VivekReddyGaddam/probative-labs/blob/main/docs/methodology.md">Methodology</a></li>
+        <li><a href="https://github.com/VivekReddyGaddam/probative-labs/blob/main/docs/validation.md">Validation</a></li>
+        <li><a href="/probative-labs/open-source/">Open source and Cloud</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Company</h4>
+      <ul>
+        <li><a href="/probative-labs/independence/">Independence</a></li>
+        <li><a href="/probative-labs/security/">Security and privacy</a></li>
+        <li><a href="/probative-labs/privacy/">Privacy notice</a></li>
+        
+      </ul>
+    </div>
+  </div>
+  <div class="wrap"><p class="muted small" style="margin-top:2.5rem">© 2026 Probative Labs · The engine is open source under the Apache License 2.0.</p></div>
+</footer>
+</body>
+</html>

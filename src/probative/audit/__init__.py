@@ -11,6 +11,7 @@ from probative.audit.resolutions import (
     load_audit_inputs,
     run_audit,
 )
+from probative.audit.spend import MODELS, SpendCheck, check_seats, check_usage, load_usage
 from probative.audit.watch import WatchResult, load_events, watch
 
 __all__ = [
@@ -28,6 +29,11 @@ __all__ = [
     "audit_resolutions",
     "load_audit_inputs",
     "run_audit",
+    "MODELS",
+    "SpendCheck",
+    "check_seats",
+    "check_usage",
+    "load_usage",
     "WatchResult",
     "load_events",
     "watch",

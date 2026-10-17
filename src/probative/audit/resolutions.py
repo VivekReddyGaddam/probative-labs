@@ -29,31 +29,14 @@ import pandas as pd
 from probative import schema as S
 from probative.config import TypingConfig
 from probative.ingest import Pseudonymizer, apply_mapping, check_work_units, read_table, read_tables, resolve_mapping
+from probative.ingest.conversations import GENERIC, RESOLVED, map_conversations, normalize_outcomes
 from probative.lineage import code_version, fingerprint
 from probative.worktypes import assign_work_types
 
 Match = Literal["same_type", "any"]
 
-# Typical column names in conversation or "automated resolution" exports. First match wins.
-CLAIMS_PRESET: dict[str, str | list[str]] = {
-    S.SESSION_ID: ["session_id", "Session ID", "Conversation ID", "conversation_id", "number", "ID"],
-    S.REQUESTER: [
-        "requester_id",
-        "Requester ID",
-        "Requester",
-        "User ID",
-        "User",
-        "caller_id",
-        "Caller",
-        "Requester Email",
-        "User Email",
-        "Email",
-    ],
-    S.SESSION_STARTED: ["started_at", "Started", "Start time", "Created", "created_at", "Created at", "Timestamp"],
-    S.SESSION_OUTCOME: ["outcome", "Outcome"],
-    S.CATEGORY: ["category", "Category", "Topic"],
-    S.SUBCATEGORY: ["subcategory", "Subcategory", "Sub-Category"],
-}
+# Typical column names in conversation or "automated resolution" exports (see probative.ingest.conversations).
+CLAIMS_PRESET = GENERIC
 
 OTHER_TYPES = "(other types)"
 ALL_TYPES = "(all)"
@@ -75,6 +58,7 @@ class AuditInputs:
     typed_on: list[str]
     health: dict
     pseudonymized: bool
+    notes: list[str] = field(default_factory=list)
 
 
 def load_audit_inputs(
@@ -88,8 +72,13 @@ def load_audit_inputs(
     resolved_value: str = "resolved",
     pseudonymizer: Pseudonymizer | None = None,
     now: pd.Timestamp | None = None,
+    claims_preset: str = "generic",
 ) -> AuditInputs:
-    """Read, map, pseudonymize and type the ticket export and the AI's claimed resolutions."""
+    """Read, map, pseudonymize and type the ticket export and the AI's claimed resolutions.
+
+    ``resolved_value`` may list several values separated by commas, for exports that record more
+    than one kind of resolution (for example "Assumed resolution,Confirmed resolution").
+    """
     raw, files, warnings = read_tables(tickets)
     mapping = resolve_mapping(preset, ticket_mapping or {})
     units, _ = apply_mapping(raw, mapping, S.WORK_UNIT_COLUMNS, required=(S.UNIT_ID, S.OPENED, S.REQUESTER))
@@ -106,8 +95,7 @@ def load_audit_inputs(
 
     c_raw, c_meta = read_table(claims)
     files.append(c_meta)
-    c_map = resolve_mapping(CLAIMS_PRESET, claims_mapping or {})
-    cl, _ = apply_mapping(c_raw, c_map, S.SESSION_COLUMNS, required=(S.REQUESTER, S.SESSION_STARTED))
+    cl, input_notes = map_conversations(c_raw, claims_preset, claims_mapping)
     rows = len(cl)
     if pseudonymizer is not None:
         cl = pseudonymizer.apply(cl, (S.REQUESTER,))
@@ -124,10 +112,13 @@ def load_audit_inputs(
     for df in (cl, units):
         if S.DESCRIPTION in df.columns:
             df.drop(columns=[S.DESCRIPTION], inplace=True)
+    has_outcome = S.SESSION_OUTCOME in cl.columns and cl[S.SESSION_OUTCOME].notna().any()
+    if has_outcome and (S.OUTCOME_DETAIL not in cl.columns or cl[S.OUTCOME_DETAIL].isna().all()):
+        cl[S.OUTCOME_DETAIL] = cl[S.SESSION_OUTCOME].astype("string").str.strip()
     conversations = cl
-    if S.SESSION_OUTCOME in cl.columns and cl[S.SESSION_OUTCOME].notna().any():
-        is_claim = cl[S.SESSION_OUTCOME].astype("string").str.strip().str.lower() == resolved_value.strip().lower()
-        cl = cl[is_claim.fillna(False)].reset_index(drop=True)
+    if has_outcome:
+        is_claim = normalize_outcomes(cl[S.SESSION_OUTCOME], cl.index, resolved_value) == RESOLVED
+        cl = cl[is_claim].reset_index(drop=True)
     return AuditInputs(
         claims=cl,
         tickets=units,
@@ -138,6 +129,7 @@ def load_audit_inputs(
         typed_on=fields,
         health=health.to_dict(),
         pseudonymized=pseudonymizer is not None,
+        notes=input_notes,
     )
 
 
@@ -470,6 +462,7 @@ class ResolutionAudit:
     lineage: dict = field(default_factory=dict)
     health: dict = field(default_factory=dict)
     notes: list[str] = field(default_factory=list)
+    by_detail: list[dict] = field(default_factory=list)
     kind: str = "resolution_audit"
 
     def to_dict(self) -> dict:
@@ -631,6 +624,26 @@ def audit_resolutions(  # noqa: C901 - one ordered story, like the main analysis
             }
         )
 
+    # How the platform says each claim ended: a claim the person walked away from is not the same as one
+    # where the topic finished. Raw return rates, with the human baseline for scale.
+    by_detail = []
+    if S.OUTCOME_DETAIL in eligible.columns and eligible[S.OUTCOME_DETAIL].nunique(dropna=True) >= 2:
+        for detail, grp in eligible.groupby(S.OUTCOME_DETAIL, dropna=True):
+            if len(grp) < min_cell:
+                continue
+            rate = float(grp["_ret"].mean())
+            by_detail.append(
+                {
+                    "detail": str(detail),
+                    "claims": int(len(grp)),
+                    "share": len(grp) / len(eligible),
+                    "returned": int(grp["_ret"].sum()),
+                    "ai_return_rate": rate,
+                    "failed_share": _failed(rate, point["base"]),
+                }
+            )
+        by_detail.sort(key=lambda d: -d["claims"])
+
     # Coverage and confidence -------------------------------------------------------------------
     ticket_people = set(tk[S.REQUESTER].dropna().astype(str))
     id_overlap = float(eligible[S.REQUESTER].astype(str).isin(ticket_people).mean())
@@ -745,6 +758,7 @@ def audit_resolutions(  # noqa: C901 - one ordered story, like the main analysis
         },
         health=health or {},
         notes=notes,
+        by_detail=by_detail,
     )
 
 
@@ -756,7 +770,7 @@ def _p(x: float) -> str:
 
 def run_audit(inputs: AuditInputs, **kwargs: Any) -> ResolutionAudit:
     """Convenience wrapper: audit loaded inputs, carrying their lineage into the result."""
-    return audit_resolutions(
+    result = audit_resolutions(
         inputs.claims,
         inputs.tickets,
         files=inputs.files,
@@ -766,6 +780,8 @@ def run_audit(inputs: AuditInputs, **kwargs: Any) -> ResolutionAudit:
         not_resolutions=inputs.not_resolutions,
         **kwargs,
     )
+    result.notes = [*inputs.notes, *result.notes]
+    return result
 
 
 __all__ = [

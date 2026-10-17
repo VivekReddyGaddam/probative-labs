@@ -1,3 +1,4 @@
+{% set ns = namespace(n=0) %}
 {% set f = r.failed_share %}
 {% set ret = r.returns %}
 {% set b = r.billing %}
@@ -40,13 +41,13 @@
 
 <p class="headline">{{ r.headline }}</p>
 
-<h2><span class="num">1</span>What was checked</h2>
+{% set ns.n = ns.n + 1 %}<h2><span class="num">{{ ns.n }}</span>What was checked</h2>
 <p>A claimed resolution holds if the person does not need help again with the same {{ "type of issue" if r.settings.match == "same_type" else "kind of problem" }} soon after. For each resolution the AI claimed, the audit looked for a ticket from the same person in the following {{ r.settings.window_days }} days{% if r.settings.match == "same_type" %} about the same type of issue{% endif %}.</p>
 <p>Some people come back after any resolution, for reasons that have nothing to do with the AI. So the same check is run on tickets resolved by people, {% if ret.standardized %}weighted to the same mix of issue types, {% endif %}in the same weeks. Only the excess return rate counts against the AI:</p>
 <p class="callout info">Did not hold = (return rate after the AI − return rate after people) ÷ (1 − return rate after people)</p>
 <p class="meta">Ranges come from resampling people {{ r.settings.reps | num(0) }} times, because one person's contacts are not independent. People are pseudonymized: the audit never sees names.</p>
 
-<h2><span class="num">2</span>Result</h2>
+{% set ns.n = ns.n + 1 %}<h2><span class="num">{{ ns.n }}</span>Result</h2>
 <div class="table-wrap"><table>
 <thead><tr><th></th><th class="n">Estimate</th><th class="n">{{ lvl }}% range</th></tr></thead>
 <tbody>
@@ -61,8 +62,17 @@
 </tbody></table></div>
 {% if not f.excludes_zero %}<div class="callout warn">The range includes zero: the AI's resolutions are not shown to fail more often than human resolutions.</div>{% endif %}
 
+{% if r.by_detail %}
+<h3>How the platform closed the conversations it counted as resolved</h3>
+<p class="meta">The platform's own reason for closing each claimed resolution, with how often the person came back. A conversation the person walked away from is not the same as one where the topic finished.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Platform's reason</th><th class="n">Claimed</th><th class="n">Share</th><th class="n">Came back</th><th class="n">Did not hold</th></tr></thead>
+<tbody>{% for d in r.by_detail %}<tr><td>{{ d.detail }}</td><td class="n">{{ d.claims | num(0) }}</td><td class="n">{{ d.share | pct(1) }}</td><td class="n">{{ d.ai_return_rate | pct(1) }}</td><td class="n">{{ d.failed_share | pct }}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% endif %}
+
 {% if r.by_type %}
-<h2><span class="num">3</span>By type of issue</h2>
+{% set ns.n = ns.n + 1 %}<h2><span class="num">{{ ns.n }}</span>By type of issue</h2>
 <div class="table-wrap"><table>
 <thead><tr><th>Type</th><th class="n">Claimed</th><th class="n">Came back</th><th class="n">After AI</th><th class="n">After people</th><th>Baseline</th><th class="n">Did not hold</th></tr></thead>
 <tbody>{% for t in r.by_type %}<tr><td>{{ t.work_type }}</td><td class="n">{{ t.claims | num(0) }}</td><td class="n">{{ t.returned | num(0) }}</td><td class="n">{{ t.ai_return_rate | pct(1) }}</td><td class="n">{{ t.baseline_return_rate | pct(1) }}</td><td>{{ t.baseline }}</td><td class="n">{{ t.failed_share | pct }}</td></tr>{% endfor %}</tbody>
@@ -71,7 +81,7 @@
 {% endif %}
 
 {% if r.by_month %}
-<h2><span class="num">4</span>Over time</h2>
+{% set ns.n = ns.n + 1 %}<h2><span class="num">{{ ns.n }}</span>Over time</h2>
 <figure>{{ chart | safe }}<figcaption>Share of claimed resolutions that did not hold, by month of the claim. Months with fewer than {{ r.settings.min_cell }} checked claims are left out.</figcaption></figure>
 <div class="table-wrap"><table>
 <thead><tr><th>Month</th><th class="n">Claims checked</th><th class="n">After AI</th><th class="n">After people</th><th class="n">Did not hold</th></tr></thead>
@@ -79,14 +89,14 @@
 </table></div>
 {% endif %}
 
-<h2><span class="num">5</span>Robustness</h2>
+{% set ns.n = ns.n + 1 %}<h2><span class="num">{{ ns.n }}</span>Robustness</h2>
 <p>The same audit with different reasonable choices. If these disagree a lot, read the result with care.</p>
 <div class="table-wrap"><table>
 <thead><tr><th>Check</th><th class="n">Claims checked</th><th class="n">Did not hold</th></tr></thead>
 <tbody>{% for s in r.sensitivity %}<tr><td>{{ s.check }}{% if s.main %} <span class="chip chip-pass">main result</span>{% endif %}</td><td class="n">{{ s.claims | num(0) }}</td><td class="n">{{ s.failed_share | pct(1) }}</td></tr>{% endfor %}</tbody>
 </table></div>
 
-<h2><span class="num">6</span>Audit confidence: {{ r.confidence.level }}</h2>
+{% set ns.n = ns.n + 1 %}<h2><span class="num">{{ ns.n }}</span>Audit confidence: {{ r.confidence.level }}</h2>
 <ul>{% for reason in r.confidence.reasons %}<li>{{ reason }}</li>{% endfor %}</ul>
 <div class="table-wrap"><table>
 <thead><tr><th>Coverage</th><th class="n">Value</th></tr></thead>
@@ -104,7 +114,7 @@
 </tbody></table></div>
 {% if r.notes %}<ul>{% for n in r.notes %}<li>{{ n }}</li>{% endfor %}</ul>{% endif %}
 
-<h2><span class="num">7</span>Data lineage</h2>
+{% set ns.n = ns.n + 1 %}<h2><span class="num">{{ ns.n }}</span>Data lineage</h2>
 <div class="table-wrap"><table>
 <thead><tr><th>File</th><th class="n">Rows</th><th>Modified</th><th>SHA-256</th></tr></thead>
 <tbody>{% for fl in r.lineage.files %}<tr><td>{{ fl.path.split("/")[-1] }}</td><td class="n">{{ fl.rows | num(0) }}</td><td>{{ fl.modified }}</td><td class="mono">{{ fl.sha256[:16] }}…</td></tr>{% endfor %}</tbody>

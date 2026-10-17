@@ -85,12 +85,14 @@ EXPOSURE_COLUMNS: dict[str, str] = {
 SESSION_ID = "session_id"
 SESSION_STARTED = "started_at"
 SESSION_OUTCOME = "outcome"  # resolved | escalated | abandoned
+OUTCOME_DETAIL = "outcome_detail"  # the platform's own words for how it ended, e.g. "No User Response"
 
 SESSION_COLUMNS: dict[str, str] = {
     SESSION_ID: "string",
     REQUESTER: "string",
     SESSION_STARTED: "datetime",
     SESSION_OUTCOME: "string",
+    OUTCOME_DETAIL: "string",
     CATEGORY: "string",
     SUBCATEGORY: "string",
     DESCRIPTION: "string",
@@ -125,4 +127,25 @@ BILL_COLUMNS: dict[str, str] = {
     BILLED_AT: "datetime",
     AMOUNT: "number",
     QUANTITY: "number",
+}
+
+# Usage logs, for AI billed by consumption (assists, credits, actions) ------------------
+
+USED_AT = "used_at"
+FEATURE = "feature"  # the skill, agent or action that consumed the units
+UNITS = "units"  # assists, credits or other billed units
+ACTIONS = "actions"
+UNIT_RATIO = "unit_ratio"  # units per action, when the log records actions
+ENVIRONMENT = "environment"  # instance or environment, to tell production from testing
+USER = "user_id"  # who used it, for active-user counts
+
+USAGE_COLUMNS: dict[str, str] = {
+    USED_AT: "datetime",
+    FEATURE: "string",
+    UNITS: "number",
+    ACTIONS: "number",
+    UNIT_RATIO: "number",
+    ENVIRONMENT: "string",
+    SESSION_ID: "string",
+    USER: "string",
 }

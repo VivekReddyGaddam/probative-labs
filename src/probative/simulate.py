@@ -180,6 +180,8 @@ class SimData:
     teams: pd.DataFrame
     truth: dict
     bill: pd.DataFrame = field(default_factory=pd.DataFrame)
+    # The same desk under other billing models and exports, keyed by file name (see _billing_exports).
+    extras: dict[str, pd.DataFrame] = field(default_factory=dict)
 
     def write(self, out_dir: str | Path, fmt: str = "servicenow") -> dict[str, Path]:
         """Write the files a customer would export, with tickets in ``fmt`` (see EXPORT_FORMATS)."""
@@ -203,6 +205,14 @@ class SimData:
             del paths["bill"]
         else:
             self.bill.to_csv(paths["bill"], index=False)
+        for name, frame in self.extras.items():
+            frame = frame.copy()
+            for col in ("opened_for", "requester_id"):
+                if col in frame.columns:
+                    frame[col] = _requester(frame[col], fmt)
+            path = out / f"{name}.csv"
+            frame.to_csv(path, index=False)
+            paths[name] = path
         paths["truth"].write_text(json.dumps({**self.truth, "export_format": fmt}, indent=2, default=str))
         return paths
 
@@ -512,9 +522,11 @@ def generate(spec: SimSpec | None = None) -> SimData:
             "outcome": outcome,
             "category": np.array([t.category for t in types])[ktype[sess_mask]],
             "subcategory": np.array([t.subcategory for t in types])[ktype[sess_mask]],
+            "_false": false_back[sess_mask],
         }
     )
     sessions = sessions[pd.to_datetime(sessions["started_at"]) < window_end].reset_index(drop=True)
+    false_flags = sessions.pop("_false").to_numpy(dtype=bool)
 
     bill, bill_truth = _vendor_bill(sessions, spec)
 
@@ -568,7 +580,11 @@ def generate(spec: SimSpec | None = None) -> SimData:
         "bill": bill_truth,
         "ai_closures": closures,
     }
-    return SimData(tickets=tickets, rollout=rollout, sessions=sessions, teams=teams, truth=truth, bill=bill)
+    extras, billing_truth = _billing_exports(sessions, false_flags, tickets, spec)
+    truth["billing_models"] = billing_truth
+    return SimData(
+        tickets=tickets, rollout=rollout, sessions=sessions, teams=teams, truth=truth, bill=bill, extras=extras
+    )
 
 
 def _plant_ai_closures(tickets: pd.DataFrame, spec: SimSpec) -> dict:
@@ -624,6 +640,206 @@ def _vendor_bill(sessions: pd.DataFrame, spec: SimSpec) -> tuple[pd.DataFrame, d
         "price": spec.bill_price,
     }
     return bill, truth
+
+
+# How ServiceNow closes Virtual Agent conversations (Interactions table, state and state reason).
+_REASONS = ("Topic Complete", "Auto Closed", "No User Response", "User Ended", "Left for search")
+_REASONS_HELD = (0.42, 0.30, 0.13, 0.12, 0.03)
+_REASONS_FALSE = (0.20, 0.08, 0.42, 0.22, 0.08)  # people who come back mostly left without finishing
+
+
+def _sessions_by_24h(requester: np.ndarray, started: np.ndarray) -> np.ndarray:
+    """A session number per conversation: one person's conversations within 24 hours of the session's first."""
+    order = np.lexsort((started, requester))
+    out = np.empty(len(order), dtype=np.int64)
+    day = np.timedelta64(24, "h")
+    current, cur_req, cur_start = -1, None, None
+    for i in order:
+        if requester[i] != cur_req or started[i] - cur_start >= day:
+            current, cur_req, cur_start = current + 1, requester[i], started[i]
+        out[i] = current
+    return out
+
+
+def _billing_exports(
+    sessions: pd.DataFrame, false_flags: np.ndarray, tickets: pd.DataFrame, spec: SimSpec
+) -> tuple[dict[str, pd.DataFrame], dict]:
+    """The same desk as other platforms would export and bill it, with known errors planted.
+
+    * ``interactions``: ServiceNow Virtual Agent conversations as the Interactions table exports them.
+      ServiceNow closes a chat the person walked away from as "Closed Complete, No User Response", so
+      some abandoned chats look resolved, and people who came back mostly left that way.
+    * ``bill_per_conversation``: every conversation billed (as per-conversation pricing does), with
+      duplicates and IDs that are not in the buyer's records.
+    * ``bill_per_session``: sessions billed per day, counted per calendar day instead of per 24 hours.
+    * ``now_assist_usage``: assists by skill and instance, with Virtual Agent conversations linked by
+      their interaction number and a share of use from development and test instances.
+
+    Uses its own random stream, so every other simulated file is unchanged.
+    """
+    rng = np.random.default_rng(spec.seed + 4_242)
+    if sessions.empty:
+        return {}, {}
+    n = len(sessions)
+    outcome = sessions["outcome"].to_numpy()
+    started = pd.to_datetime(sessions["started_at"])
+
+    # ServiceNow Virtual Agent interactions ------------------------------------------------------
+    state = np.empty(n, dtype=object)
+    reason = np.empty(n, dtype=object)
+    agent = np.zeros(n, dtype=bool)
+    res = outcome == "resolved"
+    held_idx, false_idx = np.where(res & ~false_flags)[0], np.where(res & false_flags)[0]
+    state[res] = "Closed Complete"
+    reason[held_idx] = rng.choice(_REASONS, size=len(held_idx), p=_REASONS_HELD)
+    reason[false_idx] = rng.choice(_REASONS, size=len(false_idx), p=_REASONS_FALSE)
+    e_idx = np.where(outcome == "escalated")[0]
+    left = rng.random(len(e_idx)) < 0.15
+    state[e_idx] = np.where(left, "Closed Abandoned", "Closed Complete")
+    reason[e_idx] = np.where(
+        left, "Left Before Engagement", np.where(rng.random(len(e_idx)) < 0.7, "Agent Ended", "User Ended")
+    )
+    agent[e_idx] = ~left
+    a_idx = np.where(outcome == "abandoned")[0]
+    r = rng.random(len(a_idx))
+    state[a_idx] = np.where(r < 0.5, "Closed Complete", np.where(r < 0.95, "Closed Abandoned", "Faulted"))
+    reason[a_idx] = np.where(r < 0.5, "No User Response", np.where(r < 0.95, "No Activity", "Error"))
+    numbers = np.array([f"IMS{i + 1:07d}" for i in range(n)])
+    interactions = pd.DataFrame(
+        {
+            "number": numbers,
+            "opened_for": sessions["requester_id"].to_numpy(),
+            "opened_at": sessions["started_at"].to_numpy(),
+            "type": "chat",
+            "virtual_agent": "true",
+            "agent_chat": np.where(agent, "true", "false"),
+            "state": state,
+            "state_reason": reason,
+        }
+    )
+    live_n = max(1, n // 20)  # live-agent chats in the same table, left out by the Virtual agent flag
+    live = pd.DataFrame(
+        {
+            "number": [f"IMS{n + i + 1:07d}" for i in range(live_n)],
+            "opened_for": sessions["requester_id"].sample(live_n, random_state=spec.seed, replace=True).to_numpy(),
+            "opened_at": sessions["started_at"].sample(live_n, random_state=spec.seed + 1, replace=True).to_numpy(),
+            "type": "chat",
+            "virtual_agent": "false",
+            "agent_chat": "true",
+            "state": "Closed Complete",
+            "state_reason": "Agent Ended",
+        }
+    )
+    interactions = pd.concat([interactions, live], ignore_index=True).sort_values("opened_at", kind="stable")
+    snow_claimed = state == "Closed Complete"
+    snow_claimed &= ~agent
+
+    # Billed per conversation ---------------------------------------------------------------------
+    conv_price = 2.0
+    base = sessions[["session_id", "started_at"]]
+    dups = base[rng.random(n) < 0.01]
+    n_unknown = max(1, int(round(n * 0.004)))
+    unknown = pd.DataFrame(
+        {
+            "session_id": [f"VZ{i:08d}" for i in rng.integers(0, 10**8, n_unknown)],
+            "started_at": base["started_at"].to_numpy()[rng.integers(0, n, n_unknown)],
+        }
+    )
+    lines = pd.concat([base, dups, unknown], ignore_index=True)
+    lines = lines.iloc[rng.permutation(len(lines))].sort_values("started_at", kind="stable")
+    bill_conv = pd.DataFrame(
+        {"Conversation ID": lines["session_id"], "Date": lines["started_at"], "Amount": conv_price}
+    ).reset_index(drop=True)
+
+    # Billed per session, counted by calendar day instead of 24 hours -----------------------------
+    req = sessions["requester_id"].to_numpy().astype(str)
+    true_session = _sessions_by_24h(req, started.to_numpy(dtype="datetime64[ns]"))
+    day = started.dt.normalize()
+    session_start = pd.Series(started.to_numpy()).groupby(true_session).min()
+    true_per_day = session_start.dt.normalize().value_counts()
+    vendor = pd.DataFrame({"r": req, "d": day}).drop_duplicates()
+    billed_per_day = vendor.groupby("d").size()
+    # On about one day in five the vendor's meter also runs a few percent above the sessions it served.
+    bump = (rng.random(len(billed_per_day)) < 0.2) * np.ceil(billed_per_day.to_numpy() * rng.uniform(0.03, 0.12))
+    billed_per_day = billed_per_day + bump.astype(int)
+    bill_sess = pd.DataFrame({"Date": billed_per_day.index.strftime("%Y-%m-%d"), "Sessions": billed_per_day.to_numpy()})
+
+    # Now Assist usage, in assists ----------------------------------------------------------------
+    rows = []
+    va_assists = np.where(res | (state == "Closed Complete") & ~agent, rng.integers(2, 5, n), 0)
+    va_assists = np.where(outcome == "escalated", rng.integers(4, 9, n), va_assists)
+    va_assists = np.where(va_assists == 0, rng.integers(1, 3, n), va_assists)
+    rows.append(
+        pd.DataFrame(
+            {
+                "sys_created_on": sessions["started_at"].to_numpy(),
+                "instance": "acme",
+                "skill": "Now Assist in Virtual Agent",
+                "assists": va_assists,
+                "document_id": numbers,
+            }
+        )
+    )
+    ai = tickets[tickets["u_ai_assisted"] == "true"]
+    for skill, share, assists in (
+        ("Incident summarization", 0.35, 1),
+        ("Resolution notes generation", 0.25, 1),
+        ("Chat reply recommendation", 0.06, 5),
+        ("AI agent: password reset", 0.02, 25),
+    ):
+        used = ai[rng.random(len(ai)) < share]
+        per_day = pd.to_datetime(used["opened_at"]).dt.normalize().value_counts().sort_index()
+        rows.append(
+            pd.DataFrame(
+                {
+                    "sys_created_on": per_day.index.strftime("%Y-%m-%d 12:00:00"),
+                    "instance": "acme",
+                    "skill": skill,
+                    "assists": per_day.to_numpy() * assists,
+                    "document_id": "",
+                }
+            )
+        )
+    prod = pd.concat(rows, ignore_index=True)
+    test = prod[prod["skill"] != "Now Assist in Virtual Agent"].sample(frac=0.9, random_state=spec.seed)
+    test = test.assign(
+        instance=np.where(rng.random(len(test)) < 0.6, "acme-dev", "acme-test"),
+        assists=np.maximum(1, np.round(test["assists"].to_numpy() * rng.uniform(0.2, 0.6, len(test)))).astype(int),
+        document_id="",
+    )
+    usage = pd.concat([prod, test], ignore_index=True).sort_values("sys_created_on", kind="stable")
+
+    truth = {
+        "interactions": {
+            "virtual_agent": n,
+            "live_agent_only": live_n,
+            "servicenow_resolved": int(snow_claimed.sum()),
+            "no_user_response_resolved": int((snow_claimed & (reason == "No User Response")).sum()),
+        },
+        "per_conversation": {
+            "lines": len(bill_conv),
+            "duplicates": len(dups),
+            "unknown_ids": n_unknown,
+            "price": conv_price,
+        },
+        "per_session": {
+            "sessions_24h": int(true_session.max() + 1),
+            "billed": int(billed_per_day.sum()),
+            "overcount": int(billed_per_day.sum() - true_per_day.sum()),
+        },
+        "usage": {
+            "assists": int(usage["assists"].sum()),
+            "non_production": int(test["assists"].sum()),
+            "virtual_agent": int(prod.loc[prod["skill"] == "Now Assist in Virtual Agent", "assists"].sum()),
+        },
+    }
+    extras = {
+        "interactions": interactions,
+        "bill_per_conversation": bill_conv,
+        "bill_per_session": bill_sess,
+        "now_assist_usage": usage,
+    }
+    return extras, truth
 
 
 def demo_config(data_dir: str = "data", truth: dict | None = None, fmt: str = "servicenow") -> dict:

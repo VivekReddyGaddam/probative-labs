@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dispute pack · Simulated service desk · 2026-05-01 to 2026-05-31</title>
+<style>
+:root {
+  --bg: #f7f6f2; --surface: #ffffff; --ink: #1b1c1e; --muted: #5c6066; --line: #e3e0d8;
+  --accent: #1d5c48; --accent-soft: #e2eee8;
+  --good: #1b6b41; --good-soft: #e0f1e6; --warn: #7d5300; --warn-soft: #faefd6;
+  --bad: #9a2a2a; --bad-soft: #f7e0e0; --neutral-soft: #ecebe6;
+  --chart-line: #1d5c48; --chart-band: rgba(29, 92, 72, 0.16); --chart-pre: #7b8088; --chart-grid: #e8e5de;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121314; --surface: #1a1c1e; --ink: #ecebe7; --muted: #a3a7ad; --line: #2c2f33;
+    --accent: #7fc8aa; --accent-soft: #1f322b;
+    --good: #7fd3a0; --good-soft: #1b3125; --warn: #f0c46a; --warn-soft: #362c17;
+    --bad: #f0a0a0; --bad-soft: #3a2020; --neutral-soft: #26292c;
+    --chart-line: #7fc8aa; --chart-band: rgba(127, 200, 170, 0.18); --chart-pre: #8d9299; --chart-grid: #2a2d31;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121314; --surface: #1a1c1e; --ink: #ecebe7; --muted: #a3a7ad; --line: #2c2f33;
+  --accent: #7fc8aa; --accent-soft: #1f322b;
+  --good: #7fd3a0; --good-soft: #1b3125; --warn: #f0c46a; --warn-soft: #362c17;
+  --bad: #f0a0a0; --bad-soft: #3a2020; --neutral-soft: #26292c;
+  --chart-line: #7fc8aa; --chart-band: rgba(127, 200, 170, 0.18); --chart-pre: #8d9299; --chart-grid: #2a2d31;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 var(--sans); }
+main { max-width: 980px; margin: 0 auto; padding: 32px 16px 64px; }
+h1, h2, h3 { font-family: var(--serif); font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; }
+h1 { font-size: 2rem; margin: 0.2rem 0 0.4rem; }
+h2 { font-size: 1.35rem; margin: 2.4rem 0 0.8rem; padding-top: 1.2rem; border-top: 1px solid var(--line); }
+h2 .num { color: var(--muted); font-family: var(--sans); font-size: 0.9rem; font-weight: 600; margin-right: 0.5rem; }
+p { margin: 0.5rem 0 0.9rem; }
+.eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; font-weight: 600; color: var(--accent); }
+.meta { color: var(--muted); font-size: 0.9rem; }
+header { display: flex; gap: 24px; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; }
+header > div:first-child { flex: 1 1 320px; min-width: 0; }
+.grade { flex: none; width: 96px; height: 96px; border-radius: 16px; background: var(--accent-soft); color: var(--accent);
+  display: grid; place-items: center; text-align: center; }
+.grade b { font-family: var(--serif); font-size: 2.6rem; line-height: 1; display: block; }
+.grade small { font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.grade.g-D, .grade.g-insufficient { background: var(--warn-soft); color: var(--warn); }
+.grade.g-insufficient b { font-size: 1.1rem; }
+.grade.c-medium { background: var(--warn-soft); color: var(--warn); }
+.grade.c-low { background: var(--bad-soft); color: var(--bad); }
+.grade.word b { font-size: 1.25rem; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin: 24px 0 8px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+.tile .k { font-size: 0.78rem; color: var(--muted); }
+.tile .v { font-family: var(--serif); font-size: 1.45rem; margin-top: 2px; }
+.tile .s { font-size: 0.8rem; color: var(--muted); }
+.headline { font-size: 1.08rem; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--accent);
+  border-radius: 10px; padding: 14px 18px; margin: 18px 0; }
+.rec { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+.rec b { font-family: var(--serif); font-size: 1.1rem; }
+.table-wrap { overflow-x: auto; margin: 0.6rem 0 1rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; background: var(--neutral-soft); }
+tr:last-child td { border-bottom: 0; }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.chip { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: 0.76rem; font-weight: 600; white-space: nowrap; }
+.chip-pass { background: var(--good-soft); color: var(--good); }
+.chip-watch { background: var(--warn-soft); color: var(--warn); }
+.chip-breach, .chip-fail { background: var(--bad-soft); color: var(--bad); }
+.chip-unavailable, .chip-not_run { background: var(--neutral-soft); color: var(--muted); }
+.callout { border-radius: 10px; padding: 12px 16px; margin: 12px 0; }
+.callout.bad { background: var(--bad-soft); color: var(--bad); }
+.callout.warn { background: var(--warn-soft); color: var(--warn); }
+.callout.info { background: var(--accent-soft); color: var(--ink); }
+ul { padding-left: 1.2rem; }
+li { margin: 0.25rem 0; }
+code, .mono { font-family: var(--mono); font-size: 0.82rem; }
+figure { margin: 0.6rem 0 1rem; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+figcaption { color: var(--muted); font-size: 0.82rem; margin-top: 6px; }
+.tl-chart { width: 100%; height: auto; display: block; }
+.tl-chart .grid { stroke: var(--chart-grid); stroke-width: 1; }
+.tl-chart .zero { stroke: var(--muted); stroke-width: 1; }
+.tl-chart .rollout { stroke: var(--muted); stroke-dasharray: 4 4; }
+.tl-chart .band { fill: var(--chart-band); }
+.tl-chart .bar { fill: var(--chart-line); opacity: 0.85; }
+.tl-chart .line { fill: none; stroke: var(--chart-line); stroke-width: 2; }
+.tl-chart circle.post { fill: var(--chart-line); }
+.tl-chart circle.pre { fill: var(--chart-pre); }
+.tl-chart .whisker { stroke: var(--chart-pre); stroke-width: 1.5; }
+.tl-chart text { fill: var(--muted); font: 11px var(--sans); }
+.tl-chart .axis { font-size: 12px; }
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; margin-top: 12px; }
+details summary { cursor: pointer; font-weight: 600; }
+details h3 { font-size: 1.05rem; margin: 1.2rem 0 0.4rem; }
+footer { margin-top: 48px; color: var(--muted); font-size: 0.8rem; border-top: 1px solid var(--line); padding-top: 16px; }
+@media print {
+  body { background: #fff; color: #000; font-size: 11pt; }
+  main { max-width: none; padding: 0; }
+  .tile, .table-wrap, figure, details, .headline { break-inside: avoid; }
+  details { display: block; }
+  details > *:not(summary) { display: block; }
+}
+@media (max-width: 560px) { h1 { font-size: 1.6rem; } .grade { width: 76px; height: 76px; } .grade b { font-size: 2rem; } }.sign td { height: 2.6rem; }
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div>
+    <div class="eyebrow">Bill reconciliation · per conversation</div>
+    <h1>Simulated service desk</h1>
+    <div class="meta">Billing period 2026-05-01 to 2026-05-31 · Billed per conversation at $2.00 (illustrative) · 871 billed conversations · $1,742 billed</div>
+  </div>
+  <div class="grade word" title="Amount disputed">
+    <div><b>$26</b><small>Disputed</small></div>
+  </div>
+</header>
+
+<div class="tiles">
+  <div class="tile"><div class="k">Billed</div><div class="v">871</div><div class="s">conversations · $1,742</div></div>
+  <div class="tile"><div class="k">Billing errors</div><div class="v">13</div><div class="s">1.5% of billed items · $26</div></div>
+  <div class="tile"><div class="k">Cost per resolution that held</div><div class="v">$3.18</div><div class="s">range $3.07 to $3.31</div></div>
+</div>
+
+<p class="headline">Of 871 billed conversations ($1,742) for 2026-05-01 to 2026-05-31, 13 are disputable ($26): 8 billed twice; 5 with no matching conversation. Of the conversations you paid for, 37% were handed to a person, abandoned, or came back as a ticket. Each resolution that held cost $3.18 (range $3.07 to $3.31).</p>
+
+<h2><span class="num">1</span>How this bill is counted</h2>
+<p>Every conversation the AI took part in is billed, whatever its outcome: resolved, handed to a person or abandoned. Each billed item is matched to your own conversation log, and each conversation is followed into your ticket system to see what it delivered.</p>
+
+<h2><span class="num">2</span>Reconciliation</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Reason</th><th class="n">Items</th><th class="n">Amount</th></tr></thead>
+<tbody>
+<tr><td>Billed more than once</td><td class="n">8</td><td class="n">$16</td></tr><tr><td>No matching conversation in your records</td><td class="n">5</td><td class="n">$10</td></tr><tr><td><b>Disputed</b></td><td class="n"><b>13</b></td><td class="n"><b>$26</b></td></tr>
+</tbody></table></div>
+
+<h2><span class="num">3</span>What the money bought</h2>
+<p>The conversations on the bill that match your records, by what happened next. "Came back" means the same person opened a ticket about the same type of issue within 7 days.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Outcome</th><th class="n">Conversations</th><th class="n">Share</th><th class="n">Billed</th></tr></thead>
+<tbody><tr><td>Resolved, and the person did not come back</td><td class="n">540</td><td class="n">62.9%</td><td class="n">$1,080</td></tr><tr><td>Resolved, but the person came back</td><td class="n">97</td><td class="n">11.3%</td><td class="n">$194</td></tr><tr><td>Handed to a person</td><td class="n">129</td><td class="n">15.0%</td><td class="n">$258</td></tr><tr><td>Abandoned or unanswered</td><td class="n">92</td><td class="n">10.7%</td><td class="n">$184</td></tr></tbody>
+</table></div>
+<p class="meta">Per-conversation pricing charges for these whatever happened. They are not billing errors; they are why the cost of each resolution that held is higher than the price of one conversation.</p>
+<h2><span class="num">4</span>Disputed items</h2>
+<p class="meta">The first 13 of 13. The full list is in <span class="mono">disputed-items.csv</span>, ready to send to the vendor. It contains the vendor's own item IDs only: no names and no ticket contents.</p>
+<div class="table-wrap"><table>
+<thead><tr><th class="n">Line</th><th>Item</th><th>Billed</th><th class="n">Amount</th><th>Reason</th><th>Detail</th></tr></thead>
+<tbody><tr><td class="n">4</td><td class="mono">VA00000222</td><td style="white-space:nowrap">2026-05-01</td><td class="n">$2.00</td><td>Billed more than once</td><td></td></tr><tr><td class="n">75</td><td class="mono">VZ27806930</td><td style="white-space:nowrap">2026-05-04</td><td class="n">$2.00</td><td>No matching conversation in your records</td><td></td></tr><tr><td class="n">155</td><td class="mono">VZ41972153</td><td style="white-space:nowrap">2026-05-06</td><td class="n">$2.00</td><td>No matching conversation in your records</td><td></td></tr><tr><td class="n">211</td><td class="mono">VZ24060285</td><td style="white-space:nowrap">2026-05-08</td><td class="n">$2.00</td><td>No matching conversation in your records</td><td></td></tr><tr><td class="n">307</td><td class="mono">VZ31358150</td><td style="white-space:nowrap">2026-05-12</td><td class="n">$2.00</td><td>No matching conversation in your records</td><td></td></tr><tr><td class="n">355</td><td class="mono">VZ22802046</td><td style="white-space:nowrap">2026-05-13</td><td class="n">$2.00</td><td>No matching conversation in your records</td><td></td></tr><tr><td class="n">399</td><td class="mono">VA00000109</td><td style="white-space:nowrap">2026-05-14</td><td class="n">$2.00</td><td>Billed more than once</td><td></td></tr><tr><td class="n">439</td><td class="mono">VA00002782</td><td style="white-space:nowrap">2026-05-14</td><td class="n">$2.00</td><td>Billed more than once</td><td></td></tr><tr><td class="n">491</td><td class="mono">VA00000114</td><td style="white-space:nowrap">2026-05-18</td><td class="n">$2.00</td><td>Billed more than once</td><td></td></tr><tr><td class="n">621</td><td class="mono">VA00002526</td><td style="white-space:nowrap">2026-05-21</td><td class="n">$2.00</td><td>Billed more than once</td><td></td></tr><tr><td class="n">709</td><td class="mono">VA00002934</td><td style="white-space:nowrap">2026-05-25</td><td class="n">$2.00</td><td>Billed more than once</td><td></td></tr><tr><td class="n">719</td><td class="mono">VA00004563</td><td style="white-space:nowrap">2026-05-25</td><td class="n">$2.00</td><td>Billed more than once</td><td></td></tr><tr><td class="n">860</td><td class="mono">VA00000420</td><td style="white-space:nowrap">2026-05-29</td><td class="n">$2.00</td><td>Billed more than once</td><td></td></tr></tbody>
+</table></div>
+
+<h2><span class="num">5</span>Compared with your agents' resolutions</h2>
+<p>Across the period's 637 checkable claims, 15.2% came back within 7 days after the AI, against 1.5% after your agents' resolutions of the same types. Share that did not hold beyond that normal rate: <b>13.9%</b> (range 11.0% to 17.3%). Audit confidence: high.</p>
+<p>About <b>548</b> of the period's 637 claimed resolutions held (range 527 to 567). The bill comes to <b>$3.18 per resolution that held</b> (range $3.07 to $3.31): the number to compare across vendors and billing models.</p>
+
+<h2><span class="num">6</span>Notes</h2><ul><li>3,935 bill lines dated outside the period were left out.</li></ul>
+<h2><span class="num">7</span>Sign-off</h2>
+<div class="table-wrap"><table class="sign">
+<thead><tr><th>Role</th><th>Name</th><th>Date</th></tr></thead>
+<tbody><tr><td>Prepared by</td><td></td><td></td></tr><tr><td>Reviewed by (buyer)</td><td></td><td></td></tr><tr><td>Acknowledged by (vendor)</td><td></td><td></td></tr></tbody>
+</table></div>
+
+<h2><span class="num">8</span>Data lineage</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>File</th><th class="n">Rows</th><th>SHA-256</th></tr></thead>
+<tbody><tr><td>incidents.csv</td><td class="n">74,477</td><td class="mono">a5dd9e825b4798c2…</td></tr><tr><td>virtual_agent.csv</td><td class="n">4,741</td><td class="mono">45589c60796fe765…</td></tr><tr><td>bill_per_conversation.csv</td><td class="n">4,806</td><td class="mono">a40c746c5011fd3c…</td></tr></tbody>
+</table></div>
+<p class="meta">Probative Labs 0.4.0 · settings <span class="mono">24a691e4ade1</span> · run 2026-10-17T05:00:49+00:00. Anyone with the same files can rerun this reconciliation and get the same result.</p>
+<footer>Generated by Probative Labs, independent verification of what AI delivers. Method: docs/reconciliation.md and docs/billing-models.md.</footer>
+</main>
+</body>
+</html>

@@ -8,6 +8,7 @@ This guide is for a service-desk analyst, data analyst or IT operations lead who
 | --- | --- | --- |
 | A virtual agent or AI agent reports resolutions (and you may pay per resolution) | **Resolution audit**: did the claimed resolutions hold? | About an hour, plus getting two exports |
 | You pay per resolution and have the vendor's bill | **Bill reconciliation**: what to dispute, line by line (`probative reconcile`) | An hour, plus the bill |
+| The AI is billed per conversation, per session, in assists or credits, or per seat | **Spend check**: what each resolution that held cost, and what to raise (`probative reconcile --model`, `probative usage`, `probative seats`; see [billing models](billing-models.md)) | An hour, plus the bill or usage export |
 | The AI agent closes tickets by itself | **Action audit**: how often its closures were reversed (`probative closures`) | An hour |
 | You are choosing between vendors | **Bake-off**: vendors side by side on your own teams (`probative bakeoff`) | A trial of 6 to 10 weeks |
 | Teams got the AI on different dates, or some were held back | **Evidence pack**: what changed, and was it worth it? | About two hours over a week, mostly exports and agreeing two numbers with finance |
@@ -70,6 +71,16 @@ probative audit --tickets data/incidents.csv --preset servicenow --claims data/v
 ```
 
 Leave out `--price` if you don't pay per resolution. If the audit can't find a column, it names the one it looked for; map yours with `--claims-column requester_id="User Email"`. Read the "Audit confidence" section of the report before sharing the result: if few people appear in both files, the two systems probably identify people differently.
+
+### ServiceNow Virtual Agent, in one command
+
+In ServiceNow, open `interaction.list`, filter to **Virtual agent = true** for the same months as your incidents, add the columns Number, Opened for, Opened, State, State reason, Agent chat and Type, and export as CSV to `data/interactions.csv`. Then:
+
+```bash
+probative audit --tickets data/incidents.csv --preset servicenow --claims data/interactions.csv --claims-preset servicenow_va --open
+```
+
+The preset counts a conversation the virtual agent closed without a live agent as resolved, the way ServiceNow's own reporting does, and the report shows each state reason separately: "Topic Complete" next to "No User Response", with how often each came back. If you pay for Now Assist in assists, export the Gen AI usage log (`sys_gen_ai_usage_log`, with Created, Assists, Skill config and User) and run `probative usage` as in [billing models](billing-models.md). The presets follow ServiceNow's documented field names and have been tested on simulated exports: if a column is missing, the error names it.
 
 ## 3. List who got the AI, and when
 

@@ -34,6 +34,7 @@ from probative.audit.resolutions import (
     estimate_excess,
     type_standardizer,
 )
+from probative.ingest.conversations import RESOLVED, normalize_outcomes
 from probative.lineage import code_version, fingerprint
 
 ORDER = {"regression": 3, "watch": 2, "stable": 1, "improved": 0, "insufficient": -1}
@@ -145,12 +146,8 @@ def watch(  # noqa: C901 - one ordered story, like the other audits
 
     conv = conversations.dropna(subset=[S.REQUESTER, S.SESSION_STARTED]).copy()
     has_outcome = S.SESSION_OUTCOME in conv.columns and conv[S.SESSION_OUTCOME].notna().any()
-    conv["_resolved"] = (
-        conv[S.SESSION_OUTCOME].astype("string").str.strip().str.lower() == resolved_value.strip().lower()
-        if has_outcome
-        else True
-    )
-    conv["_resolved"] = conv["_resolved"].fillna(False).astype(bool)
+    outcome = normalize_outcomes(conv[S.SESSION_OUTCOME] if has_outcome else None, conv.index, resolved_value)
+    conv["_resolved"] = outcome.eq(RESOLVED).astype(bool)
     conv = conv[(conv[S.SESSION_STARTED] >= data_start) & (conv[S.SESSION_STARTED] <= data_end - window)]
     conv["_week"] = _week(conv[S.SESSION_STARTED])
     cl = conv[conv["_resolved"]].copy()

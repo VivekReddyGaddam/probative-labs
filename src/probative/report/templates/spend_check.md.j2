@@ -1,0 +1,73 @@
+{% set cur = r.settings.currency %}
+{% set a = r.audit %}
+{% set u = r.usage %}
+{% set p = r.pool %}
+{% set st = r.seats %}
+{% set h = r.per_held %}
+# Spend check: {{ r.program.vendor or r.program.name or "AI spend" }}
+
+{{ MODELS[r.model] }} · {{ r.period.start }} to {{ r.period.end }}{% if r.spend.amount is not none %} · {{ r.spend.amount | money(cur) }}{% endif %}{% if r.spend.basis %} ({{ r.spend.basis }}){% endif %}
+
+> {{ r.headline }}
+{% if r.review %}
+
+## What to raise
+
+| Finding | Units | Amount | Detail |
+| --- | ---: | ---: | --- |
+{% for x in r.review %}
+| {{ x.title }} | {{ x.units | num(0) }} | {{ x.amount | money(cur) }} | {{ x.detail }} |
+{% endfor %}
+{% endif %}
+{% if u %}
+
+## Where the {{ u.unit_name }} went
+
+| Feature | {{ u.unit_name | capitalize }} | Share | Amount | Outside production |
+| --- | ---: | ---: | ---: | ---: |
+{% for f in u.by_feature %}
+| {{ f.feature }} | {{ f.units | num(0) }} | {{ f.share | pct(1) }} | {{ f.amount | money(cur) }} | {{ f.nonprod_units | num(0) }} |
+{% endfor %}
+{% endif %}
+{% if st %}
+
+## Seats
+
+{{ st.active | num(0) }} of {{ st.seats | num(0) }} {{ st.label }} used it ({{ st.utilization | pct(1) }}, from {{ st.active_source }}). Paid for and not used: {{ st.idle | num(0) }}, {{ st.idle_cost | money(cur) }} of the period's fee.
+{% endif %}
+{% if r.outcomes %}
+
+## What the AI's conversations delivered
+
+| Outcome | Conversations | Share |
+| --- | ---: | ---: |
+{% for x in r.outcomes %}
+| {{ x.label }} | {{ x.count | num(0) }} | {{ x.share | pct(1) }} |
+{% endfor %}
+{% endif %}
+{% if a %}
+
+## Each resolution that held
+
+Did not hold beyond the normal rate after your agents: **{{ a.failed_share.estimate | pct(1) }}** (range {{ a.failed_share.ci_low | pct(1) }} to {{ a.failed_share.ci_high | pct(1) }}); about {{ a.held.estimate | num(0) }} of {{ a.claims | num(0) }} claimed resolutions held.{% if h %} Cost per resolution that held: **{{ h.estimate | unit_price(cur) }}** (range {{ h.ci_low | unit_price(cur) }} to {{ h.ci_high | unit_price(cur) }}), from {{ h.basis }}.{% endif %}
+{% if a.by_detail %}
+
+| Platform's reason | Claimed | Came back | Did not hold |
+| --- | ---: | ---: | ---: |
+{% for d in a.by_detail %}
+| {{ d.detail }} | {{ d.claims | num(0) }} | {{ d.ai_return_rate | pct(1) }} | {{ d.failed_share | pct }} |
+{% endfor %}
+{% endif %}
+{% endif %}
+{% if p %}
+
+## The {{ p.unit_name }} pool
+
+{{ p.used | num(0) }} of {{ p.units | num(0) }} used ({{ p.used_share | pct }}) through {{ p.through }}, at {{ p.daily_rate | num(0) }} a day.{% if p.overage_units %} {% if p.runs_out_on == "used up" %}Already used up{% else %}Runs out on {{ p.runs_out_on }}{% endif %}, about {{ p.overage_units | num(0) }} over by {{ p.term_end }}{% if p.overage_cost is not none %} ({{ p.overage_cost | money(cur) }}){% endif %}.{% else %} About {{ p.unused_units | num(0) }} left unused at {{ p.term_end }}{% if p.unused_value is not none %} ({{ p.unused_value | money(cur) }}){% endif %}.{% endif %}
+{% endif %}
+{% for n in r.notes %}
+
+- {{ n }}
+{% endfor %}
+
+Probative Labs {{ r.lineage.code.probative }} · settings `{{ r.lineage.settings_sha256[:12] }}` · run {{ r.lineage.run_at }}
