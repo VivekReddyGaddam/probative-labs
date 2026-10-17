@@ -441,7 +441,8 @@ details.panel summary { cursor: pointer; font-weight: 600; }
 /* The free check */
 .callout.info { background: var(--accent-soft); }
 .callout.warn { background: var(--warn-soft); color: var(--warn); }
-.check-trust { margin-bottom: 1.4rem; }
+.check-trust { margin-bottom: 1rem; }
+.check-example { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.8rem; margin: 0 0 1.2rem; color: var(--ink-2); }
 .check-inputs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .dropzone { position: relative; display: grid; place-items: center; min-height: 9.5rem; margin: 1rem 0 0.5rem; padding: 1.2rem 1rem;
   text-align: center; border: 2px dashed var(--line); border-radius: 12px; background: var(--surface-2); color: var(--ink-2);
@@ -469,6 +470,8 @@ details.panel summary { cursor: pointer; font-weight: 600; }
 .check-options { margin: 1.2rem 0 0.4rem; }
 .check-options summary { cursor: pointer; font-weight: 600; }
 .check-results { margin-top: 2rem; }
+.check-badge { display: inline-block; vertical-align: middle; margin-left: 0.7rem; padding: 0.3rem 0.6rem; border-radius: 999px;
+  background: var(--warn-soft); color: var(--warn); font: 700 0.7rem/1 var(--sans); letter-spacing: 0.06em; text-transform: uppercase; }
 .check-results h3 { margin-top: 1.8rem; }
 .check-results .headline { font-size: 1.08rem; background: var(--surface); border: 1px solid var(--line);
   border-left: 4px solid var(--accent); border-radius: 10px; padding: 1rem 1.2rem; }

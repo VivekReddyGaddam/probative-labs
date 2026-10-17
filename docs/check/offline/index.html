@@ -1,0 +1,1505 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-TRKgkJVXnkBDeTVQIERy3JeoVBNYbrvdj58I7c81adk='; style-src 'unsafe-inline'; img-src data:; form-action 'none'; base-uri 'none'">
+<title>Free resolution check, offline copy · Probative Labs</title>
+<style>/* Probative Labs: one stylesheet for the website and the product. Tokens first; components after. */
+:root {
+  --paper: #f7f6f2;
+  --surface: #ffffff;
+  --surface-2: #f0eee8;
+  --ink: #18191b;
+  --ink-2: #3a3d42;
+  --muted: #62666d;
+  --line: #e2dfd7;
+  --accent: #1d5c48;
+  --accent-ink: #ffffff;
+  --accent-soft: #e2eee8;
+  --accent-2: #a8661a;
+  --accent-2-soft: #f8ecd9;
+  --good: #1b6b41;
+  --good-soft: #e0f1e6;
+  --warn: #7d5300;
+  --warn-soft: #faefd6;
+  --bad: #9a2a2a;
+  --bad-soft: #f7e0e0;
+  --focus: #2f7dd1;
+  --shadow: 0 1px 2px rgba(20, 20, 20, 0.04), 0 6px 24px rgba(20, 20, 20, 0.06);
+  --radius: 12px;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #111213; --surface: #191b1d; --surface-2: #202326; --ink: #ecebe7; --ink-2: #c9c9c4; --muted: #a0a4aa;
+    --line: #2c2f33; --accent: #7fc8aa; --accent-ink: #0e1a15; --accent-soft: #1d3029; --accent-2: #e6ad62; --accent-2-soft: #33281a;
+    --good: #7fd3a0; --good-soft: #1b3125; --warn: #f0c46a; --warn-soft: #362c17; --bad: #f0a0a0; --bad-soft: #3a2020;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 28px rgba(0, 0, 0, 0.35);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #111213; --surface: #191b1d; --surface-2: #202326; --ink: #ecebe7; --ink-2: #c9c9c4; --muted: #a0a4aa;
+  --line: #2c2f33; --accent: #7fc8aa; --accent-ink: #0e1a15; --accent-soft: #1d3029; --accent-2: #e6ad62; --accent-2-soft: #33281a;
+  --good: #7fd3a0; --good-soft: #1b3125; --warn: #f0c46a; --warn-soft: #362c17; --bad: #f0a0a0; --bad-soft: #3a2020;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 28px rgba(0, 0, 0, 0.35);
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.6 var(--sans); }
+img, svg { max-width: 100%; }
+a { color: var(--accent); text-underline-offset: 3px; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
+h1, h2, h3, h4 { font-family: var(--serif); font-weight: 600; letter-spacing: -0.012em; line-height: 1.15; margin: 0 0 0.5em; }
+h1 { font-size: clamp(2rem, 4.2vw, 3.1rem); }
+h1, h2, h3 { text-wrap: balance; }
+p, li { text-wrap: pretty; }
+h2 { font-size: clamp(1.55rem, 2.8vw, 2.1rem); }
+h3 { font-size: 1.25rem; }
+p { margin: 0 0 1rem; }
+small, .small { font-size: 0.875rem; }
+.muted { color: var(--muted); }
+.mono { font-family: var(--mono); font-size: 0.85em; }
+.eyebrow { text-transform: uppercase; letter-spacing: 0.09em; font-size: 0.75rem; font-weight: 700; color: var(--accent); margin-bottom: 0.6rem; text-wrap: balance; }
+.lead { font-size: 1.14rem; line-height: 1.6; color: var(--ink-2); max-width: 44rem; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+.narrow { max-width: 760px; }
+.skip { position: absolute; left: -999px; }
+.skip:focus { left: 16px; top: 16px; background: var(--surface); padding: 8px 12px; z-index: 10; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* Buttons and forms */
+.btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.65rem 1.1rem; border-radius: 10px; border: 1px solid var(--line);
+  background: var(--surface); color: var(--ink); font: 600 0.95rem/1.2 var(--sans); text-decoration: none; cursor: pointer; }
+.btn:hover { border-color: var(--muted); }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn-primary:hover { filter: brightness(1.08); border-color: var(--accent); }
+.btn-ghost { background: transparent; border-color: transparent; }
+.btn-danger { color: var(--bad); }
+.btn-sm { padding: 0.4rem 0.7rem; font-size: 0.85rem; }
+.btn[disabled] { opacity: 0.55; cursor: not-allowed; }
+label { display: block; font-weight: 600; font-size: 0.9rem; margin: 0 0 0.35rem; }
+.hint { display: block; font-weight: 400; color: var(--muted); font-size: 0.82rem; margin-top: 0.15rem; }
+input[type=text], input[type=email], input[type=password], input[type=url], input[type=number], input[type=date], select, textarea {
+  width: 100%; padding: 0.6rem 0.75rem; border: 1px solid var(--line); border-radius: 9px; background: var(--surface);
+  color: var(--ink); font: 0.95rem/1.4 var(--sans); }
+input[type=file] { font: 0.9rem var(--sans); color: var(--ink-2); }
+textarea { min-height: 7rem; resize: vertical; }
+.field { margin-bottom: 1rem; }
+fieldset { border: 0; padding: 0; margin: 0 0 1rem; min-width: 0; }
+legend { font-weight: 600; font-size: 0.9rem; padding: 0; margin: 0 0 0.35rem; }
+fieldset .checkbox { margin: 0.25rem 0; }
+.field .error { color: var(--bad); font-size: 0.85rem; margin-top: 0.25rem; }
+.grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 1rem; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 1rem; }
+.checkbox { display: flex; gap: 0.5rem; align-items: center; font-weight: 500; }
+.hp { position: absolute; left: -5000px; }
+
+/* Cards, chips, tables */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.25rem 1.4rem; }
+.card h3 { margin-bottom: 0.35rem; }
+.chip { display: inline-block; padding: 0.1rem 0.6rem; border-radius: 999px; font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
+.chip-good, .chip-pass, .chip-succeeded, .chip-counted { background: var(--good-soft); color: var(--good); }
+.chip-warn, .chip-watch, .chip-running, .chip-queued, .chip-indicative { background: var(--warn-soft); color: var(--warn); }
+.chip-bad, .chip-breach, .chip-fail, .chip-failed, .chip-withheld { background: var(--bad-soft); color: var(--bad); }
+.chip-neutral, .chip-unavailable, .chip-not_run { background: var(--surface-2); color: var(--muted); }
+.grade { display: inline-grid; place-items: center; width: 2.1rem; height: 2.1rem; border-radius: 8px; font: 700 1.05rem var(--serif);
+  background: var(--accent-soft); color: var(--accent); }
+.grade.g-D, .grade.g-insufficient { background: var(--warn-soft); color: var(--warn); font-size: 0.7rem; }
+.grade.g-E { background: var(--accent-2-soft); color: var(--accent-2); }
+.grade.g-none { background: var(--surface-2); color: var(--muted); }
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+th, td { text-align: left; padding: 0.65rem 0.9rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); background: var(--surface-2); font-weight: 700; }
+tr:last-child td { border-bottom: 0; }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* Tables that turn into stacked cards on phones: each cell labelled from data-label. */
+@media (max-width: 640px) {
+  table.mobile-cards thead { display: none; }
+  table.mobile-cards, table.mobile-cards tbody, table.mobile-cards tr, table.mobile-cards td { display: block; width: 100%; }
+  table.mobile-cards tr { padding: 0.75rem 1rem; border-bottom: 1px solid var(--line); }
+  table.mobile-cards tr:last-child { border-bottom: 0; }
+  table.mobile-cards td { border: 0; padding: 0.12rem 0; text-align: left; white-space: normal; }
+  table.mobile-cards td[data-label]::before { content: attr(data-label); display: block; font-size: 0.72rem; font-weight: 700;
+    letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); margin-top: 0.45rem; }
+  table.mobile-cards td:first-child { font-size: 1rem; }
+}
+.empty { text-align: center; color: var(--muted); padding: 2rem 1rem; }
+
+/* Flash messages */
+.flashes { margin: 1rem 0; display: grid; gap: 0.5rem; }
+.flash { border-radius: 10px; padding: 0.75rem 1rem; border: 1px solid var(--line); background: var(--surface); }
+.flash-success { background: var(--good-soft); color: var(--good); border-color: transparent; }
+.flash-warning { background: var(--warn-soft); color: var(--warn); border-color: transparent; word-break: break-word; }
+.flash-error { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+
+/* ---------- Website ---------- */
+.site-header { position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: saturate(1.4) blur(8px); border-bottom: 1px solid var(--line); }
+.site-header .wrap { display: flex; align-items: center; gap: 1.5rem; height: 64px; }
+.brand { display: inline-flex; align-items: center; gap: 0.55rem; font: 700 1.15rem var(--serif); color: var(--ink); text-decoration: none; }
+.brand svg { width: 28px; height: 28px; }
+.site-nav { display: flex; gap: 1.2rem; margin-left: auto; align-items: center; }
+.site-nav a { color: var(--ink-2); text-decoration: none; font-weight: 500; font-size: 0.95rem; }
+.site-nav a:hover, .site-nav a[aria-current=page] { color: var(--ink); text-decoration: underline; }
+.site-nav a.btn-primary, .site-nav a.btn-primary:hover { color: var(--accent-ink); text-decoration: none; }
+.nav-toggle { display: none; margin-left: auto; }
+section { padding: 4rem 0; }
+section.tight { padding: 3rem 0; }
+.band { background: var(--surface); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.hero { padding: 4.5rem 0 4rem; }
+.hero-grid { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 3rem; align-items: center; }
+.hero h1 { max-width: 15ch; font-size: clamp(2.4rem, 5vw, 3.5rem); }
+.hero h1 .hl { color: var(--accent); white-space: nowrap; }
+.works-with { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem 1.5rem; margin-top: 3.2rem; padding-top: 1.5rem;
+  border-top: 1px solid var(--line); }
+.works-with > span { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); }
+.works-with ul { display: flex; flex-wrap: wrap; gap: 0.4rem 1.5rem; margin: 0; padding: 0; list-style: none; }
+.works-with li { font-weight: 600; color: var(--ink-2); }
+.cta-row { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.6rem; }
+.proof { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 1.5rem; box-shadow: var(--shadow); }
+.proof h3 { font-size: 1.05rem; }
+.bar-row { margin: 1rem 0; }
+.bar-row .label { display: flex; justify-content: space-between; font-size: 0.88rem; margin-bottom: 0.35rem; gap: 1rem; }
+.bar { height: 14px; border-radius: 7px; background: var(--surface-2); position: relative; overflow: hidden; }
+.bar > span { position: absolute; inset: 0 auto 0 0; border-radius: 7px; }
+.bar .claimed { background: var(--accent-2); }
+.bar .range, .bar .measured { background: var(--accent); }
+.proof h3 { margin-bottom: 0.2rem; }
+.proof .key { display: flex; flex-wrap: wrap; gap: 0.3rem 1.1rem; font-size: 0.8rem; color: var(--ink-2); margin: 0.7rem 0 0.2rem; }
+.proof .key span { display: inline-flex; align-items: center; gap: 0.4rem; }
+.proof .key i { width: 0.8rem; height: 0.8rem; border-radius: 3px; }
+.proof .key .claimed { background: var(--accent-2); }
+.proof .key .measured { background: var(--accent); }
+.proof-group { border-top: 1px solid var(--line); margin-top: 1rem; padding-top: 0.9rem; }
+.proof-group h4 { margin: 0; font-size: 0.74rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); }
+.proof-group .bar-row { margin: 0.65rem 0; }
+.proof .takeaway { margin: 0.4rem 0 0; font-size: 0.86rem; color: var(--ink); }
+.proof .foot { font-size: 0.8rem; color: var(--muted); margin-top: 1rem; }
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; margin-top: 2rem; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.2rem; }
+.stat b { display: block; font: 600 2.1rem/1.1 var(--serif); margin-bottom: 0.35rem; }
+.stat b.neg { color: var(--bad); }
+.stat b.pos { color: var(--good); }
+.stat p { font-size: 0.9rem; color: var(--ink-2); margin: 0; }
+.stat a { font-size: 0.8rem; }
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; align-items: start; }
+.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.compare .card b { font: 600 2.2rem/1.1 var(--serif); display: block; }
+.steps { counter-reset: step; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1rem; margin-top: 2rem; }
+.steps li { list-style: none; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.1rem; }
+.steps li::before { counter-increment: step; content: counter(step); display: inline-grid; place-items: center; width: 1.8rem; height: 1.8rem;
+  border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-weight: 700; margin-bottom: 0.6rem; }
+.steps h3 { font-size: 1.02rem; }
+.steps p { font-size: 0.9rem; color: var(--ink-2); margin: 0; }
+.grades { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.75rem; margin-top: 1.5rem; }
+.grades .card { padding: 1rem; }
+.grades .grade { margin-bottom: 0.5rem; }
+.grades p { font-size: 0.86rem; margin: 0; color: var(--ink-2); }
+.checklist { list-style: none; padding: 0; margin: 0; }
+.checklist li { padding-left: 1.6rem; position: relative; margin: 0.45rem 0; }
+.checklist li::before { content: ""; position: absolute; left: 0.2rem; top: 0.45rem; width: 0.7rem; height: 0.38rem;
+  border-left: 2px solid var(--accent); border-bottom: 2px solid var(--accent); transform: rotate(-45deg); }
+.tiers { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; align-items: stretch; }
+.tier { display: flex; flex-direction: column; }
+.tier.featured { border: 2px solid var(--accent); }
+.tier .price { font: 600 1.6rem var(--serif); margin: 0.4rem 0 0.1rem; }
+.tier .checklist { flex: 1; margin: 1rem 0 1.4rem; }
+.callout { border-radius: var(--radius); padding: 1.2rem 1.4rem; background: var(--accent-soft); }
+.cta-band { text-align: center; }
+.cta-band .cta-row { justify-content: center; }
+.code { background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 1rem 1.1rem; overflow-x: auto;
+  font: 0.86rem/1.6 var(--mono); white-space: pre; }
+.faq dt { font-weight: 700; margin-top: 1.2rem; }
+.faq dd { margin: 0.3rem 0 0; color: var(--ink-2); }
+.site-footer { border-top: 1px solid var(--line); padding: 3rem 0 2.5rem; font-size: 0.92rem; }
+.footer-grid { display: grid; grid-template-columns: 1.6fr repeat(4, 1fr); gap: 2rem; }
+.site-footer h4 { font: 700 0.78rem var(--sans); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.site-footer ul { list-style: none; padding: 0; margin: 0; }
+.site-footer li { margin: 0.35rem 0; }
+.site-footer a { color: var(--ink-2); text-decoration: none; }
+.site-footer a:hover { text-decoration: underline; }
+.prose h2 { margin-top: 2.5rem; }
+.prose h3 { margin-top: 1.8rem; }
+.prose ul { padding-left: 1.2rem; }
+.prose li { margin: 0.3rem 0; }
+
+/* ---------- Product ---------- */
+.app { display: grid; grid-template-columns: 232px minmax(0, 1fr); min-height: 100vh; }
+.sidebar { background: var(--surface); border-right: 1px solid var(--line); padding: 1.1rem 0.9rem; display: flex; flex-direction: column; gap: 0.25rem; }
+.sidebar .brand { padding: 0.3rem 0.5rem 1rem; }
+.sidebar .org { font-size: 0.8rem; color: var(--muted); padding: 0 0.6rem 0.9rem; }
+.sidebar a.nav { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.65rem; border-radius: 8px; color: var(--ink-2); text-decoration: none; font-weight: 500; }
+.sidebar a.nav:hover { background: var(--surface-2); color: var(--ink); }
+.sidebar a.nav[aria-current=page] { background: var(--accent-soft); color: var(--accent); }
+.sidebar .spacer { flex: 1; }
+.sidebar .me { font-size: 0.82rem; color: var(--muted); padding: 0.6rem; border-top: 1px solid var(--line); }
+.sidebar .me form { margin-top: 0.4rem; }
+.main { padding: 1.6rem 2rem 4rem; max-width: 1180px; width: 100%; }
+.page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.2rem; }
+.page-head h1 { font-size: 1.9rem; margin: 0; }
+.page-head .meta { color: var(--muted); font-size: 0.9rem; margin-top: 0.3rem; }
+.tabs { display: flex; gap: 0.25rem; border-bottom: 1px solid var(--line); margin: 0 0 1.4rem; overflow-x: auto; }
+.tabs a { padding: 0.6rem 0.9rem; color: var(--ink-2); text-decoration: none; border-bottom: 2px solid transparent; white-space: nowrap; font-weight: 500; }
+.tabs a[aria-current=page] { color: var(--accent); border-bottom-color: var(--accent); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1rem; margin-bottom: 1.4rem; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1rem 1.1rem; }
+.tile .k { font-size: 0.8rem; color: var(--muted); }
+.tile .v { font: 600 1.55rem/1.25 var(--serif); margin-top: 0.15rem; }
+.tile .s { font-size: 0.8rem; color: var(--muted); }
+.stack { display: grid; gap: 1rem; }
+.cols { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 1.2rem; align-items: start; }
+.checklist-steps { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.6rem; }
+.checklist-steps li { display: flex; gap: 0.7rem; align-items: flex-start; }
+.dot { flex: none; width: 1.3rem; height: 1.3rem; border-radius: 50%; border: 2px solid var(--line); margin-top: 0.15rem; }
+.dot.done { background: var(--accent); border-color: var(--accent); }
+.inline-form { display: inline; }
+.actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+details.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 0.9rem 1.1rem; }
+details.panel summary { cursor: pointer; font-weight: 600; }
+.login { min-height: 100vh; display: grid; place-items: center; padding: 16px; }
+.login .card { width: 100%; max-width: 420px; padding: 2rem; }
+.divider { display: flex; align-items: center; gap: 0.8rem; color: var(--muted); font-size: 0.85rem; margin: 1.2rem 0; }
+.divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+@media (max-width: 960px) {
+  .hero-grid, .split, .cols { grid-template-columns: 1fr; }
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .steps, .grades { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tiers { grid-template-columns: 1fr; }
+  .footer-grid { grid-template-columns: 1fr 1fr; }
+  .app { grid-template-columns: 1fr; }
+  .sidebar { flex-direction: row; flex-wrap: wrap; align-items: center; border-right: 0; border-bottom: 1px solid var(--line); padding: 0.6rem 16px; }
+  .sidebar .brand, .sidebar .org { padding: 0 0.5rem 0 0; }
+  .sidebar .spacer, .sidebar .org { display: none; }
+  .sidebar .me { border-top: 0; padding: 0; display: flex; gap: 0.5rem; align-items: center; }
+  .main { padding: 1.2rem 16px 3rem; }
+}
+@media (max-width: 720px) {
+  .site-nav { display: none; position: absolute; top: 64px; left: 0; right: 0; background: var(--paper); border-bottom: 1px solid var(--line);
+    flex-direction: column; align-items: flex-start; padding: 1rem 16px; gap: 0.9rem; }
+  .site-nav.open { display: flex; }
+  .nav-toggle { display: inline-flex; }
+  .grid-2, .grid-3, .compare { grid-template-columns: 1fr; }
+  .stats, .steps, .grades { grid-template-columns: 1fr; }
+  .footer-grid { grid-template-columns: 1fr; }
+  section { padding: 3rem 0; }
+}
+
+.pillars { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-top: 1.8rem; }
+.pillars .card { display: flex; flex-direction: column; }
+.pillars .card p { flex: 1; }
+.pillars .when { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.pillars .out { font-size: 0.88rem; color: var(--ink-2); border-top: 1px solid var(--line); padding-top: 0.7rem; margin-top: 0.8rem; }
+.formula { font-family: var(--serif); font-size: 1.05rem; background: var(--accent-soft); border-radius: var(--radius); padding: 0.9rem 1.1rem; }
+@media (max-width: 900px) { .pillars { grid-template-columns: 1fr; } }
+
+
+/* ---------- Website components, second pass: calmer pages ---------- */
+.page-hero { padding: 4.25rem 0 2.75rem; text-align: center; }
+.page-hero h1 { font-size: clamp(2rem, 4vw, 2.85rem); max-width: 24ch; margin: 0 auto 0.9rem; }
+.page-hero .lead { margin: 0 auto; }
+.page-hero .cta-row { justify-content: center; }
+.page-hero .code { text-align: left; max-width: 34rem; margin: 1.6rem auto 0; }
+.section-head { max-width: 46rem; margin-bottom: 2rem; }
+.section-head h2 { margin-bottom: 0.45rem; }
+.section-head p { color: var(--ink-2); margin: 0; }
+.section-head.center { text-align: center; margin-left: auto; margin-right: auto; }
+.trust { display: flex; flex-wrap: wrap; gap: 0.35rem 1.2rem; margin-top: 1.4rem; font-size: 0.88rem; color: var(--muted); }
+.trust span::before { content: "\2713"; color: var(--accent); font-weight: 700; margin-right: 0.4rem; }
+
+/* Pricing */
+.plan-group + .plan-group { margin-top: 3rem; }
+.plan-group-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem 1.5rem; flex-wrap: wrap;
+  border-bottom: 1px solid var(--line); padding-bottom: 0.75rem; margin-bottom: 1.5rem; }
+.plan-group-head h2 { font-size: 1.4rem; margin: 0; }
+.plan-group-head p { margin: 0; color: var(--muted); font-size: 0.92rem; }
+.plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
+.plan { position: relative; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 16px; padding: 1.75rem 1.75rem 1.6rem; }
+.plan.featured { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), var(--shadow); }
+.plan .badge { position: absolute; top: -0.72rem; left: 1.6rem; background: var(--accent); color: var(--accent-ink);
+  font-size: 0.7rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; padding: 0.22rem 0.65rem; border-radius: 999px; }
+.plan h3 { font-size: 1.45rem; margin: 0 0 0.35rem; }
+.plan .tagline { color: var(--ink-2); margin: 0 0 1rem; }
+.plan .model { align-self: flex-start; font-size: 0.84rem; font-weight: 600; color: var(--accent); background: var(--accent-soft);
+  border-radius: 999px; padding: 0.25rem 0.75rem; }
+.plan .price { font: 600 2rem/1.1 var(--serif); margin: 0.2rem 0 0.4rem; }
+.plan .checklist { flex: 1; margin: 1.3rem 0 1.6rem; font-size: 0.95rem; }
+.plan .btn { justify-content: center; }
+.includes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem 1.5rem; margin-top: 3rem; padding: 1.4rem 1.6rem;
+  background: var(--surface-2); border-radius: 14px; }
+.includes div { display: flex; gap: 0.6rem; align-items: flex-start; font-size: 0.92rem; color: var(--ink-2); }
+.includes svg { flex: none; width: 1.1rem; height: 1.1rem; color: var(--accent); margin-top: 0.15rem; }
+
+.plan .code { margin: 0; }
+.plan-link { align-self: center; margin-top: 0.8rem; font-size: 0.92rem; font-weight: 600; text-decoration: none; }
+.plan-link::after { content: " \2192"; }
+.plan .model + h3 { margin-top: 0.9rem; }
+.plan-note { margin: 0.7rem 0 0; text-align: center; font-size: 0.86rem; color: var(--muted); }
+.offer { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem 1.5rem; flex-wrap: wrap;
+  margin-bottom: 2.5rem; padding: 0.85rem 1rem 0.85rem 1.4rem; background: var(--accent-soft); border-radius: 14px; }
+.offer p { margin: 0; color: var(--ink); font-weight: 600; }
+.cta-note { margin: 0.9rem 0 0; font-size: 0.88rem; color: var(--muted); }
+
+/* Open source versus Cloud */
+.versus th[scope=row] { width: 26%; color: var(--ink); font-size: 0.92rem; text-transform: none; letter-spacing: 0;
+  font-weight: 600; background: transparent; }
+.versus thead th:last-child { color: var(--accent); }
+.versus td:last-child { background: color-mix(in srgb, var(--accent-soft) 45%, transparent); color: var(--ink); }
+.versus td { color: var(--ink-2); }
+
+/* Why pay when the engine is free (pricing) */
+.why { margin-top: 3rem; }
+.why-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem 1.5rem; flex-wrap: wrap;
+  border-bottom: 1px solid var(--line); padding-bottom: 0.75rem; margin-bottom: 1.5rem; }
+.why-head h2 { font-size: 1.4rem; margin: 0; }
+.why-head p { margin: 0; color: var(--muted); font-size: 0.92rem; }
+.why-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1rem 1.5rem; }
+.why-grid div { border-left: 2px solid var(--accent); padding: 0.1rem 0 0.1rem 0.9rem; }
+.why-grid b { display: block; font-size: 0.97rem; margin-bottom: 0.2rem; }
+.why-grid span { display: block; font-size: 0.9rem; color: var(--ink-2); }
+
+/* FAQ accordion */
+.faq-list { border-top: 1px solid var(--line); }
+.faq-list details { border-bottom: 1px solid var(--line); }
+.faq-list summary { list-style: none; cursor: pointer; padding: 1.1rem 2.4rem 1.1rem 0; font-weight: 600; position: relative; }
+.faq-list summary::-webkit-details-marker { display: none; }
+.faq-list summary::after { content: "+"; position: absolute; right: 0.35rem; top: 0.8rem; font-size: 1.45rem; font-weight: 400; color: var(--muted); }
+.faq-list details[open] summary::after { content: "\2212"; }
+.faq-list details > div { padding: 0 2.4rem 1.2rem 0; color: var(--ink-2); }
+.faq-list details > div p:last-child { margin-bottom: 0; }
+
+/* Numbered cards (rules, principles) */
+.rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; counter-reset: rule; }
+.rules .card { position: relative; padding: 1.3rem 1.4rem 1.3rem 4rem; }
+.rules .card::before { counter-increment: rule; content: counter(rule); position: absolute; left: 1.25rem; top: 1.25rem; width: 1.9rem;
+  height: 1.9rem; display: grid; place-items: center; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+.rules .card:last-child:nth-child(odd) { grid-column: 1 / -1; justify-self: center; width: calc(50% - 0.5rem); }
+.rules h3 { font-size: 1.08rem; margin-bottom: 0.3rem; }
+.rules p { margin: 0; color: var(--ink-2); font-size: 0.95rem; }
+.rules .card-includes { margin-top: 0.75rem; font-size: 0.82rem; font-weight: 600; color: var(--accent); }
+.features { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+.features .card h3 { font-size: 1.1rem; }
+.features .card p, .features .card li { font-size: 0.94rem; color: var(--ink-2); }
+.features .card ul { padding-left: 1.1rem; margin: 0.4rem 0 0; }
+.features .card li { margin: 0.35rem 0; }
+
+/* What is open and what Cloud adds */
+.compare-table td.check, .compare-table th.check { text-align: center; width: 8.5rem; }
+.compare-table .yes { color: var(--accent); font-weight: 700; }
+.compare-table .later { color: var(--muted); font-size: 0.85rem; }
+.compare-table tr.group td { background: var(--surface-2); font-size: 0.74rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--muted); padding-top: 0.5rem; padding-bottom: 0.5rem; }
+
+/* Long pages: a sidebar "On this page" that follows you, collapsed into a menu on small screens */
+[id] { scroll-margin-top: 84px; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+.doc-layout { display: grid; grid-template-columns: 220px minmax(0, 760px); gap: 3.5rem; align-items: start; }
+.doc-nav { position: sticky; top: 88px; max-height: calc(100vh - 108px); overflow-y: auto; font-size: 0.9rem; }
+.doc-nav summary { list-style: none; font-size: 0.74rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 0.4rem; }
+.doc-nav summary::-webkit-details-marker { display: none; }
+.doc-nav-group { margin: 1rem 0 0.35rem; font-size: 0.82rem; font-weight: 600; color: var(--ink); }
+.doc-nav a { display: block; padding: 0.3rem 0 0.3rem 0.9rem; border-left: 2px solid var(--line); color: var(--ink-2); text-decoration: none; }
+.doc-nav a:hover { color: var(--accent); }
+.doc-nav a.active { color: var(--accent); border-left-color: var(--accent); font-weight: 600; }
+.doc-part { margin: 3.2rem 0 0; padding-top: 1.2rem; border-top: 1px solid var(--line); font-size: 0.75rem; font-weight: 700;
+  letter-spacing: 0.09em; text-transform: uppercase; color: var(--accent); }
+.doc-part:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+.doc-part + h2 { margin-top: 0.5rem; }
+@media (max-width: 900px) {
+  .doc-layout { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
+  .doc-nav { position: static; max-height: none; border: 1px solid var(--line); border-radius: 12px; background: var(--surface);
+    padding: 0.8rem 1rem; }
+  .doc-nav summary { cursor: pointer; margin: 0; display: flex; justify-content: space-between; }
+  .doc-nav summary::after { content: "+"; font-size: 1.1rem; line-height: 1; }
+  .doc-nav[open] summary::after { content: "\2212"; }
+  .doc-nav[open] summary { margin-bottom: 0.4rem; }
+}
+@media (min-width: 901px) { .doc-nav summary { pointer-events: none; } }
+
+/* Pillars with deliverables */
+.pillars .links { list-style: none; padding: 0.8rem 0 0; margin: 1rem 0 0; border-top: 1px solid var(--line); font-size: 0.92rem; }
+.pillars .links li { margin: 0.3rem 0; }
+.pillars .links a { text-decoration: none; font-weight: 600; }
+.pillars .links a::after { content: " \2192"; }
+.pillars .links span { color: var(--muted); }
+
+@media (max-width: 960px) {
+  .includes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .features { grid-template-columns: 1fr; }
+}
+@media (max-width: 720px) {
+  .plans, .rules, .includes { grid-template-columns: 1fr; }
+  .rules .card:last-child:nth-child(odd) { width: auto; justify-self: stretch; }
+  .page-hero { padding: 3rem 0 2rem; }
+  .compare-table td.check, .compare-table th.check { width: 5.5rem; }
+}
+
+/* The free check */
+.callout.info { background: var(--accent-soft); }
+.callout.warn { background: var(--warn-soft); color: var(--warn); }
+.check-trust { margin-bottom: 1rem; }
+.check-example { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.8rem; margin: 0 0 1.2rem; color: var(--ink-2); }
+.check-inputs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.dropzone { position: relative; display: grid; place-items: center; min-height: 9.5rem; margin: 1rem 0 0.5rem; padding: 1.2rem 1rem;
+  text-align: center; border: 2px dashed var(--line); border-radius: 12px; background: var(--surface-2); color: var(--ink-2);
+  font-weight: 400; cursor: pointer; transition: border-color 0.15s, background-color 0.15s; }
+/* Only the zone takes pointer events, so dragging across its contents doesn't flicker the highlight. */
+.dropzone > span { pointer-events: none; }
+.dropzone:hover, .dropzone.over { border-color: var(--accent); background: var(--accent-soft); }
+.dropzone:hover .btn-primary { filter: brightness(1.08); }
+.dropzone:has(input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
+.dz-empty { display: grid; justify-items: center; gap: 0.6rem; }
+.dz-icon { flex: none; width: 2rem; height: 2rem; fill: none; stroke: var(--accent); stroke-width: 1.6; stroke-linecap: round;
+  stroke-linejoin: round; }
+.dz-hint { font-size: 0.85rem; color: var(--muted); }
+.dz-chosen { display: none; align-items: center; gap: 0.8rem; text-align: left; }
+.dz-text { display: grid; gap: 0.1rem; min-width: 0; }
+.dz-text b { color: var(--ink); overflow-wrap: anywhere; }
+.dropzone.chosen { min-height: 0; place-items: center start; border-style: solid; border-color: var(--accent); background: var(--accent-soft); }
+.dropzone.chosen .dz-empty { display: none; }
+.dropzone.chosen .dz-chosen { display: flex; }
+.dropzone.chosen .dz-hint { text-decoration: underline; text-underline-offset: 3px; }
+.dz-status { margin: 0; color: var(--ink-2); }
+.dz-status.error { color: var(--bad); }
+.check-map { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem 1rem; margin-top: 0.6rem; }
+.check-field { display: grid; gap: 0.2rem; font-size: 0.85rem; color: var(--ink-2); }
+.check-options { margin: 1.2rem 0 0.4rem; }
+.check-options summary { cursor: pointer; font-weight: 600; }
+.check-results { margin-top: 2rem; }
+.check-badge { display: inline-block; vertical-align: middle; margin-left: 0.7rem; padding: 0.3rem 0.6rem; border-radius: 999px;
+  background: var(--warn-soft); color: var(--warn); font: 700 0.7rem/1 var(--sans); letter-spacing: 0.06em; text-transform: uppercase; }
+.check-results h3 { margin-top: 1.8rem; }
+.check-results .headline { font-size: 1.08rem; background: var(--surface); border: 1px solid var(--line);
+  border-left: 4px solid var(--accent); border-radius: 10px; padding: 1rem 1.2rem; }
+.check-notes { margin-top: 1.2rem; }
+@media (max-width: 720px) { .check-inputs, .check-map { grid-template-columns: 1fr; } }
+
+/* Founder */
+.founder { display: flex; gap: 1.4rem; align-items: flex-start; }
+.founder-photo { flex: none; border-radius: 50%; object-fit: cover; }
+.founder h3 { margin: 0.2rem 0 0.4rem; }
+
+/* A clean one-page summary when a page is printed or saved as PDF */
+@media print {
+  .site-header, .site-footer, .page-hero, .check-inputs, .check-options, .check-trust, #check-run, .check-actions,
+  .band, .cta-band, .faq-list { display: none !important; }
+  body { background: #fff; color: #000; }
+  .check-results { margin: 0; }
+  .table-wrap { border-color: #ccc; }
+}
+
+/* Grid items may shrink below their content's width, so a wide table scrolls inside its card
+   instead of pushing the page wider than the screen. */
+.hero-grid > *, .split > *, .cols > *, .features > *, .plans > * { min-width: 0; }
+th.nowrap, td.nowrap { white-space: nowrap; }
+
+th.n.wrap, td.n.wrap { white-space: normal; }
+
+.offline-head { border-bottom: 1px solid var(--line); background: var(--surface); padding: 0.9rem 0; font-size: 0.95rem; }
+.offline-foot { border-top: 1px solid var(--line); margin-top: 3rem; padding: 1.4rem 0 2.4rem; }
+</style>
+</head>
+<body>
+<header class="offline-head"><div class="wrap"><b>Probative Labs</b> · Free resolution check, offline copy (version 0.3.0)</div></header>
+<main>
+<section class="tight" id="free-check">
+  <div class="wrap">
+    <h1 style="font-size:clamp(1.8rem,3.6vw,2.4rem)">Check what your AI agent actually resolved.</h1>
+    <div class="callout info check-trust"><b>This file can't send anything.</b> Its security policy lets it run only the code inside this file, and blocks every network request and every load from anywhere else. Turn off your Wi-Fi if you like, then drop your two exports. The result stays on this computer unless you save it.</div>
+    
+
+<div class="cols check-inputs">
+  <div class="card">
+    <h3>1. Virtual Agent conversations</h3>
+    <p class="small muted">In ServiceNow, open <span class="mono">interaction.list</span>, filter to Virtual agent = true for the months you want, and export as CSV with: Number, Opened for, Opened, State, State reason, Agent chat, Type.</p>
+    
+<label class="dropzone" id="conv-zone">
+  <input class="sr-only" id="conv-file" type="file" accept=".csv,.txt" aria-describedby="conv-status">
+  <span class="dz-empty">
+    <svg class="dz-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M8.5 13h7M8.5 16.5h7M12 13v3.5"/></svg>
+    <span class="btn btn-primary">Choose the conversations CSV</span>
+    <span class="dz-hint">or drag it here. Nothing is uploaded.</span>
+  </span>
+  <span class="dz-chosen">
+    <svg class="dz-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 14.5l2 2 4-4"/></svg>
+    <span class="dz-text"><b id="conv-name"></b><span class="dz-hint">Choose a different file</span></span>
+  </span>
+</label>
+<p class="small dz-status" id="conv-status" role="status"></p>
+
+    <div id="conv-map"></div>
+  </div>
+  <div class="card">
+    <h3>2. Incidents for the same months, plus a week</h3>
+    <p class="small muted">Export <span class="mono">incident.list</span> as CSV with: Number, Caller, Opened, Resolved, Contact type, and Category for the fix list. Contact type lets the check tell incidents the virtual agent opened itself from people coming back. Use the same kind of person field as the conversations: both names, or both Sys IDs.</p>
+    
+<label class="dropzone" id="tickets-zone">
+  <input class="sr-only" id="tickets-file" type="file" accept=".csv,.txt" aria-describedby="tickets-status">
+  <span class="dz-empty">
+    <svg class="dz-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M8.5 13h7M8.5 16.5h7M12 13v3.5"/></svg>
+    <span class="btn btn-primary">Choose the incidents CSV</span>
+    <span class="dz-hint">or drag it here. Nothing is uploaded.</span>
+  </span>
+  <span class="dz-chosen">
+    <svg class="dz-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 14.5l2 2 4-4"/></svg>
+    <span class="dz-text"><b id="tickets-name"></b><span class="dz-hint">Choose a different file</span></span>
+  </span>
+</label>
+<p class="small dz-status" id="tickets-status" role="status"></p>
+
+    <div id="tickets-map"></div>
+  </div>
+</div>
+<details class="check-options">
+  <summary>Options</summary>
+  <div class="grid-2">
+    <label class="field"><span>Return window, in days</span><input id="check-window" type="number" min="1" max="60" value="7"></label>
+    <label class="field"><span>For other platforms: outcome values that mean resolved, comma-separated</span><input id="check-resolved" type="text" value="resolved"></label>
+    <label class="field"><span>Ticket channels the AI agent opens tickets through, comma-separated</span><input id="check-ai-channels" type="text" value="virtual agent, ai agent, chatbot, bot"></label>
+    <label class="field"><span>A ticket through those channels this many minutes after a conversation came from it</span><input id="check-link" type="number" min="0" max="1440" value="30"></label>
+  </div>
+</details>
+<div class="cta-row"><button class="btn btn-primary" id="check-run" type="button" disabled>Run the check</button></div>
+<p class="callout warn" id="check-error" hidden></p>
+<div id="check-results" class="check-results" hidden></div>
+  </div>
+</section>
+</main>
+<footer class="offline-foot"><div class="wrap small muted">Downloaded from probativelabs.com/check. The method and this code are open source: github.com/VivekReddyGaddam/probative-labs.</div></footer>
+<script>/* Probative Labs free check: did the virtual agent's "resolved" conversations hold?
+ *
+ * Everything runs in this browser. The page's Content-Security-Policy (connect-src 'none') stops it from
+ * sending anything anywhere: open the browser's Network tab while it runs and you will see no requests.
+ *
+ * The definitions follow the open engine's resolution audit (`probative audit --claims-preset servicenow_va`):
+ * a claimed resolution came back if the same person opened a ticket within the window after the conversation
+ * started; the normal rate is how often people came back after tickets your agents resolved, in the same
+ * months; only the excess counts against the AI:
+ *   did not hold = (came back after the AI − came back after people) ÷ (1 − came back after people)
+ */
+const ProbativeCheck = (() => {
+  "use strict";
+
+  const DAY = 86400000;
+  const MINUTE = 60000;
+  const MIN_CELL = 30;
+  // As in the engine: a ticket the AI agent opens itself (ServiceNow's Create Incident topic sets Contact type to
+  // Virtual Agent) is a handoff, not a return. One through these channels within LINK_MINUTES of the same
+  // person's latest conversation was created in that conversation.
+  const AI_CHANNELS = "virtual agent, ai agent, chatbot, bot";
+  const LINK_MINUTES = 30;
+
+  // --- CSV ---------------------------------------------------------------------------------------------
+  function parseCSV(text) {
+    if (text.charCodeAt(0) === 0xfeff) text = text.slice(1);
+    const nl = text.indexOf("\n");
+    const first = nl === -1 ? text : text.slice(0, nl);
+    let delim = ",";
+    for (const d of [";", "\t"]) if (first.split(d).length > first.split(delim).length) delim = d;
+    const rows = [];
+    let row = [];
+    let i = 0;
+    const n = text.length;
+    while (i <= n) {
+      if (i === n) {
+        if (row.length) rows.push(row);
+        break;
+      }
+      let field = "";
+      if (text[i] === '"') {
+        i++;
+        let start = i;
+        for (;;) {
+          const q = text.indexOf('"', i);
+          if (q === -1) {
+            field += text.slice(start);
+            i = n;
+            break;
+          }
+          if (text[q + 1] === '"') {
+            field += text.slice(start, q + 1);
+            i = q + 2;
+            start = i;
+            continue;
+          }
+          field += text.slice(start, q);
+          i = q + 1;
+          break;
+        }
+        while (i < n && text[i] !== delim && text[i] !== "\n") i++;
+      } else {
+        const start = i;
+        while (i < n && text[i] !== delim && text[i] !== "\n") i++;
+        field = text.slice(start, i);
+      }
+      if (field.endsWith("\r")) field = field.slice(0, -1);
+      row.push(field);
+      if (i >= n) {
+        rows.push(row);
+        break;
+      }
+      if (text[i] === "\n") {
+        rows.push(row);
+        row = [];
+      }
+      i++;
+    }
+    const header = (rows.shift() || []).map((h) => h.trim());
+    return { header, rows: rows.filter((r) => r.length > 1 || (r[0] || "").trim() !== "") };
+  }
+
+  // --- Columns -------------------------------------------------------------------------------------------
+  const norm = (v) =>
+    String(v == null ? "" : v)
+      .trim()
+      .toLowerCase()
+      .replace(/[_\s]+/g, " ");
+
+  const CONVERSATION_FIELDS = {
+    person: ["opened_for.sys_id", "opened_for", "opened for", "consumer", "requester_id", "requester", "caller_id",
+      "user", "user id", "user email", "email"],
+    started: ["opened_at", "opened", "sys_created_on", "created", "started_at", "start time", "created at"],
+    state: ["state"],
+    reason: ["state_reason", "state reason"],
+    agentChat: ["agent_chat", "agent chat"],
+    virtualAgent: ["virtual_agent", "virtual agent"],
+    type: ["type"],
+    outcome: ["outcome", "resolution state", "deflection outcome", "fin ai agent resolution state"],
+  };
+  // Column names from the engine's export presets: ServiceNow, Jira Service Management, Zendesk, Freshservice,
+  // BMC Helix and Ivanti. The first name found wins; anything else is matched by hand on the page.
+  const TICKET_FIELDS = {
+    id: ["number", "issue key", "ticket id", "id", "sys_id", "incident number", "incident id", "incident id*+",
+      "incidentnumber", "incident #"],
+    person: ["caller_id.sys_id", "caller_id", "caller", "opened_for.sys_id", "opened_for", "requester_id", "requester",
+      "requester email", "reporter", "requester name", "email", "person id", "customer login id",
+      "direct contact login id", "profilelink_recid", "profilelink", "profilefullname", "customer"],
+    opened: ["opened_at", "opened", "sys_created_on", "created", "created at", "created date", "created time",
+      "reported date", "reported date+", "submit date", "createddatetime", "created date time", "created on"],
+    resolved: ["resolved_at", "resolved", "resolution date", "resolved at", "solved at", "resolved date", "resolved time",
+      "last resolved date", "resolveddatetime", "resolved date time", "resolved on"],
+    category: ["category", "u_category", "request type", "custom field (request type)",
+      "custom field (customer request type)", "issue type", "ticket type", "operational categorization tier 1",
+      "categorization tier 1", "operational categorization tier 1+", "actualcategory", "type"],
+    channel: ["contact_type", "contact type", "channel", "via", "source", "reported source", "reported source+"],
+  };
+
+  function detect(header, fields) {
+    const lookup = new Map();
+    header.forEach((h, i) => {
+      if (!lookup.has(norm(h))) lookup.set(norm(h), i);
+    });
+    const out = {};
+    for (const [key, candidates] of Object.entries(fields)) {
+      out[key] = -1;
+      for (const c of candidates) {
+        if (lookup.has(norm(c))) {
+          out[key] = lookup.get(norm(c));
+          break;
+        }
+      }
+    }
+    return out;
+  }
+
+  // --- Dates ---------------------------------------------------------------------------------------------
+  const MONTHS = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 };
+  const NUMERIC = /^\s*(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})(?:[ T]+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AaPp][Mm])?)?/;
+  const ISO = /^\s*(\d{4})-(\d{1,2})-(\d{1,2})(?:[ T]+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/;
+  const NAMED = /^\s*(\d{1,2})[/\- ]([A-Za-z]{3})[a-z]*[/\- ](\d{2,4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AaPp][Mm])?)?/;
+
+  // Exports follow the user's date preference, so one file is consistent: the clear cases decide.
+  function dayFirst(values) {
+    let d = 0;
+    let m = 0;
+    for (const v of values) {
+      const x = NUMERIC.exec(v);
+      if (!x) continue;
+      if (+x[1] > 12) d++;
+      if (+x[2] > 12) m++;
+      if (d + m > 200) break;
+    }
+    return d > 0 && m === 0;
+  }
+
+  function clock(h, mi, s, ampm) {
+    let hour = +(h || 0);
+    if (ampm) {
+      const pm = ampm.toLowerCase() === "pm";
+      if (pm && hour < 12) hour += 12;
+      if (!pm && hour === 12) hour = 0;
+    }
+    return [hour, +(mi || 0), +(s || 0)];
+  }
+
+  function parseDate(v, df) {
+    if (v == null) return NaN;
+    const s = String(v).trim();
+    if (!s) return NaN;
+    let x = ISO.exec(s);
+    if (x) return Date.UTC(+x[1], +x[2] - 1, +x[3], ...clock(x[4], x[5], x[6]));
+    x = NUMERIC.exec(s);
+    if (x) {
+      const day = df ? +x[1] : +x[2];
+      const month = df ? +x[2] : +x[1];
+      let year = +x[3];
+      if (year < 100) year += 2000;
+      return Date.UTC(year, month - 1, day, ...clock(x[4], x[5], x[6], x[7]));
+    }
+    x = NAMED.exec(s);
+    if (x && MONTHS[x[2].toLowerCase()]) {
+      let year = +x[3];
+      if (year < 100) year += 2000;
+      return Date.UTC(year, MONTHS[x[2].toLowerCase()] - 1, +x[1], ...clock(x[4], x[5], x[6], x[7]));
+    }
+    const t = Date.parse(s);
+    return Number.isNaN(t) ? NaN : t;
+  }
+
+  const monthOf = (t) => {
+    const d = new Date(t);
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+  };
+
+  // --- Outcomes ------------------------------------------------------------------------------------------
+  const truthy = (v) => ["true", "1", "yes", "y", "t"].includes(norm(v));
+
+  function readable(v) {
+    const s = String(v == null ? "" : v).trim();
+    if (/^[a-z0-9_]+$/.test(s)) return s.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
+    return s;
+  }
+
+  // ServiceNow closes a Virtual Agent chat the person walked away from as "Closed Complete": that is what its
+  // reporting counts as handled, so it is a claimed resolution here too (as in the engine's servicenow_va preset).
+  function serviceNowOutcome(state, reason, live) {
+    const st = norm(state);
+    const rs = norm(reason);
+    if (live || rs === "agent ended" || rs === "left before engagement") return "escalated";
+    if (["in progress", "new", "work in progress"].includes(st)) return "open";
+    if (st === "closed abandoned" || rs === "no activity" || st === "faulted" || rs === "error") return "abandoned";
+    if (st === "closed complete") return "resolved";
+    return "other";
+  }
+
+  function genericOutcome(value, resolvedValues) {
+    const o = norm(value);
+    if (!o) return "other";
+    if (resolvedValues.has(o)) return "resolved";
+    if (["open", "in progress", "new", "active"].includes(o)) return "open";
+    if (/abandon|no response|no activity|timed? ?out|unanswered|dropped/.test(o)) return "abandoned";
+    if (/escalat|hand ?off|handed|transfer|routed|live agent|human/.test(o)) return "escalated";
+    return "other";
+  }
+
+  function conversations(table, cols, resolvedValue) {
+    const resolvedValues = new Set(
+      String(resolvedValue || "resolved")
+        .split(",")
+        .map((v) => norm(v))
+        .filter(Boolean),
+    );
+    const serviceNow = cols.state >= 0;
+    const starts = table.rows.map((r) => r[cols.started]);
+    const df = dayFirst(starts);
+    const out = [];
+    let skipped = 0;
+    for (const r of table.rows) {
+      if (serviceNow && cols.virtualAgent >= 0 && !truthy(r[cols.virtualAgent])) {
+        skipped++;
+        continue;
+      }
+      if (serviceNow && cols.type >= 0 && !["chat", ""].includes(norm(r[cols.type]))) {
+        skipped++;
+        continue;
+      }
+      const live = cols.agentChat >= 0 && truthy(r[cols.agentChat]);
+      let outcome;
+      let detail;
+      if (serviceNow) {
+        outcome = serviceNowOutcome(r[cols.state], cols.reason >= 0 ? r[cols.reason] : "", live);
+        detail = live ? "Live agent joined" : readable(cols.reason >= 0 && r[cols.reason] ? r[cols.reason] : r[cols.state]);
+      } else if (cols.outcome >= 0) {
+        outcome = genericOutcome(r[cols.outcome], resolvedValues);
+        detail = readable(r[cols.outcome]);
+      } else {
+        outcome = "resolved";
+        detail = "";
+      }
+      out.push({
+        person: String(r[cols.person] == null ? "" : r[cols.person]).trim(),
+        start: parseDate(r[cols.started], df),
+        outcome,
+        detail,
+      });
+    }
+    return { rows: out, skipped, serviceNow };
+  }
+
+  // As the engine's health check: a ticket number seen twice keeps its first row, and a ticket resolved
+  // before it was opened is left out.
+  function tickets(table, cols, notes) {
+    const df = dayFirst(table.rows.map((r) => r[cols.opened]).concat(cols.resolved >= 0 ? table.rows.map((r) => r[cols.resolved]) : []));
+    const seen = new Set();
+    let duplicates = 0;
+    let impossible = 0;
+    const out = [];
+    for (const r of table.rows) {
+      if (cols.id >= 0) {
+        const key = String(r[cols.id] == null ? "" : r[cols.id]).trim();
+        if (key && seen.has(key)) {
+          duplicates++;
+          continue;
+        }
+        seen.add(key);
+      }
+      const t = {
+        person: String(r[cols.person] == null ? "" : r[cols.person]).trim(),
+        opened: parseDate(r[cols.opened], df),
+        resolved: cols.resolved >= 0 ? parseDate(r[cols.resolved], df) : NaN,
+        category: cols.category >= 0 ? String(r[cols.category] || "").trim() : "",
+        channel: cols.channel >= 0 ? String(r[cols.channel] == null ? "" : r[cols.channel]).trim() : "",
+      };
+      if (!Number.isNaN(t.resolved) && !Number.isNaN(t.opened) && t.resolved < t.opened) {
+        impossible++;
+        continue;
+      }
+      out.push(t);
+    }
+    if (duplicates) notes.push(`${duplicates.toLocaleString()} duplicate ticket numbers were left out (the first row was kept).`);
+    if (impossible) notes.push(`${impossible.toLocaleString()} tickets resolved before they were opened were left out.`);
+    return out;
+  }
+
+  // --- The check -----------------------------------------------------------------------------------------
+  function poisson(rand) {
+    const L = Math.exp(-1);
+    let k = 0;
+    let p = 1;
+    do {
+      k++;
+      p *= rand();
+    } while (p > L);
+    return k - 1;
+  }
+
+  function mulberry32(seed) {
+    let a = seed >>> 0;
+    return () => {
+      a = (a + 0x6d2b79f5) >>> 0;
+      let t = a;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  const failed = (r, b) => (b < 1 ? (r - b) / (1 - b) : NaN);
+
+  // The human baseline standardized to the claims' months: each month of claims is compared with tickets
+  // your agents resolved that month; a month with fewer than 30 falls back to all of them.
+  function standardized(claimCells, baseCells, basePooled) {
+    let n = 0;
+    let s = 0;
+    let b = 0;
+    for (const [month, c] of claimCells) {
+      if (!c.n) continue;
+      const cell = baseCells.get(month);
+      const rate = cell && cell.n >= MIN_CELL ? cell.s / cell.n : basePooled;
+      n += c.n;
+      s += c.s;
+      b += c.n * rate;
+    }
+    if (!n) return { ai: NaN, base: NaN, failed: NaN, n: 0 };
+    return { ai: s / n, base: b / n, failed: failed(s / n, b / n), n };
+  }
+
+  function run(convTable, convCols, ticketTable, ticketCols, opts = {}) {
+    const windowDays = opts.windowDays || 7;
+    const W = windowDays * DAY;
+    const reps = opts.reps || 400;
+    const notes = [];
+    const linkMinutes =
+      opts.linkMinutes == null || opts.linkMinutes === "" || Number.isNaN(+opts.linkMinutes)
+        ? LINK_MINUTES
+        : Math.max(0, +opts.linkMinutes);
+    const LINK = linkMinutes * MINUTE;
+    if (LINK >= W) throw new Error("The minutes for tickets the AI agent created must be shorter than the return window.");
+    const aiChannels = new Set(
+      String(opts.aiChannels == null ? AI_CHANNELS : opts.aiChannels)
+        .split(",")
+        .map((v) => norm(v))
+        .filter(Boolean),
+    );
+
+    const conv = conversations(convTable, convCols, opts.resolvedValue);
+    if (conv.skipped) notes.push(`${conv.skipped.toLocaleString()} rows without the Virtual agent flag, or not chats, were left out.`);
+    const tk = tickets(ticketTable, ticketCols, notes).filter((t) => t.person && !Number.isNaN(t.opened));
+    if (!tk.length) throw new Error("No tickets with a person and an opened date were found. Check the columns.");
+
+    let dataStart = Infinity;
+    let dataEnd = -Infinity;
+    const byPerson = new Map();
+    tk.forEach((t, i) => {
+      if (t.opened < dataStart) dataStart = t.opened;
+      if (t.opened > dataEnd) dataEnd = t.opened;
+      if (!byPerson.has(t.person)) byPerson.set(t.person, []);
+      byPerson.get(t.person).push(i);
+    });
+    for (const list of byPerson.values()) list.sort((a, b) => tk[a].opened - tk[b].opened);
+
+    // The ticket the same person opened next, within the window after time t (strictly after, as in the engine).
+    // With "after", only tickets opened later than that after t count.
+    function nextTicket(person, t, after = 0) {
+      const list = byPerson.get(person);
+      if (!list) return -1;
+      const from = t + after;
+      let lo = 0;
+      let hi = list.length;
+      while (lo < hi) {
+        const mid = (lo + hi) >> 1;
+        if (tk[list[mid]].opened > from) hi = mid;
+        else lo = mid + 1;
+      }
+      if (lo < list.length && tk[list[lo]].opened - t <= W) return list[lo];
+      return -1;
+    }
+
+    const outcomes = { resolved: 0, escalated: 0, abandoned: 0, open: 0, other: 0 };
+    conv.rows.forEach((c) => {
+      outcomes[c.outcome] = (outcomes[c.outcome] || 0) + 1;
+    });
+    // Tickets the AI agent created itself. With the ticket's channel they are found exactly, and the
+    // conversations that created them are handoffs, left out. Without it, a ticket opened in the first minutes
+    // could be either, so on both sides only tickets opened after LINK count as returns.
+    const channelKnown = ticketCols.channel >= 0 && tk.some((t) => t.channel);
+    const after = channelKnown ? 0 : LINK;
+    const key = (person, start) => `${person}\u0000${start}`;
+    const handoffKeys = new Set();
+    if (channelKnown && LINK > 0) {
+      const starts = new Map();
+      for (const c of conv.rows) {
+        if (!c.person || Number.isNaN(c.start)) continue;
+        if (!starts.has(c.person)) starts.set(c.person, []);
+        starts.get(c.person).push(c.start);
+      }
+      for (const list of starts.values()) list.sort((a, b) => a - b);
+      for (const t of tk) {
+        if (!aiChannels.has(norm(t.channel))) continue;
+        const list = starts.get(t.person);
+        if (!list) continue;
+        let lo = 0;
+        let hi = list.length;
+        while (lo < hi) {
+          const mid = (lo + hi) >> 1;
+          if (list[mid] <= t.opened) lo = mid + 1;
+          else hi = mid;
+        }
+        if (lo > 0 && t.opened - list[lo - 1] <= LINK) handoffKeys.add(key(t.person, list[lo - 1]));
+      }
+    }
+    const allClaims = conv.rows.filter((c) => c.outcome === "resolved" && c.person && !Number.isNaN(c.start));
+    const claims = allClaims.filter((c) => !handoffKeys.has(key(c.person, c.start)));
+    const handoffs = allClaims.length - claims.length;
+    const outside = claims.filter((c) => c.start < dataStart || c.start > dataEnd).length;
+    const tooRecent = claims.filter((c) => c.start >= dataStart && c.start <= dataEnd && c.start > dataEnd - W).length;
+    const eligible = claims.filter((c) => c.start >= dataStart && c.start <= dataEnd - W);
+    if (!eligible.length) {
+      throw new Error(
+        "None of the resolved conversations fall inside the ticket export with a week to follow up. " +
+          "Export tickets covering the same months, plus a week.",
+      );
+    }
+    let lo = Infinity;
+    let hi = -Infinity;
+    for (const c of eligible) {
+      c.next = nextTicket(c.person, c.start, after);
+      c.ret = c.next >= 0 ? 1 : 0;
+      c.month = monthOf(c.start);
+      if (c.start < lo) lo = c.start;
+      if (c.start > hi) hi = c.start;
+    }
+    const base = [];
+    for (let i = 0; i < tk.length; i++) {
+      const t = tk[i];
+      if (Number.isNaN(t.resolved) || t.resolved < lo || t.resolved > hi) continue;
+      base.push({ person: t.person, ret: nextTicket(t.person, t.resolved, after) >= 0 ? 1 : 0, month: monthOf(t.resolved) });
+    }
+    if (!base.length) throw new Error("No tickets resolved by your agents in the same weeks. Include the resolved date.");
+
+    // Point estimate.
+    const cells = (items, weight) => {
+      const m = new Map();
+      items.forEach((x, i) => {
+        const w = weight ? weight[i] : 1;
+        if (!w) return;
+        const c = m.get(x.month) || { n: 0, s: 0 };
+        c.n += w;
+        c.s += w * x.ret;
+        m.set(x.month, c);
+      });
+      return m;
+    };
+    const pooledOf = (items, weight) => {
+      let n = 0;
+      let s = 0;
+      items.forEach((x, i) => {
+        const w = weight ? weight[i] : 1;
+        n += w;
+        s += w * x.ret;
+      });
+      return n ? s / n : NaN;
+    };
+    const point = standardized(cells(eligible), cells(base), pooledOf(base));
+
+    // Range: resample people (a Poisson bootstrap), so one person's contacts move together.
+    const people = new Map();
+    const pid = (p) => {
+      if (!people.has(p)) people.set(p, people.size);
+      return people.get(p);
+    };
+    const claimPeople = eligible.map((c) => pid(c.person));
+    const basePeople = base.map((b) => pid(b.person));
+    const rand = mulberry32(20261014);
+    const draws = [];
+    const weightsOfPeople = new Float64Array(people.size);
+    for (let r = 0; r < reps; r++) {
+      for (let p = 0; p < weightsOfPeople.length; p++) weightsOfPeople[p] = poisson(rand);
+      const wc = claimPeople.map((p) => weightsOfPeople[p]);
+      const wb = basePeople.map((p) => weightsOfPeople[p]);
+      const est = standardized(cells(eligible, wc), cells(base, wb), pooledOf(base, wb));
+      if (!Number.isNaN(est.failed)) draws.push(est.failed);
+    }
+    draws.sort((a, b) => a - b);
+    const q = (p) => (draws.length ? draws[Math.min(draws.length - 1, Math.max(0, Math.round(p * (draws.length - 1))))] : NaN);
+    const range = { low: q(0.025), high: q(0.975) };
+
+    // How much the result depends on two choices: whose resolutions make the baseline, and the tickets the AI
+    // agent may have created itself (the engine's sensitivity checks).
+    const checks = [{ check: "Main result", didNotHold: point.failed, main: true }];
+    const peopleWithClaims = new Set(eligible.map((c) => c.person));
+    const baseSame = base.filter((b) => peopleWithClaims.has(b.person));
+    if (baseSame.length >= MIN_CELL) {
+      const s = standardized(cells(eligible), cells(baseSame), pooledOf(baseSame));
+      checks.push({ check: "Baseline from the same people only", didNotHold: s.failed });
+    }
+    if (handoffs || (!channelKnown && LINK > 0)) {
+      let lo2 = Infinity;
+      let hi2 = -Infinity;
+      const everyClaim = [];
+      for (const c of allClaims) {
+        if (c.start < dataStart || c.start > dataEnd - W) continue;
+        everyClaim.push({ month: monthOf(c.start), ret: nextTicket(c.person, c.start) >= 0 ? 1 : 0 });
+        if (c.start < lo2) lo2 = c.start;
+        if (c.start > hi2) hi2 = c.start;
+      }
+      const everyBase = [];
+      for (const t of tk) {
+        if (Number.isNaN(t.resolved) || t.resolved < lo2 || t.resolved > hi2) continue;
+        everyBase.push({ month: monthOf(t.resolved), ret: nextTicket(t.person, t.resolved) >= 0 ? 1 : 0 });
+      }
+      if (everyClaim.length && everyBase.length) {
+        const s = standardized(cells(everyClaim), cells(everyBase), pooledOf(everyBase));
+        checks.push({ check: "Every ticket counts, even ones the AI agent may have created", didNotHold: s.failed });
+      }
+    }
+
+    if (handoffs) {
+      notes.push(
+        `${handoffs.toLocaleString()} conversations counted as resolved created a ticket themselves: a ticket through ` +
+          `the AI agent's channel within ${linkMinutes} minutes. They were handed to your team, so they are left out ` +
+          "instead of being counted as returns. If your dashboard counts them as resolved, its resolution rate includes them.",
+      );
+    }
+    let fastChannels = [];
+    if (channelKnown && LINK > 0) {
+      const counts = new Map();
+      let total = 0;
+      for (const c of eligible) {
+        const list = byPerson.get(c.person);
+        if (!list) continue;
+        let lo = 0;
+        let hi = list.length;
+        while (lo < hi) {
+          const mid = (lo + hi) >> 1;
+          if (tk[list[mid]].opened > c.start) hi = mid;
+          else lo = mid + 1;
+        }
+        if (lo >= list.length) continue;
+        const t = tk[list[lo]];
+        if (t.opened - c.start > LINK || aiChannels.has(norm(t.channel))) continue;
+        const label = t.channel || "(blank)";
+        counts.set(label, (counts.get(label) || 0) + 1);
+        total++;
+      }
+      if (total >= Math.max(10, 0.01 * eligible.length)) {
+        fastChannels = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+        notes.push(
+          `Tickets opened within ${linkMinutes} minutes of a conversation counted as resolved came through ` +
+            fastChannels.map(([c, n]) => `${c} (${n.toLocaleString()})`).join(", ") +
+            ". If the AI agent opens tickets through one of these channels, add it under Options, so those tickets " +
+            "count as handoffs, not returns.",
+        );
+      }
+    } else if (LINK > 0) {
+      notes.push(
+        "The incidents have no channel column, so a ticket the AI agent created during a conversation can't be told " +
+          `apart from a person coming straight back. Returns count from ${linkMinutes} minutes after each conversation ` +
+          "or resolution, on both sides. Add Contact type to the incidents export to count faster returns too.",
+      );
+    }
+
+    // How the platform closed the conversations it counted as resolved.
+    const details = new Map();
+    for (const c of eligible) {
+      const d = details.get(c.detail) || { n: 0, s: 0 };
+      d.n++;
+      d.s += c.ret;
+      details.set(c.detail, d);
+    }
+    const byDetail =
+      details.size >= 2
+        ? [...details.entries()]
+            .filter(([, d]) => d.n >= MIN_CELL)
+            .map(([detail, d]) => ({
+              detail,
+              claims: d.n,
+              share: d.n / eligible.length,
+              cameBack: d.s / d.n,
+              didNotHold: failed(d.s / d.n, point.base),
+            }))
+            .sort((a, b) => b.claims - a.claims)
+        : [];
+
+    // What the people who came back opened tickets about: the bot's fix list.
+    const cats = new Map();
+    let returns = 0;
+    for (const c of eligible) {
+      if (c.next < 0) continue;
+      returns++;
+      const cat = tk[c.next].category || "(no category)";
+      cats.set(cat, (cats.get(cat) || 0) + 1);
+    }
+    const cameBackAbout = ticketCols.category >= 0
+      ? [...cats.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([category, n]) => ({ category, returns: n, share: n / returns }))
+      : [];
+
+    // By month.
+    const claimMonths = cells(eligible);
+    const baseMonths = cells(base);
+    const pooled = pooledOf(base);
+    const byMonth = [...claimMonths.entries()]
+      .filter(([, c]) => c.n >= MIN_CELL)
+      .sort((a, b) => (a[0] < b[0] ? -1 : 1))
+      .map(([month, c]) => {
+        const bc = baseMonths.get(month);
+        const b = bc && bc.n >= MIN_CELL ? bc.s / bc.n : pooled;
+        return { month, claims: c.n, cameBack: c.s / c.n, afterPeople: b, didNotHold: failed(c.s / c.n, b) };
+      });
+
+    const ticketPeople = new Set(tk.map((t) => t.person));
+    const overlap = eligible.filter((c) => ticketPeople.has(c.person)).length / eligible.length;
+    if (overlap < 0.5) {
+      notes.push(
+        `Only ${Math.round(overlap * 100)}% of the people in the conversations appear in the tickets, so the two ` +
+          "files probably identify people differently (for example a name in one and an ID in the other).",
+      );
+    }
+    if (!conv.serviceNow && convCols.outcome < 0) notes.push("The conversations have no outcome column, so every row counted as a resolution.");
+    const caveat =
+      "A screening estimate, not a verdict: any ticket from the same person counts as a return, and the comparison " +
+      "is with all of your agents' resolutions. The full audit also matches the type of issue, runs more checks, and " +
+      "widens the range with a month-by-month check.";
+
+    const fmtDay = (t) => new Date(t).toISOString().slice(0, 10);
+    return {
+      version: "free-check-2",
+      windowDays,
+      linkMinutes,
+      channelKnown,
+      period: { from: fmtDay(lo), to: fmtDay(hi) },
+      conversations: { rows: conv.rows.length, outcomes, serviceNow: conv.serviceNow },
+      claims: {
+        total: allClaims.length,
+        handedOff: handoffs,
+        checked: eligible.length,
+        tooRecent,
+        outside,
+        people: new Set(eligible.map((c) => c.person)).size,
+      },
+      tickets: { rows: tk.length, baselineResolved: base.length },
+      cameBack: point.ai,
+      afterPeople: point.base,
+      didNotHold: point.failed,
+      range,
+      held: Math.min(eligible.length, eligible.length * (1 - Math.max(point.failed, 0))),
+      byDetail,
+      cameBackAbout,
+      byMonth,
+      overlap,
+      checks,
+      fastChannels,
+      caveat,
+      notes,
+    };
+  }
+
+  return { parseCSV, detect, CONVERSATION_FIELDS, TICKET_FIELDS, run, parseDate, dayFirst };
+})();
+
+if (typeof module === "object" && module.exports) {
+  module.exports = ProbativeCheck;
+} else {
+  (function ui() {
+    "use strict";
+    const $ = (id) => document.getElementById(id);
+    const root = $("free-check");
+    if (!root) return;
+    const state = { conv: null, tickets: null, sample: false };
+    const pct = (x, d = 0) => (x == null || Number.isNaN(x) ? "n/a" : `${(x * 100).toFixed(d)}%`.replace("-", "−"));
+    const num = (x) => (x == null || Number.isNaN(x) ? "n/a" : Math.round(x).toLocaleString());
+
+    function el(tag, attrs = {}, ...children) {
+      const node = document.createElement(tag);
+      for (const [k, v] of Object.entries(attrs)) {
+        if (k === "class") node.className = v;
+        else node.setAttribute(k, v);
+      }
+      for (const c of children) node.append(c instanceof Node ? c : document.createTextNode(String(c)));
+      return node;
+    }
+
+    const LABELS = {
+      person: "Person",
+      started: "Conversation start",
+      state: "State",
+      reason: "State reason",
+      agentChat: "Agent chat",
+      virtualAgent: "Virtual agent",
+      type: "Type",
+      outcome: "Outcome",
+      opened: "Opened",
+      resolved: "Resolved",
+      id: "Ticket number",
+      category: "Category",
+      channel: "Channel (Contact type)",
+    };
+    const REQUIRED = { conv: ["person", "started"], tickets: ["person", "opened", "resolved"] };
+
+    function mappingTable(kind, table, cols, fields) {
+      const wrap = el("div", { class: "check-map" });
+      for (const key of Object.keys(fields)) {
+        const select = el("select", { "data-kind": kind, "data-key": key, "aria-label": LABELS[key] });
+        select.append(el("option", { value: "-1" }, "(none)"));
+        table.header.forEach((h, i) => {
+          const o = el("option", { value: String(i) }, h || `(column ${i + 1})`);
+          if (i === cols[key]) o.selected = true;
+          select.append(o);
+        });
+        select.addEventListener("change", () => {
+          cols[key] = Number(select.value);
+          ready();
+        });
+        const need = REQUIRED[kind].includes(key);
+        wrap.append(el("label", { class: "check-field" }, el("span", {}, LABELS[key] + (need ? "" : " (optional)")), select));
+      }
+      return wrap;
+    }
+
+    async function load(kind, file) {
+      const status = $(`${kind}-status`);
+      status.classList.remove("error");
+      status.textContent = `Reading ${file.name}…`;
+      const text = await file.text();
+      const table = ProbativeCheck.parseCSV(text);
+      if (!table.header.length || !table.rows.length) {
+        throw new Error(`${file.name} has no rows to read. Export the list as CSV, with its column headers.`);
+      }
+      const fields = kind === "conv" ? ProbativeCheck.CONVERSATION_FIELDS : ProbativeCheck.TICKET_FIELDS;
+      const cols = ProbativeCheck.detect(table.header, fields);
+      state[kind] = { table, cols, fields, name: file.name };
+      $(`${kind}-name`).textContent = file.name;
+      $(`${kind}-zone`).classList.add("chosen");
+      status.textContent = `${table.rows.length.toLocaleString()} rows, ${table.header.length} columns. Check the columns below.`;
+      const holder = $(`${kind}-map`);
+      holder.replaceChildren(mappingTable(kind, table, cols, fields));
+      ready();
+    }
+
+    function failed(kind, error) {
+      state[kind] = null;
+      $(`${kind}-zone`).classList.remove("chosen");
+      $(`${kind}-map`).replaceChildren();
+      const status = $(`${kind}-status`);
+      status.classList.add("error");
+      status.textContent = error.message;
+      ready();
+    }
+
+    function ready() {
+      const ok =
+        state.conv &&
+        state.tickets &&
+        REQUIRED.conv.every((k) => state.conv.cols[k] >= 0) &&
+        REQUIRED.tickets.every((k) => state.tickets.cols[k] >= 0);
+      $("check-run").disabled = !ok;
+      return ok;
+    }
+
+    function table(head, rows) {
+      const t = el("table");
+      t.append(el("thead", {}, el("tr", {}, ...head.map((h, i) => el("th", i ? { class: "n" } : {}, h)))));
+      const body = el("tbody");
+      for (const r of rows) body.append(el("tr", {}, ...r.map((c, i) => el("td", i ? { class: "n" } : {}, c))));
+      t.append(body);
+      return el("div", { class: "table-wrap" }, t);
+    }
+
+    function render(r) {
+      const out = $("check-results");
+      const headline =
+        `Of ${num(r.claims.checked)} conversations counted as resolved (${r.period.from} to ${r.period.to}), ` +
+        `${pct(r.cameBack, 1)} came back as a ticket within ${r.windowDays} days. After your agents' own resolutions, ` +
+        `${pct(r.afterPeople, 1)} did. Beyond that normal rate, ${pct(r.didNotHold, 1)} did not hold ` +
+        `(95% range ${pct(r.range.low, 1)} to ${pct(r.range.high, 1)}).` +
+        (r.claims.handedOff ? ` ${num(r.claims.handedOff)} more created a ticket themselves, so they were left out.` : "");
+      const blocks = [
+        el("h2", {}, "Result", el("span", { class: "check-badge" }, "Screening estimate")),
+        ...(state.sample
+          ? [el("p", { class: "callout warn" }, "Example only: made-up data from a simulated service desk, to show what you'll get. Drop your own exports above to check yours.")]
+          : []),
+        el("p", { class: "headline" }, headline),
+        el("p", { class: "small muted" }, r.caveat),
+        el(
+          "div",
+          { class: "tiles" },
+          el("div", { class: "tile" }, el("div", { class: "k" }, "Counted as resolved"), el("div", { class: "v" }, num(r.claims.checked)), el("div", { class: "s" }, `${num(r.claims.people)} people`)),
+          el("div", { class: "tile" }, el("div", { class: "k" }, "Came back"), el("div", { class: "v" }, pct(r.cameBack, 1)), el("div", { class: "s" }, `within ${r.windowDays} days`)),
+          el("div", { class: "tile" }, el("div", { class: "k" }, "After your agents"), el("div", { class: "v" }, pct(r.afterPeople, 1)), el("div", { class: "s" }, `${num(r.tickets.baselineResolved)} tickets`)),
+          el("div", { class: "tile" }, el("div", { class: "k" }, "Did not hold"), el("div", { class: "v" }, pct(r.didNotHold, 1)), el("div", { class: "s" }, `range ${pct(r.range.low, 1)} to ${pct(r.range.high, 1)}`)),
+        ),
+      ];
+      if (r.checks.length > 1) {
+        blocks.push(el("h3", {}, "How much the result depends on the method"));
+        blocks.push(table(["Check", "Did not hold"], r.checks.map((c) => [c.check, pct(c.didNotHold, 1)])));
+        blocks.push(el("p", { class: "small muted" }, "If these differ a lot, the result depends on that choice, and the full audit should look closer."));
+      }
+      if (r.byDetail.length) {
+        blocks.push(el("h3", {}, "By how the platform closed the conversation"));
+        blocks.push(table(["Close reason", "Counted resolved", "Share", "Came back", "Did not hold"], r.byDetail.map((d) => [d.detail || "(blank)", num(d.claims), pct(d.share, 1), pct(d.cameBack, 1), pct(d.didNotHold)])));
+      }
+      if (r.cameBackAbout.length) {
+        blocks.push(el("h3", {}, "What people came back about: where the bot is failing"));
+        blocks.push(table(["Category of the ticket they opened", "Returns", "Share of returns"], r.cameBackAbout.map((c) => [c.category, num(c.returns), pct(c.share, 1)])));
+      }
+      if (r.byMonth.length) {
+        blocks.push(el("h3", {}, "By month"));
+        blocks.push(table(["Month", "Counted resolved", "Came back", "After your agents", "Did not hold"], r.byMonth.map((m) => [m.month, num(m.claims), pct(m.cameBack, 1), pct(m.afterPeople, 1), pct(m.didNotHold)])));
+      }
+      blocks.push(el("ul", { class: "small muted check-notes" }, ...r.notes.map((n) => el("li", {}, n))));
+      const save = el("button", { class: "btn", type: "button" }, "Download the summary (JSON)");
+      save.addEventListener("click", () => {
+        const blob = new Blob([JSON.stringify(r, null, 2)], { type: "application/json" });
+        const a = el("a", { href: URL.createObjectURL(blob), download: "resolution-check-summary.json" });
+        document.body.append(a);
+        a.click();
+        a.remove();
+      });
+      const print = el("button", { class: "btn", type: "button" }, "Print or save as PDF");
+      print.addEventListener("click", () => window.print());
+      blocks.push(el("div", { class: "cta-row check-actions" }, print, save));
+      blocks.push(el("p", { class: "small muted" }, "The summary holds rates and counts only: no names, IDs or ticket contents. It is what you would share."));
+      out.replaceChildren(...blocks);
+      out.hidden = false;
+      out.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    for (const kind of ["conv", "tickets"]) {
+      const input = $(`${kind}-file`);
+      input.addEventListener("change", () => {
+        if (!input.files[0]) return;
+        state.sample = false;
+        // Cleared once read, so choosing the same file again after editing it reloads it.
+        load(kind, input.files[0])
+          .catch((e) => failed(kind, e))
+          .finally(() => (input.value = ""));
+      });
+      const zone = $(`${kind}-zone`);
+      zone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        zone.classList.add("over");
+      });
+      zone.addEventListener("dragleave", () => zone.classList.remove("over"));
+      zone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        zone.classList.remove("over");
+        const f = e.dataTransfer.files[0];
+        if (!f) return;
+        state.sample = false;
+        load(kind, f).catch((e) => failed(kind, e));
+      });
+    }
+    // The example: sample exports from a simulated desk, fetched only when asked for (from this site, as a script,
+    // since the page allows no other requests), then run like any other files.
+    const sample = $("check-sample");
+    if (sample) {
+      const runSample = () => {
+        const data = window.PROBATIVE_SAMPLE;
+        state.sample = true;
+        Promise.all([
+          load("conv", new File([data.conversations], "sample-conversations.csv", { type: "text/csv" })),
+          load("tickets", new File([data.tickets], "sample-incidents.csv", { type: "text/csv" })),
+        ])
+          .then(() => $("check-run").click())
+          .catch((e) => failed("conv", e));
+      };
+      sample.addEventListener("click", () => {
+        if (window.PROBATIVE_SAMPLE) return runSample();
+        sample.disabled = true;
+        const tag = document.createElement("script");
+        tag.src = sample.dataset.sample;
+        tag.onload = () => {
+          sample.disabled = false;
+          runSample();
+        };
+        tag.onerror = () => {
+          sample.disabled = false;
+          failed("conv", new Error("The sample data didn't load. Check your connection and try again."));
+        };
+        document.head.append(tag);
+      });
+    }
+    $("check-run").addEventListener("click", () => {
+      const error = $("check-error");
+      error.hidden = true;
+      if (!ready()) return;
+      try {
+        const r = ProbativeCheck.run(state.conv.table, state.conv.cols, state.tickets.table, state.tickets.cols, {
+          windowDays: Number($("check-window").value) || 7,
+          resolvedValue: $("check-resolved").value,
+          aiChannels: $("check-ai-channels").value,
+          linkMinutes: $("check-link").value,
+        });
+        render(r);
+      } catch (e) {
+        error.textContent = e.message;
+        error.hidden = false;
+      }
+    });
+  })();
+}
+</script>
+</body>
+</html>

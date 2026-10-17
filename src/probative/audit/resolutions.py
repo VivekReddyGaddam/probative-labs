@@ -41,6 +41,12 @@ CLAIMS_PRESET = GENERIC
 OTHER_TYPES = "(other types)"
 ALL_TYPES = "(all)"
 MIN_TYPE_SHARE = 0.01  # claim types below this share are grouped for the baseline
+# A ticket the AI agent opens itself, such as an incident from ServiceNow's Create Incident topic (which sets
+# Contact type to Virtual Agent), is a handoff, not a return: a ticket through one of these channels, opened
+# within LINK_MINUTES of the same person's latest conversation, was created in that conversation.
+AI_CHANNELS = ("virtual agent", "ai agent", "chatbot", "bot")
+LINK_MINUTES = 30
+_NO_DELAY = pd.Timedelta(0)
 
 
 class AuditError(RuntimeError):
@@ -137,9 +143,17 @@ def load_audit_inputs(
 
 
 def next_ticket(
-    left: pd.DataFrame, time_col: str, tickets: pd.DataFrame, by: list[str], window: pd.Timedelta
+    left: pd.DataFrame,
+    time_col: str,
+    tickets: pd.DataFrame,
+    by: list[str],
+    window: pd.Timedelta,
+    after: pd.Timedelta = _NO_DELAY,
 ) -> pd.Series:
-    """When the same person (and type) next opened a ticket in the ``window`` after ``time_col``; NaT if not."""
+    """When the same person (and type) next opened a ticket in the ``window`` after ``time_col``; NaT if not.
+
+    With ``after``, only tickets opened later than that after ``time_col`` count.
+    """
     out = np.full(len(left), np.datetime64("NaT", "ns"), dtype="datetime64[ns]")
     if left.empty:
         return pd.Series(out, index=left.index)
@@ -150,7 +164,7 @@ def next_ticket(
         lt[c] = lt[c].astype("string")
         rt[c] = rt[c].astype("string")
     # Exports and Parquet files can store times at different precisions; compare them at one.
-    lt[time_col] = lt[time_col].astype("datetime64[ns]")
+    lt[time_col] = lt[time_col].astype("datetime64[ns]") + after
     rt[S.OPENED] = rt[S.OPENED].astype("datetime64[ns]")
     rt = rt.rename(columns={S.OPENED: "_next"}).sort_values("_next")
     m = pd.merge_asof(
@@ -160,7 +174,7 @@ def next_ticket(
         right_on="_next",
         by=by,
         direction="forward",
-        tolerance=window,
+        tolerance=window - after,
         allow_exact_matches=False,
     )
     out[m["_row"].to_numpy()] = m["_next"].to_numpy(dtype="datetime64[ns]")
@@ -168,10 +182,76 @@ def next_ticket(
 
 
 def _returns(
-    left: pd.DataFrame, time_col: str, tickets: pd.DataFrame, by: list[str], window: pd.Timedelta
+    left: pd.DataFrame,
+    time_col: str,
+    tickets: pd.DataFrame,
+    by: list[str],
+    window: pd.Timedelta,
+    after: pd.Timedelta = _NO_DELAY,
 ) -> np.ndarray:
     """True where the same person (and type) opened a ticket in the ``window`` after ``time_col``."""
-    return next_ticket(left, time_col, tickets, by, window).notna().to_numpy()
+    return next_ticket(left, time_col, tickets, by, window, after).notna().to_numpy()
+
+
+def _channel_key(values: pd.Series) -> pd.Series:
+    return values.astype("string").str.strip().str.lower().str.replace(r"[_\s]+", " ", regex=True)
+
+
+def _channel_set(channels: tuple[str, ...]) -> set[str]:
+    return {" ".join(str(c).lower().replace("_", " ").split()) for c in channels}
+
+
+def created_in_conversation(
+    tickets: pd.DataFrame, conversations: pd.DataFrame, link: pd.Timedelta, ai_channels: tuple[str, ...]
+) -> pd.DataFrame:
+    """Tickets the AI agent most likely created itself, each with the start of the conversation it came from.
+
+    A ticket counts when it came through one of ``ai_channels`` within ``link`` after the same person's
+    latest conversation started.
+    """
+    is_ai = _channel_key(tickets[S.CHANNEL]).isin(_channel_set(ai_channels)).fillna(False).astype(bool)
+    t = tickets.loc[is_ai, [S.REQUESTER, S.OPENED]].dropna()
+    c = conversations[[S.REQUESTER, S.SESSION_STARTED]].dropna()
+    if t.empty or c.empty:
+        return pd.DataFrame(columns=[S.REQUESTER, S.OPENED, "_conv_started"])
+    t = t.astype({S.REQUESTER: "string", S.OPENED: "datetime64[ns]"})
+    c = c.rename(columns={S.SESSION_STARTED: "_conv_started"}).astype(
+        {S.REQUESTER: "string", "_conv_started": "datetime64[ns]"}
+    )
+    m = pd.merge_asof(
+        t.sort_values(S.OPENED),
+        c.sort_values("_conv_started"),
+        left_on=S.OPENED,
+        right_on="_conv_started",
+        by=S.REQUESTER,
+        direction="backward",
+        tolerance=link,
+        allow_exact_matches=True,
+    )
+    return m.dropna(subset=["_conv_started"])
+
+
+def _fast_ticket_channels(
+    claims: pd.DataFrame, tickets: pd.DataFrame, link: pd.Timedelta, ai_channels: tuple[str, ...]
+) -> list[tuple[str, int]]:
+    """Channels of tickets opened within ``link`` after a claimed resolution, other than the AI's own."""
+    lt = claims[[S.REQUESTER, S.SESSION_STARTED]].dropna().astype({S.REQUESTER: "string"})
+    lt[S.SESSION_STARTED] = lt[S.SESSION_STARTED].astype("datetime64[ns]")
+    rt = tickets[[S.REQUESTER, S.OPENED, S.CHANNEL]].dropna(subset=[S.REQUESTER, S.OPENED])
+    rt = rt.rename(columns={S.OPENED: "_opened"}).astype({S.REQUESTER: "string", "_opened": "datetime64[ns]"})
+    m = pd.merge_asof(
+        lt.sort_values(S.SESSION_STARTED),
+        rt.sort_values("_opened"),
+        left_on=S.SESSION_STARTED,
+        right_on="_opened",
+        by=S.REQUESTER,
+        direction="forward",
+        tolerance=link,
+        allow_exact_matches=False,
+    )
+    ch = m.dropna(subset=["_opened"])[S.CHANNEL].astype("string").str.strip()
+    ch = ch[~_channel_key(ch).isin(_channel_set(ai_channels)).fillna(False).astype(bool)]
+    return [(str(k), int(v)) for k, v in ch.fillna("(blank)").value_counts().head(5).items()]
 
 
 def _failed(r: float, b: float) -> float:
@@ -493,12 +573,22 @@ def audit_resolutions(  # noqa: C901 - one ordered story, like the main analysis
     pseudonymized: bool = True,
     claims_rows: int | None = None,
     not_resolutions: int = 0,
+    conversations: pd.DataFrame | None = None,
+    link_minutes: int = LINK_MINUTES,
+    ai_channels: tuple[str, ...] = AI_CHANNELS,
 ) -> ResolutionAudit:
-    """Check the AI's claimed resolutions against what happened next."""
+    """Check the AI's claimed resolutions against what happened next.
+
+    ``conversations`` holds every conversation, whatever its outcome, so a ticket the AI agent created is tied
+    to the conversation it came from; without it, the claims are used.
+    """
     if window_days < 1:
         raise AuditError("the return window must be at least one day")
     notes: list[str] = []
     window = pd.Timedelta(days=window_days)
+    link = pd.Timedelta(minutes=max(int(link_minutes), 0))
+    if link >= window:
+        raise AuditError("the minutes for tickets the AI agent created must be shorter than the return window")
     tk = tickets.dropna(subset=[S.OPENED, S.REQUESTER]).copy()
     if tk.empty:
         raise AuditError("no tickets with a requester to check the claims against")
@@ -508,6 +598,24 @@ def audit_resolutions(  # noqa: C901 - one ordered story, like the main analysis
     resolved_rows = len(cl)
     incomplete = cl[S.REQUESTER].isna() | cl[S.SESSION_STARTED].isna()
     cl = cl[~incomplete]
+
+    # Tickets the AI agent created itself. With the ticket's channel, they are found exactly, and the
+    # conversations that created them are handoffs, left out of the claims. Without it, a ticket opened in the
+    # first minutes could be either, so on both sides only tickets opened after ``link`` count as returns.
+    channel_known = S.CHANNEL in tk.columns and bool(tk[S.CHANNEL].notna().any())
+    handed_off = pd.Series(False, index=cl.index)
+    if channel_known and link > pd.Timedelta(0):
+        made = created_in_conversation(tk, conversations if conversations is not None else cl, link, ai_channels)
+        if not made.empty:
+            keys = set(zip(made[S.REQUESTER].astype(str), made["_conv_started"], strict=True))
+            starts = cl[S.SESSION_STARTED].astype("datetime64[ns]")
+            handed_off = pd.Series(
+                [(str(p), t) in keys for p, t in zip(cl[S.REQUESTER], starts, strict=True)], index=cl.index, dtype=bool
+            )
+    after = pd.Timedelta(0) if channel_known else link
+    n_handed_off = int(handed_off.sum())
+    cl_all = cl
+    cl = cl[~handed_off]
     outside = (cl[S.SESSION_STARTED] < data_start) | (cl[S.SESSION_STARTED] > data_end)
     too_recent = ~outside & (cl[S.SESSION_STARTED] > data_end - window)
     in_period = cl[~outside].copy()
@@ -522,11 +630,20 @@ def audit_resolutions(  # noqa: C901 - one ordered story, like the main analysis
     notes.extend(match_notes)
     std_type = type_standardizer(eligible, typed)
 
-    def prepare(window_: pd.Timedelta, by_: list[str], people: set[str] | None = None):
-        el = cl[~outside & (cl[S.SESSION_STARTED] <= data_end - window_)].copy()
+    def prepare(
+        window_: pd.Timedelta,
+        by_: list[str],
+        people: set[str] | None = None,
+        frame: pd.DataFrame | None = None,
+        after_: pd.Timedelta | None = None,
+    ):
+        src = cl if frame is None else frame
+        aft = after if after_ is None else after_
+        out_ = (src[S.SESSION_STARTED] < data_start) | (src[S.SESSION_STARTED] > data_end)
+        el = src[~out_ & (src[S.SESSION_STARTED] <= data_end - window_)].copy()
         el["_type"] = std_type(el[S.WORK_TYPE] if typed else el[S.REQUESTER])
         el["_month"] = el[S.SESSION_STARTED].dt.strftime("%Y-%m")
-        el["_ret"] = _returns(el, S.SESSION_STARTED, tk, by_, window_)
+        el["_ret"] = _returns(el, S.SESSION_STARTED, tk, by_, window_, aft)
         lo, hi = el[S.SESSION_STARTED].min(), el[S.SESSION_STARTED].max()
         b = tk.dropna(subset=[S.RESOLVED])
         b = b[(b[S.RESOLVED] >= lo) & (b[S.RESOLVED] <= hi)].copy()
@@ -534,7 +651,7 @@ def audit_resolutions(  # noqa: C901 - one ordered story, like the main analysis
             b = b[b[S.REQUESTER].isin(people)]
         b["_type"] = std_type(b[S.WORK_TYPE] if typed else b[S.REQUESTER])
         b["_month"] = b[S.RESOLVED].dt.strftime("%Y-%m")
-        b["_ret"] = _returns(b, S.RESOLVED, tk, by_, window_)
+        b["_ret"] = _returns(b, S.RESOLVED, tk, by_, window_, aft)
         return el, b
 
     eligible, base = prepare(window, by)
@@ -626,6 +743,42 @@ def audit_resolutions(  # noqa: C901 - one ordered story, like the main analysis
                 "main": False,
             }
         )
+    if n_handed_off or not channel_known:
+        e_x, b_x = prepare(window, by, frame=cl_all, after_=pd.Timedelta(0))
+        if not e_x.empty and not b_x.empty:
+            s = _rates(e_x, b_x, min_cell)
+            sensitivity.append(
+                {
+                    "check": "Every ticket counts, even ones the AI agent may have created",
+                    "failed_share": s["failed"],
+                    "claims": s["claims"],
+                    "main": False,
+                }
+            )
+
+    if n_handed_off:
+        notes.append(
+            f"{n_handed_off:,} conversations the AI counted as resolved created a ticket themselves: a ticket "
+            f"through the AI agent's channel within {link_minutes} minutes. They were handed to your team, so they "
+            "are left out of the check instead of being counted as returns. If the AI's own reporting counts them "
+            "as resolved, its resolution rate includes them."
+        )
+    if channel_known and link > pd.Timedelta(0):
+        fast = _fast_ticket_channels(eligible, tk, link, ai_channels)
+        if sum(n for _, n in fast) >= max(10, 0.01 * len(eligible)):
+            notes.append(
+                f"Tickets opened within {link_minutes} minutes of a claimed resolution came through "
+                + ", ".join(f"{c} ({n:,})" for c, n in fast)
+                + ". If the AI agent creates tickets through one of these channels, list it as an AI channel, so "
+                "those tickets count as handoffs, not returns."
+            )
+    elif not channel_known and link > pd.Timedelta(0):
+        notes.append(
+            "The ticket export has no channel, so a ticket the AI agent created during a conversation can't be "
+            f"told apart from a person coming straight back. Returns count from {link_minutes} minutes after each "
+            "conversation or resolution, on both sides; add the channel (Contact type in ServiceNow) to count "
+            "faster returns too."
+        )
 
     # How the platform says each claim ended: a claim the person walked away from is not the same as one
     # where the topic finished. Raw return rates, with the human baseline for scale.
@@ -689,6 +842,8 @@ def audit_resolutions(  # noqa: C901 - one ordered story, like the main analysis
             f"({money(pf['ci_low'], currency)} to {money(pf['ci_high'], currency)}) was paid for resolutions "
             "that did not hold."
         )
+    if n_handed_off:
+        headline += f" {n_handed_off:,} more created a ticket themselves, so they were left out."
     headline += f" Audit confidence: {confidence['level']}."
 
     settings = {
@@ -702,6 +857,9 @@ def audit_resolutions(  # noqa: C901 - one ordered story, like the main analysis
         "level": level,
         "min_cell": min_cell,
         "interval": interval,
+        "link_minutes": link_minutes,
+        "ai_channels": list(ai_channels),
+        "channel_known": channel_known,
     }
     return ResolutionAudit(
         headline=headline,
@@ -717,6 +875,7 @@ def audit_resolutions(  # noqa: C901 - one ordered story, like the main analysis
             "not_resolutions": not_resolutions,
             "resolutions": resolved_rows,
             "incomplete": int(incomplete.sum()),
+            "handed_off": n_handed_off,
             "outside_ticket_dates": int(outside.sum()),
             "too_recent": int(too_recent.sum()),
             "checked": n_el,
@@ -781,6 +940,7 @@ def run_audit(inputs: AuditInputs, **kwargs: Any) -> ResolutionAudit:
         pseudonymized=inputs.pseudonymized,
         claims_rows=inputs.claims_rows,
         not_resolutions=inputs.not_resolutions,
+        conversations=inputs.conversations,
         **kwargs,
     )
     result.notes = [*inputs.notes, *result.notes]
@@ -788,11 +948,14 @@ def run_audit(inputs: AuditInputs, **kwargs: Any) -> ResolutionAudit:
 
 
 __all__ = [
+    "AI_CHANNELS",
     "CLAIMS_PRESET",
+    "LINK_MINUTES",
     "AuditError",
     "AuditInputs",
     "ResolutionAudit",
     "audit_resolutions",
+    "created_in_conversation",
     "load_audit_inputs",
     "run_audit",
 ]

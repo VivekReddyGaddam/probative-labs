@@ -13,7 +13,13 @@ const ProbativeCheck = (() => {
   "use strict";
 
   const DAY = 86400000;
+  const MINUTE = 60000;
   const MIN_CELL = 30;
+  // As in the engine: a ticket the AI agent opens itself (ServiceNow's Create Incident topic sets Contact type to
+  // Virtual Agent) is a handoff, not a return. One through these channels within LINK_MINUTES of the same
+  // person's latest conversation was created in that conversation.
+  const AI_CHANNELS = "virtual agent, ai agent, chatbot, bot";
+  const LINK_MINUTES = 30;
 
   // --- CSV ---------------------------------------------------------------------------------------------
   function parseCSV(text) {
@@ -107,6 +113,7 @@ const ProbativeCheck = (() => {
     category: ["category", "u_category", "request type", "custom field (request type)",
       "custom field (customer request type)", "issue type", "ticket type", "operational categorization tier 1",
       "categorization tier 1", "operational categorization tier 1+", "actualcategory", "type"],
+    channel: ["contact_type", "contact type", "channel", "via", "source", "reported source", "reported source+"],
   };
 
   function detect(header, fields) {
@@ -283,6 +290,7 @@ const ProbativeCheck = (() => {
         opened: parseDate(r[cols.opened], df),
         resolved: cols.resolved >= 0 ? parseDate(r[cols.resolved], df) : NaN,
         category: cols.category >= 0 ? String(r[cols.category] || "").trim() : "",
+        channel: cols.channel >= 0 ? String(r[cols.channel] == null ? "" : r[cols.channel]).trim() : "",
       };
       if (!Number.isNaN(t.resolved) && !Number.isNaN(t.opened) && t.resolved < t.opened) {
         impossible++;
@@ -343,6 +351,18 @@ const ProbativeCheck = (() => {
     const W = windowDays * DAY;
     const reps = opts.reps || 400;
     const notes = [];
+    const linkMinutes =
+      opts.linkMinutes == null || opts.linkMinutes === "" || Number.isNaN(+opts.linkMinutes)
+        ? LINK_MINUTES
+        : Math.max(0, +opts.linkMinutes);
+    const LINK = linkMinutes * MINUTE;
+    if (LINK >= W) throw new Error("The minutes for tickets the AI agent created must be shorter than the return window.");
+    const aiChannels = new Set(
+      String(opts.aiChannels == null ? AI_CHANNELS : opts.aiChannels)
+        .split(",")
+        .map((v) => norm(v))
+        .filter(Boolean),
+    );
 
     const conv = conversations(convTable, convCols, opts.resolvedValue);
     if (conv.skipped) notes.push(`${conv.skipped.toLocaleString()} rows without the Virtual agent flag, or not chats, were left out.`);
@@ -361,14 +381,16 @@ const ProbativeCheck = (() => {
     for (const list of byPerson.values()) list.sort((a, b) => tk[a].opened - tk[b].opened);
 
     // The ticket the same person opened next, within the window after time t (strictly after, as in the engine).
-    function nextTicket(person, t) {
+    // With "after", only tickets opened later than that after t count.
+    function nextTicket(person, t, after = 0) {
       const list = byPerson.get(person);
       if (!list) return -1;
+      const from = t + after;
       let lo = 0;
       let hi = list.length;
       while (lo < hi) {
         const mid = (lo + hi) >> 1;
-        if (tk[list[mid]].opened > t) hi = mid;
+        if (tk[list[mid]].opened > from) hi = mid;
         else lo = mid + 1;
       }
       if (lo < list.length && tk[list[lo]].opened - t <= W) return list[lo];
@@ -379,7 +401,38 @@ const ProbativeCheck = (() => {
     conv.rows.forEach((c) => {
       outcomes[c.outcome] = (outcomes[c.outcome] || 0) + 1;
     });
-    const claims = conv.rows.filter((c) => c.outcome === "resolved" && c.person && !Number.isNaN(c.start));
+    // Tickets the AI agent created itself. With the ticket's channel they are found exactly, and the
+    // conversations that created them are handoffs, left out. Without it, a ticket opened in the first minutes
+    // could be either, so on both sides only tickets opened after LINK count as returns.
+    const channelKnown = ticketCols.channel >= 0 && tk.some((t) => t.channel);
+    const after = channelKnown ? 0 : LINK;
+    const key = (person, start) => `${person}\u0000${start}`;
+    const handoffKeys = new Set();
+    if (channelKnown && LINK > 0) {
+      const starts = new Map();
+      for (const c of conv.rows) {
+        if (!c.person || Number.isNaN(c.start)) continue;
+        if (!starts.has(c.person)) starts.set(c.person, []);
+        starts.get(c.person).push(c.start);
+      }
+      for (const list of starts.values()) list.sort((a, b) => a - b);
+      for (const t of tk) {
+        if (!aiChannels.has(norm(t.channel))) continue;
+        const list = starts.get(t.person);
+        if (!list) continue;
+        let lo = 0;
+        let hi = list.length;
+        while (lo < hi) {
+          const mid = (lo + hi) >> 1;
+          if (list[mid] <= t.opened) lo = mid + 1;
+          else hi = mid;
+        }
+        if (lo > 0 && t.opened - list[lo - 1] <= LINK) handoffKeys.add(key(t.person, list[lo - 1]));
+      }
+    }
+    const allClaims = conv.rows.filter((c) => c.outcome === "resolved" && c.person && !Number.isNaN(c.start));
+    const claims = allClaims.filter((c) => !handoffKeys.has(key(c.person, c.start)));
+    const handoffs = allClaims.length - claims.length;
     const outside = claims.filter((c) => c.start < dataStart || c.start > dataEnd).length;
     const tooRecent = claims.filter((c) => c.start >= dataStart && c.start <= dataEnd && c.start > dataEnd - W).length;
     const eligible = claims.filter((c) => c.start >= dataStart && c.start <= dataEnd - W);
@@ -392,7 +445,7 @@ const ProbativeCheck = (() => {
     let lo = Infinity;
     let hi = -Infinity;
     for (const c of eligible) {
-      c.next = nextTicket(c.person, c.start);
+      c.next = nextTicket(c.person, c.start, after);
       c.ret = c.next >= 0 ? 1 : 0;
       c.month = monthOf(c.start);
       if (c.start < lo) lo = c.start;
@@ -402,7 +455,7 @@ const ProbativeCheck = (() => {
     for (let i = 0; i < tk.length; i++) {
       const t = tk[i];
       if (Number.isNaN(t.resolved) || t.resolved < lo || t.resolved > hi) continue;
-      base.push({ person: t.person, ret: nextTicket(t.person, t.resolved) >= 0 ? 1 : 0, month: monthOf(t.resolved) });
+      base.push({ person: t.person, ret: nextTicket(t.person, t.resolved, after) >= 0 ? 1 : 0, month: monthOf(t.resolved) });
     }
     if (!base.length) throw new Error("No tickets resolved by your agents in the same weeks. Include the resolved date.");
 
@@ -452,6 +505,81 @@ const ProbativeCheck = (() => {
     draws.sort((a, b) => a - b);
     const q = (p) => (draws.length ? draws[Math.min(draws.length - 1, Math.max(0, Math.round(p * (draws.length - 1))))] : NaN);
     const range = { low: q(0.025), high: q(0.975) };
+
+    // How much the result depends on two choices: whose resolutions make the baseline, and the tickets the AI
+    // agent may have created itself (the engine's sensitivity checks).
+    const checks = [{ check: "Main result", didNotHold: point.failed, main: true }];
+    const peopleWithClaims = new Set(eligible.map((c) => c.person));
+    const baseSame = base.filter((b) => peopleWithClaims.has(b.person));
+    if (baseSame.length >= MIN_CELL) {
+      const s = standardized(cells(eligible), cells(baseSame), pooledOf(baseSame));
+      checks.push({ check: "Baseline from the same people only", didNotHold: s.failed });
+    }
+    if (handoffs || (!channelKnown && LINK > 0)) {
+      let lo2 = Infinity;
+      let hi2 = -Infinity;
+      const everyClaim = [];
+      for (const c of allClaims) {
+        if (c.start < dataStart || c.start > dataEnd - W) continue;
+        everyClaim.push({ month: monthOf(c.start), ret: nextTicket(c.person, c.start) >= 0 ? 1 : 0 });
+        if (c.start < lo2) lo2 = c.start;
+        if (c.start > hi2) hi2 = c.start;
+      }
+      const everyBase = [];
+      for (const t of tk) {
+        if (Number.isNaN(t.resolved) || t.resolved < lo2 || t.resolved > hi2) continue;
+        everyBase.push({ month: monthOf(t.resolved), ret: nextTicket(t.person, t.resolved) >= 0 ? 1 : 0 });
+      }
+      if (everyClaim.length && everyBase.length) {
+        const s = standardized(cells(everyClaim), cells(everyBase), pooledOf(everyBase));
+        checks.push({ check: "Every ticket counts, even ones the AI agent may have created", didNotHold: s.failed });
+      }
+    }
+
+    if (handoffs) {
+      notes.push(
+        `${handoffs.toLocaleString()} conversations counted as resolved created a ticket themselves: a ticket through ` +
+          `the AI agent's channel within ${linkMinutes} minutes. They were handed to your team, so they are left out ` +
+          "instead of being counted as returns. If your dashboard counts them as resolved, its resolution rate includes them.",
+      );
+    }
+    let fastChannels = [];
+    if (channelKnown && LINK > 0) {
+      const counts = new Map();
+      let total = 0;
+      for (const c of eligible) {
+        const list = byPerson.get(c.person);
+        if (!list) continue;
+        let lo = 0;
+        let hi = list.length;
+        while (lo < hi) {
+          const mid = (lo + hi) >> 1;
+          if (tk[list[mid]].opened > c.start) hi = mid;
+          else lo = mid + 1;
+        }
+        if (lo >= list.length) continue;
+        const t = tk[list[lo]];
+        if (t.opened - c.start > LINK || aiChannels.has(norm(t.channel))) continue;
+        const label = t.channel || "(blank)";
+        counts.set(label, (counts.get(label) || 0) + 1);
+        total++;
+      }
+      if (total >= Math.max(10, 0.01 * eligible.length)) {
+        fastChannels = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+        notes.push(
+          `Tickets opened within ${linkMinutes} minutes of a conversation counted as resolved came through ` +
+            fastChannels.map(([c, n]) => `${c} (${n.toLocaleString()})`).join(", ") +
+            ". If the AI agent opens tickets through one of these channels, add it under Options, so those tickets " +
+            "count as handoffs, not returns.",
+        );
+      }
+    } else if (LINK > 0) {
+      notes.push(
+        "The incidents have no channel column, so a ticket the AI agent created during a conversation can't be told " +
+          `apart from a person coming straight back. Returns count from ${linkMinutes} minutes after each conversation ` +
+          "or resolution, on both sides. Add Contact type to the incidents export to count faster returns too.",
+      );
+    }
 
     // How the platform closed the conversations it counted as resolved.
     const details = new Map();
@@ -510,18 +638,27 @@ const ProbativeCheck = (() => {
       );
     }
     if (!conv.serviceNow && convCols.outcome < 0) notes.push("The conversations have no outcome column, so every row counted as a resolution.");
-    notes.push(
-      "A return is any ticket from the same person. The full audit also matches the type of issue, runs " +
-        "sensitivity checks, and widens the range with a month-by-month check.",
-    );
+    const caveat =
+      "A screening estimate, not a verdict: any ticket from the same person counts as a return, and the comparison " +
+      "is with all of your agents' resolutions. The full audit also matches the type of issue, runs more checks, and " +
+      "widens the range with a month-by-month check.";
 
     const fmtDay = (t) => new Date(t).toISOString().slice(0, 10);
     return {
-      version: "free-check-1",
+      version: "free-check-2",
       windowDays,
+      linkMinutes,
+      channelKnown,
       period: { from: fmtDay(lo), to: fmtDay(hi) },
       conversations: { rows: conv.rows.length, outcomes, serviceNow: conv.serviceNow },
-      claims: { total: claims.length, checked: eligible.length, tooRecent, outside, people: new Set(eligible.map((c) => c.person)).size },
+      claims: {
+        total: allClaims.length,
+        handedOff: handoffs,
+        checked: eligible.length,
+        tooRecent,
+        outside,
+        people: new Set(eligible.map((c) => c.person)).size,
+      },
       tickets: { rows: tk.length, baselineResolved: base.length },
       cameBack: point.ai,
       afterPeople: point.base,
@@ -532,6 +669,9 @@ const ProbativeCheck = (() => {
       cameBackAbout,
       byMonth,
       overlap,
+      checks,
+      fastChannels,
+      caveat,
       notes,
     };
   }
@@ -547,7 +687,7 @@ if (typeof module === "object" && module.exports) {
     const $ = (id) => document.getElementById(id);
     const root = $("free-check");
     if (!root) return;
-    const state = { conv: null, tickets: null };
+    const state = { conv: null, tickets: null, sample: false };
     const pct = (x, d = 0) => (x == null || Number.isNaN(x) ? "n/a" : `${(x * 100).toFixed(d)}%`.replace("-", "−"));
     const num = (x) => (x == null || Number.isNaN(x) ? "n/a" : Math.round(x).toLocaleString());
 
@@ -574,6 +714,7 @@ if (typeof module === "object" && module.exports) {
       resolved: "Resolved",
       id: "Ticket number",
       category: "Category",
+      channel: "Channel (Contact type)",
     };
     const REQUIRED = { conv: ["person", "started"], tickets: ["person", "opened", "resolved"] };
 
@@ -652,10 +793,15 @@ if (typeof module === "object" && module.exports) {
         `Of ${num(r.claims.checked)} conversations counted as resolved (${r.period.from} to ${r.period.to}), ` +
         `${pct(r.cameBack, 1)} came back as a ticket within ${r.windowDays} days. After your agents' own resolutions, ` +
         `${pct(r.afterPeople, 1)} did. Beyond that normal rate, ${pct(r.didNotHold, 1)} did not hold ` +
-        `(95% range ${pct(r.range.low, 1)} to ${pct(r.range.high, 1)}).`;
+        `(95% range ${pct(r.range.low, 1)} to ${pct(r.range.high, 1)}).` +
+        (r.claims.handedOff ? ` ${num(r.claims.handedOff)} more created a ticket themselves, so they were left out.` : "");
       const blocks = [
-        el("h2", {}, "Result"),
+        el("h2", {}, "Result", el("span", { class: "check-badge" }, "Screening estimate")),
+        ...(state.sample
+          ? [el("p", { class: "callout warn" }, "Example only: made-up data from a simulated service desk, to show what you'll get. Drop your own exports above to check yours.")]
+          : []),
         el("p", { class: "headline" }, headline),
+        el("p", { class: "small muted" }, r.caveat),
         el(
           "div",
           { class: "tiles" },
@@ -665,6 +811,11 @@ if (typeof module === "object" && module.exports) {
           el("div", { class: "tile" }, el("div", { class: "k" }, "Did not hold"), el("div", { class: "v" }, pct(r.didNotHold, 1)), el("div", { class: "s" }, `range ${pct(r.range.low, 1)} to ${pct(r.range.high, 1)}`)),
         ),
       ];
+      if (r.checks.length > 1) {
+        blocks.push(el("h3", {}, "How much the result depends on the method"));
+        blocks.push(table(["Check", "Did not hold"], r.checks.map((c) => [c.check, pct(c.didNotHold, 1)])));
+        blocks.push(el("p", { class: "small muted" }, "If these differ a lot, the result depends on that choice, and the full audit should look closer."));
+      }
       if (r.byDetail.length) {
         blocks.push(el("h3", {}, "By how the platform closed the conversation"));
         blocks.push(table(["Close reason", "Counted resolved", "Share", "Came back", "Did not hold"], r.byDetail.map((d) => [d.detail || "(blank)", num(d.claims), pct(d.share, 1), pct(d.cameBack, 1), pct(d.didNotHold)])));
@@ -699,6 +850,7 @@ if (typeof module === "object" && module.exports) {
       const input = $(`${kind}-file`);
       input.addEventListener("change", () => {
         if (!input.files[0]) return;
+        state.sample = false;
         // Cleared once read, so choosing the same file again after editing it reloads it.
         load(kind, input.files[0])
           .catch((e) => failed(kind, e))
@@ -714,7 +866,39 @@ if (typeof module === "object" && module.exports) {
         e.preventDefault();
         zone.classList.remove("over");
         const f = e.dataTransfer.files[0];
-        if (f) load(kind, f).catch((e) => failed(kind, e));
+        if (!f) return;
+        state.sample = false;
+        load(kind, f).catch((e) => failed(kind, e));
+      });
+    }
+    // The example: sample exports from a simulated desk, fetched only when asked for (from this site, as a script,
+    // since the page allows no other requests), then run like any other files.
+    const sample = $("check-sample");
+    if (sample) {
+      const runSample = () => {
+        const data = window.PROBATIVE_SAMPLE;
+        state.sample = true;
+        Promise.all([
+          load("conv", new File([data.conversations], "sample-conversations.csv", { type: "text/csv" })),
+          load("tickets", new File([data.tickets], "sample-incidents.csv", { type: "text/csv" })),
+        ])
+          .then(() => $("check-run").click())
+          .catch((e) => failed("conv", e));
+      };
+      sample.addEventListener("click", () => {
+        if (window.PROBATIVE_SAMPLE) return runSample();
+        sample.disabled = true;
+        const tag = document.createElement("script");
+        tag.src = sample.dataset.sample;
+        tag.onload = () => {
+          sample.disabled = false;
+          runSample();
+        };
+        tag.onerror = () => {
+          sample.disabled = false;
+          failed("conv", new Error("The sample data didn't load. Check your connection and try again."));
+        };
+        document.head.append(tag);
       });
     }
     $("check-run").addEventListener("click", () => {
@@ -725,6 +909,8 @@ if (typeof module === "object" && module.exports) {
         const r = ProbativeCheck.run(state.conv.table, state.conv.cols, state.tickets.table, state.tickets.cols, {
           windowDays: Number($("check-window").value) || 7,
           resolvedValue: $("check-resolved").value,
+          aiChannels: $("check-ai-channels").value,
+          linkMinutes: $("check-link").value,
         });
         render(r);
       } catch (e) {

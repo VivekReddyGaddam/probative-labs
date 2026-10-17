@@ -37,7 +37,7 @@ Every simulated dataset (`probative.simulate`) has:
 - **Diagnostics rarely cry wolf.** Valid analyses kept a countable grade in 93% to 100% of runs. Most of the remaining downgrades are false alarms, which are expected given the diagnostics' 5% family-wise error rate.
 - **Known limitation: ranges for large, heterogeneous effects are somewhat narrow.** At the −15% planted effect, the 95% range covered the truth in 87% of runs. In this scenario, the true sampling spread is about 1.2 times what the team bootstrap and jackknife estimate. The cause is that effects scale with each team's own speed while deflection shifts each team's ticket mix. At smaller effects the ranges are conservative (100% coverage).
 
-  Until this is closed, treat the edges of a range for a large effect as somewhat optimistic. We are evaluating an analytic variance estimator (Borusyak, Jaravel and Spiess, 2024) and a studentized bootstrap. Results will be published here before any change ships.
+  Until this is closed, treat the edges of a range for a large effect as somewhat optimistic. An analytic variance estimator (Borusyak, Jaravel and Spiess, 2024) and a studentized bootstrap are being evaluated. Results will be published here before any change ships.
 
 ## Resolution audit
 
@@ -67,6 +67,7 @@ probative validate --audit --rates 0,0.12,0.3 --runs 60 --reps 199
 
 1. **Baseline timing.** The first version compared claims with human-resolved tickets from the whole period. Claims cluster later, when the bot deflects more, so the baseline came out slightly high and the estimate slightly low (−0.1 points with nothing planted). The baseline is now standardized by month as well as issue type.
 2. **Ranges.** Resampling people alone gave 85% to 93% coverage. Months are shared by everyone in them, so the range is now widened to a leave-one-month-out jackknife when that is larger.
+3. **Tickets the AI agent opens itself (0.5.0).** An outside review pointed out that a topic built to open an incident (ServiceNow's Create Incident topic sets Contact type to Virtual Agent) is a claimed resolution followed at once by a ticket from the same person, which the audit counted as a return. Such a ticket, through the AI agent's channel within 30 minutes of the person's latest conversation, now marks that conversation as a handoff: it is left out and reported. Without a channel column, tickets in the first 30 minutes don't count on either side. In a test where the bot opened an incident in 150 of 400 conversations and nothing else failed, the old count reported 37.5% did not hold; the new one reports 0.7% (95% range −2.0% to 3.5%), and 0.2% without a channel. People who phone the desk 10 minutes after a chat still count: with 100 of 400 doing so, the audit found 25.2%, against a true 25%. The results on this page and on real data are unchanged: those tickets carry channels, none of them an AI agent's, and a rerun of the real-data validation gave identical estimates.
 
 ## Bill reconciliation
 

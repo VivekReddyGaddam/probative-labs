@@ -42,19 +42,20 @@ The same settings can live in `probative.yaml` under `audit:` (see [configuratio
 
 Common column names (`Requester`, `User Email`, `Created`, `Topic` and so on) are recognized automatically. See [data-model.md](data-model.md).
 
-**Your ticket export:** covering the same dates plus at least a week, with the person who raised each ticket, opened and resolved times, and category. Any built-in preset works (`probative presets`).
+**Your ticket export:** covering the same dates plus at least a week, with the person who raised each ticket, opened and resolved times, category, and the channel each ticket came through (Contact type in ServiceNow). Any built-in preset works (`probative presets`).
 
 ## How it works
 
 1. **Find returns.** For every claimed resolution, look for a ticket from the same person within the window, about the same type of issue.
-2. **Find the normal return rate.** People come back after human-resolved tickets too, for reasons that have nothing to do with the AI. The same check runs on tickets your agents resolved, in the same months and weighted to the same mix of issue types.
-3. **Count only the excess against the AI:**
+2. **Leave out tickets the AI opened itself.** Some topics end by opening a ticket: ServiceNow's Create Incident topic, for example, sets Contact type to Virtual Agent. A ticket through the AI agent's channel (`--ai-channel`, by default virtual agent, AI agent, chatbot or bot) within 30 minutes of the same person's latest conversation (`--link-minutes`) came from that conversation. The conversation was a handoff, not a resolution, so it is left out and reported, and its ticket is not a return. Without a channel column the two can't be told apart, so tickets opened in the first 30 minutes don't count on either side, and the result with every ticket counted is shown beside it.
+3. **Find the normal return rate.** People come back after human-resolved tickets too, for reasons that have nothing to do with the AI. The same check runs on tickets your agents resolved, in the same months and weighted to the same mix of issue types.
+4. **Count only the excess against the AI:**
 
    did not hold = (return rate after the AI − return rate after people) ÷ (1 − return rate after people)
 
    Dividing by (1 − return rate after people) scales the excess to the claims that could have come back.
-4. **State the uncertainty.** Ranges come from resampling people 999 times, because one person's contacts are not independent. If a leave-one-month-out jackknife shows more spread, the range is widened to it.
-5. **Check the result.** The audit reruns with 3- and 14-day windows, with any ticket counting as a return, and with a baseline from the same people only. Large disagreement is a reason for care.
+5. **State the uncertainty.** Ranges come from resampling people 999 times, because one person's contacts are not independent. If a leave-one-month-out jackknife shows more spread, the range is widened to it.
+6. **Check the result.** The audit reruns with 3- and 14-day windows, with any ticket counting as a return, with a baseline from the same people only, and with every ticket counted, even ones the AI may have opened. Large disagreement is a reason for care.
 
 ## Audit confidence
 

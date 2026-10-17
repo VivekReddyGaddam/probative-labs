@@ -179,3 +179,84 @@ def test_benchmark_contribution_has_no_names_or_money(small_project, tmp_path):
     assert body["effect"]["teams_band"] in {"8–19", "20–49"}
     assert len(body["sha256"]) == 64
     assert np.isfinite(body["effect"]["relative"])
+
+
+def _bot_scenario(channel: bool, bot_creates: int = 150, fast_phone: int = 0):
+    """400 claims; ``bot_creates`` of them open an incident in the conversation itself (2 minutes in), as
+    ServiceNow's Create Incident topic does. One in 20 people comes back three days later, the same rate as after
+    1000 human-resolved tickets: so nothing failed."""
+    claims, tickets, conversations = [], [], []
+    for i in range(400):
+        t = T0 + pd.Timedelta(hours=i)
+        claims.append({S.REQUESTER: f"c{i}", S.SESSION_STARTED: t})
+        conversations.append({S.REQUESTER: f"c{i}", S.SESSION_STARTED: t})
+        if i < bot_creates:
+            tickets.append((f"va{i}", f"c{i}", t + pd.Timedelta(minutes=2), t + pd.Timedelta(hours=5), "Virtual Agent"))
+        elif i < bot_creates + fast_phone:
+            tickets.append((f"ph{i}", f"c{i}", t + pd.Timedelta(minutes=10), t + pd.Timedelta(hours=5), "Phone"))
+        if i % 20 == 0:
+            tickets.append((f"r{i}", f"c{i}", t + pd.Timedelta(days=3), t + pd.Timedelta(days=4), "Phone"))
+    for i in range(1000):
+        o = T0 + pd.Timedelta(hours=i % 300)
+        tickets.append((f"h{i}", f"h{i}", o, o + pd.Timedelta(hours=2), "Phone"))
+        if i % 20 == 0:
+            tickets.append((f"h{i}b", f"h{i}", o + pd.Timedelta(days=2), o + pd.Timedelta(days=3), "Email"))
+    tickets.append(("pad", "nobody", T0 + pd.Timedelta(days=60), T0 + pd.Timedelta(days=61), "Phone"))
+    df = pd.DataFrame(tickets, columns=[S.UNIT_ID, S.REQUESTER, S.OPENED, S.RESOLVED, S.CHANNEL])
+    for c in (S.OPENED, S.RESOLVED):
+        df[c] = pd.to_datetime(df[c])
+    if not channel:
+        df = df.drop(columns=[S.CHANNEL])
+    return pd.DataFrame(claims), df, pd.DataFrame(conversations)
+
+
+def test_a_ticket_the_ai_agent_created_is_a_handoff_not_a_return():
+    claims, tickets, convs = _bot_scenario(channel=True)
+    res = audit_resolutions(claims, tickets, conversations=convs, reps=199).to_dict()
+    # The 150 conversations that opened an incident themselves are left out, not counted as failures.
+    assert res["claims"]["handed_off"] == 150 and res["claims"]["checked"] == 250
+    assert res["returns"]["ai_rate"] == pytest.approx(12 / 250)
+    assert abs(res["failed_share"]["estimate"]) < 0.03 and not res["failed_share"]["excludes_zero"]
+    assert any("created a ticket themselves" in n for n in res["notes"])
+    every = [s for s in res["sensitivity"] if s["check"].startswith("Every ticket counts")]
+    assert every and every[0]["failed_share"] > 0.3  # what the old count would have called a failure
+
+
+def test_without_a_channel_the_first_minutes_do_not_count_on_either_side():
+    claims, tickets, convs = _bot_scenario(channel=False)
+    res = audit_resolutions(claims, tickets, conversations=convs, reps=199).to_dict()
+    assert res["claims"]["handed_off"] == 0 and res["claims"]["checked"] == 400
+    assert res["returns"]["ai_rate"] == pytest.approx(20 / 400)  # the incidents opened 2 minutes in don't count
+    assert abs(res["failed_share"]["estimate"]) < 0.03
+    assert any("no channel" in n for n in res["notes"])
+    assert res["settings"]["channel_known"] is False
+
+
+def test_a_fast_return_through_another_channel_still_counts():
+    claims, tickets, convs = _bot_scenario(channel=True, bot_creates=0, fast_phone=100)
+    res = audit_resolutions(claims, tickets, conversations=convs, reps=199).to_dict()
+    assert res["claims"]["handed_off"] == 0
+    # 100 phone tickets 10 minutes after the chat, plus the 3-day returns among the other 300.
+    assert res["returns"]["ai_rate"] == pytest.approx((100 + 15) / 400)
+    assert res["failed_share"]["excludes_zero"]
+    assert any("Phone (" in n for n in res["notes"])  # the fast tickets' channels are shown
+
+
+def test_a_ticket_from_a_later_conversation_still_counts_against_an_earlier_claim():
+    claims, tickets, convs = _bot_scenario(channel=True, bot_creates=0)
+    # c1 comes back to the bot 10 minutes later in a conversation that ends with an incident.
+    later = T0 + pd.Timedelta(hours=1, minutes=10)
+    convs = pd.concat([convs, pd.DataFrame({S.REQUESTER: ["c1"], S.SESSION_STARTED: [later]})], ignore_index=True)
+    extra = pd.DataFrame(
+        {
+            S.UNIT_ID: ["va-late"],
+            S.REQUESTER: ["c1"],
+            S.OPENED: [later + pd.Timedelta(minutes=3)],
+            S.RESOLVED: [later + pd.Timedelta(hours=2)],
+            S.CHANNEL: ["virtual_agent"],
+        }
+    )
+    res = audit_resolutions(claims, pd.concat([tickets, extra], ignore_index=True), conversations=convs, reps=49)
+    res = res.to_dict()
+    assert res["claims"]["handed_off"] == 0  # the incident came from the later conversation, not the claim
+    assert res["returns"]["ai_rate"] == pytest.approx(21 / 400)

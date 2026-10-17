@@ -536,6 +536,17 @@ def audit(
         list[str] | None, typer.Option("--tickets-column", help='Map a ticket field, e.g. requester_id="Caller".')
     ] = None,
     claims_preset: ClaimsPresetOpt = None,
+    ai_channel: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--ai-channel",
+            help="Ticket channel the AI agent opens tickets through (virtual agent, ai agent, chatbot, bot). "
+            "Repeat for more.",
+        ),
+    ] = None,
+    link_minutes: Annotated[
+        int, typer.Option(help="A ticket through an AI channel this soon after a conversation came from it.")
+    ] = 30,
     reps: Annotated[int, typer.Option(help="Bootstrap draws.")] = 999,
     out: Annotated[Path | None, typer.Option("--out", "-o", help="Output directory (out/audit).")] = None,
     open_report: Annotated[bool, typer.Option("--open", help="Open the HTML audit.")] = False,
@@ -544,7 +555,7 @@ def audit(
 
     Works without a staggered rollout, so it fits desks where everyone got the AI at once.
     """
-    from probative.audit import AuditError, run_audit
+    from probative.audit import AI_CHANNELS, AuditError, run_audit
 
     cfg = _default_config(config, claims, tickets)
     base = cfg.base_dir if cfg else Path(".")
@@ -566,6 +577,8 @@ def audit(
             currency=currency or (cfg.value.currency if cfg else "USD"),
             reps=reps,
             program=_program_info(cfg),
+            link_minutes=link_minutes,
+            ai_channels=tuple(ai_channel) if ai_channel else AI_CHANNELS,
         ).to_dict()
     except (AuditError, ValueError, FileNotFoundError) as exc:
         typer.secho(f"Audit failed: {exc}", fg="red")

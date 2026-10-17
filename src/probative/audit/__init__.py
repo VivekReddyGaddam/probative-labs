@@ -3,7 +3,9 @@
 from probative.audit.billing import BILL_PRESET, Reconciliation, load_bill, reconcile_bill
 from probative.audit.closures import ClosureAudit, audit_closures, load_closure_inputs
 from probative.audit.resolutions import (
+    AI_CHANNELS,
     CLAIMS_PRESET,
+    LINK_MINUTES,
     AuditError,
     AuditInputs,
     ResolutionAudit,
@@ -18,8 +20,10 @@ __all__ = [
     "ClosureAudit",
     "audit_closures",
     "load_closure_inputs",
+    "AI_CHANNELS",
     "BILL_PRESET",
     "CLAIMS_PRESET",
+    "LINK_MINUTES",
     "Reconciliation",
     "load_bill",
     "reconcile_bill",

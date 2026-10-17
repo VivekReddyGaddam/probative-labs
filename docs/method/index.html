@@ -16,7 +16,7 @@
 <meta property="og:url" content="https://probativelabs.com/method/">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/static/img/logo.svg?v=0818421d7d" type="image/svg+xml">
-<link rel="stylesheet" href="/static/css/main.css?v=29b2c12154">
+<link rel="stylesheet" href="/static/css/main.css?v=9e260e4913">
 <script src="/static/js/app.js?v=0384b69a37" defer></script>
 
 </head>
@@ -104,7 +104,7 @@
       <p>ROI = (value − total cost) ÷ total cost. It is always a range: the measured effect's uncertainty is combined with your finance team's assumptions (loaded hourly cost, realization share) in 10,000 simulations. Capacity ROI counts freed hours. Cash ROI counts only money that provably moved.</p>
       <p class="doc-part" id="claims">Did the AI's claims hold?</p>
       <h2 id="audit">Resolution audit</h2>
-      <p>For every resolution an AI claims, the audit looks for a ticket from the same person within 7 days about the same type of issue. People come back after human-resolved tickets too, so the same check runs on your agents' resolutions in the same months, weighted to the same issue mix. Only the excess counts against the AI:</p>
+      <p>For every resolution an AI claims, the audit looks for a ticket from the same person within 7 days about the same type of issue. A ticket the AI agent opened itself during the conversation, such as an incident from ServiceNow's Create Incident topic, is a handoff, not a return: that conversation is left out. People come back after human-resolved tickets too, so the same check runs on your agents' resolutions in the same months, weighted to the same issue mix. Only the excess counts against the AI:</p>
       <p class="formula">Did not hold = (return rate after the AI − return rate after people) ÷ (1 − return rate after people)</p>
       <p>Ranges come from resampling people, widened to a leave-one-month-out jackknife when that is larger. The audit reruns with 3- and 14-day windows, any-ticket matching and a same-people baseline, and reports a high, medium or low confidence with its reasons. It needs no comparison group of teams. It is a floor: failures that end in a phone call leave no ticket.</p>
       <h2 id="reconcile">Bill reconciliation</h2>

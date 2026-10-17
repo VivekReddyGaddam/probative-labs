@@ -175,8 +175,8 @@ On a 45-minute call, walk through:
 | Very wide ranges | Few teams, few weeks after rollout, or noisy data. `probative plan power` shows how much more data would help. |
 | Effect looks too good | Check that `rollout.csv` dates are right and that team names match exactly. |
 
-## What we ask in return
+## What I ask in return
 
-Thirty minutes of honest feedback on what was useful, what was confusing and what you'd need to act on the result. If you're willing, we'd also like an anonymized case study. That part is optional, and we never name your company without written permission.
+Thirty minutes of honest feedback on what was useful, what was confusing and what you'd need to act on the result. If you're willing, I'd also like an anonymized case study. That part is optional, and I never name your company without written permission.
 
 Questions or problems: [open an issue](https://github.com/VivekReddyGaddam/probative-labs/issues), or reply to whoever invited you to the pilot.

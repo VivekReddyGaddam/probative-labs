@@ -6,7 +6,7 @@
 - **Verify:** measure what actually changed against teams that did not have the AI yet, and audit the resolutions an AI claims, including the ones you pay for.
 - **Benchmark:** compare with other companies running the same AI, without sharing data.
 
-This repository is the open-source engine. The method is published and validated against planted truths, and every result can be rerun by your own data team or auditor. v0.4 covers the IT service desk, and is also [validated on real ServiceNow data](docs/validation-real-data.md).
+This repository is the open-source engine. The method is published and validated against planted truths, and every result can be rerun by your own data team or auditor. v0.5 covers the IT service desk, and is also [validated on real ServiceNow data](docs/validation-real-data.md).
 
 **[Website](https://probativelabs.com/)** · **[Sample evidence pack](https://probativelabs.com/sample/evidence-pack.html)** · **[Sample resolution audit](https://probativelabs.com/sample/resolution-audit.html)** · **[Run a pilot on your own data](docs/pilot-guide.md)**
 
@@ -129,9 +129,9 @@ Full method: [docs/methodology.md](docs/methodology.md). Evidence grades: [docs/
 
 The engine is free under Apache-2.0, and every analysis is in it: use it to see, privately, whether your AI works. Probative Labs Cloud proves it to the people who act on it, every month:
 
-- **Money back on your AI bill.** Every bill or usage export checked as it arrives, however the AI is billed.
 - **Proof for the renewal.** An independent finding the vendor can't dismiss as your own numbers.
 - **An early warning when the AI slips.** Checks on fresh data every month, and an alert when something changes.
+- **Money back on your AI bill.** Every bill or usage export checked as it arrives, however the AI is billed.
 - **Answers for your CFO and board.** Every AI program's cost and return in one view, in numbers finance signed off.
 - **Nothing for your team to run.** I set it up and present the findings, and the data arrives by itself.
 
@@ -140,7 +140,7 @@ See [OPEN_CORE.md](OPEN_CORE.md) for the comparison, side by side.
 
 ## Status and roadmap
 
-v0.4 is alpha. It covers the IT service desk. Planned next:
+v0.5 is alpha. It covers the IT service desk. Planned next:
 
 - Agent-level staggered adoption, for desks where every team got the AI at once but people started using it at different times
 - Action audits beyond ticket closures (access approvals, refunds, record changes) from system change history
