@@ -18,8 +18,8 @@ The audit works even when every team got the AI on the same day. If you can, do 
 
 ## What you get
 
-- **Resolution audit:** the share of the AI's claimed resolutions that did not hold, compared with your agents' own resolutions, by issue type and month, with a range and a confidence level. If you give the price per resolution, the amount paid for ones that did not hold. [Sample](https://vivekreddygaddam.github.io/probative-labs/sample/resolution-audit.html).
-- **Evidence pack:** the effect on agent hours or resolution time per ticket, with a range; an evidence grade from A to E; quality guardrails; capacity and cash ROI ranges; a renew, expand, fix or stop recommendation. [Sample](https://vivekreddygaddam.github.io/probative-labs/sample/evidence-pack.html).
+- **Resolution audit:** the share of the AI's claimed resolutions that did not hold, compared with your agents' own resolutions, by issue type and month, with a range and a confidence level. If you give the price per resolution, the amount paid for ones that did not hold. [Sample](https://probativelabs.com/sample/resolution-audit.html).
+- **Evidence pack:** the effect on agent hours or resolution time per ticket, with a range; an evidence grade from A to E; quality guardrails; capacity and cash ROI ranges; a renew, expand, fix or stop recommendation. [Sample](https://probativelabs.com/sample/evidence-pack.html).
 - **Measurement plan:** waves, holdout, the chance of detecting the expected effect, guardrails, decision rules and a sign-off table.
 
 All samples use simulated data.

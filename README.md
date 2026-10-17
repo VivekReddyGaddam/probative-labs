@@ -8,7 +8,7 @@
 
 This repository is the open-source engine. The method is published and validated against planted truths, and every result can be rerun by your own data team or auditor. v0.4 covers the IT service desk, and is also [validated on real ServiceNow data](docs/validation-real-data.md).
 
-**[Website](https://vivekreddygaddam.github.io/probative-labs/)** · **[Sample evidence pack](https://vivekreddygaddam.github.io/probative-labs/sample/evidence-pack.html)** · **[Sample resolution audit](https://vivekreddygaddam.github.io/probative-labs/sample/resolution-audit.html)** · **[Run a pilot on your own data](docs/pilot-guide.md)**
+**[Website](https://probativelabs.com/)** · **[Sample evidence pack](https://probativelabs.com/sample/evidence-pack.html)** · **[Sample resolution audit](https://probativelabs.com/sample/resolution-audit.html)** · **[Run a pilot on your own data](docs/pilot-guide.md)**
 
 ```
 $ probative demo
@@ -99,8 +99,8 @@ Benchmark contributions hold rates, ranges, grades and size bands only, for you 
 
 ![The top of a sample evidence pack: effect, evidence grade, guardrails and ROI ranges](docs/images/evidence-pack.png)
 
-- **Evidence pack** ([sample](https://vivekreddygaddam.github.io/probative-labs/sample/evidence-pack.html), [Markdown](docs/sample/evidence-pack.md)): the effect and its range, the design and why, headline versus mix-adjusted results, an event-study chart, quality guardrails, diagnostics, capacity and cash ROI ranges, the vendor's claim beside the measured result, assumptions with owners, data lineage and a renew, expand, fix or stop recommendation.
-- **Resolution audit** ([sample](https://vivekreddygaddam.github.io/probative-labs/sample/resolution-audit.html)): claimed resolutions that did not hold, by issue type and month, with robustness checks, coverage and the amount paid for failed resolutions.
+- **Evidence pack** ([sample](https://probativelabs.com/sample/evidence-pack.html), [Markdown](docs/sample/evidence-pack.md)): the effect and its range, the design and why, headline versus mix-adjusted results, an event-study chart, quality guardrails, diagnostics, capacity and cash ROI ranges, the vendor's claim beside the measured result, assumptions with owners, data lineage and a renew, expand, fix or stop recommendation.
+- **Resolution audit** ([sample](https://probativelabs.com/sample/resolution-audit.html)): claimed resolutions that did not hold, by issue type and month, with robustness checks, coverage and the amount paid for failed resolutions.
 - **Dispute pack:** what was billed, what is disputed and why, line by line for the vendor, and what was not billed in the vendor's favour.
 - **Regression watch:** the latest weeks against the weeks before, release-date tests and a weekly chart.
 - **Action audit, bake-off decision pack and measurement plan.**
