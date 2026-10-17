@@ -1265,9 +1265,42 @@ def validate(
     ] = False,
     closures_check: Annotated[bool, typer.Option("--closures", help="Validate the action audit.")] = False,
     bakeoff_check: Annotated[bool, typer.Option("--bakeoff", help="Validate the bake-off decision.")] = False,
+    real: Annotated[
+        Path | None,
+        typer.Option(
+            "--real",
+            help="Validate the resolution audit on a real ServiceNow incident log: the UCI incident management "
+            "event log (incident_event_log.csv, CC BY 4.0).",
+        ),
+    ] = None,
+    report: Annotated[Path | None, typer.Option(help="With --real: write the summary as JSON here.")] = None,
 ) -> None:
     """Check the estimator (or, with --audit, the resolution audit) against planted truths, including zero."""
+    import json
+
     from probative import validation as V
+
+    if real is not None:
+        from probative.validation_real import real_validation_report
+
+        summary, df = real_validation_report(real, runs=runs, reps=max(reps, 99), seed=seed, progress=_say)
+        if out:
+            df.to_csv(out, index=False)
+        if report:
+            report.write_text(json.dumps(summary, indent=2, default=str))
+        b = summary["baseline"]["overall"]
+        typer.secho("\nResolution audit on real ServiceNow data", bold=True)
+        typer.echo(
+            f"{summary['ingest']['events']:,} events, {summary['ingest']['rows_kept']:,} incidents. After a person's "
+            f"resolution, {b['same_type']:.1%} came back about the same type of issue within 7 days."
+        )
+        rec = pd.DataFrame(summary["recovery"])
+        with pd.option_context("display.float_format", "{:.3f}".format, "display.width", 140):
+            typer.echo(rec.to_string(index=False))
+        typer.echo(
+            "\ncoverage should be near 0.95; mean_estimate near planted; flagged near 0.025 at 0 and 1 otherwise."
+        )
+        return
     from probative.validation import (
         run_audit_validation,
         run_validation,

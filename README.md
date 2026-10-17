@@ -6,7 +6,7 @@
 - **Verify:** measure what actually changed against teams that did not have the AI yet, and audit the resolutions an AI claims, including the ones you pay for.
 - **Benchmark:** compare with other companies running the same AI, without sharing data.
 
-This repository is the open-source engine. The method is published and validated against planted truths, and every result can be rerun by your own data team or auditor. v0.3 covers the IT service desk.
+This repository is the open-source engine. The method is published and validated against planted truths, and every result can be rerun by your own data team or auditor. v0.4 covers the IT service desk, and is also [validated on real ServiceNow data](docs/validation-real-data.md).
 
 **[Website](https://vivekreddygaddam.github.io/probative-labs/)** · **[Sample evidence pack](https://vivekreddygaddam.github.io/probative-labs/sample/evidence-pack.html)** · **[Sample resolution audit](https://vivekreddygaddam.github.io/probative-labs/sample/resolution-audit.html)** · **[Run a pilot on your own data](docs/pilot-guide.md)**
 
@@ -133,7 +133,7 @@ The engine is free under Apache-2.0, and every analysis is in it: use it to see,
 - **Proof for the renewal.** An independent finding the vendor can't dismiss as your own numbers.
 - **An early warning when the AI slips.** Checks on fresh data every month, and an alert when something changes.
 - **Answers for your CFO and board.** Every AI program's cost and return in one view, in numbers finance signed off.
-- **Nothing for your team to run.** We set it up and present the findings, and the data arrives by itself.
+- **Nothing for your team to run.** I set it up and present the findings, and the data arrives by itself.
 
 See [OPEN_CORE.md](OPEN_CORE.md) for the comparison, side by side.
 <!-- editions:end -->

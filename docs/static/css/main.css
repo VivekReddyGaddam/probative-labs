@@ -116,14 +116,14 @@ tr:last-child td { border-bottom: 0; }
 td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 /* Tables that turn into stacked cards on phones: each cell labelled from data-label. */
 @media (max-width: 640px) {
-  table.stack thead { display: none; }
-  table.stack, table.stack tbody, table.stack tr, table.stack td { display: block; width: 100%; }
-  table.stack tr { padding: 0.75rem 1rem; border-bottom: 1px solid var(--line); }
-  table.stack tr:last-child { border-bottom: 0; }
-  table.stack td { border: 0; padding: 0.12rem 0; text-align: left; white-space: normal; }
-  table.stack td[data-label]::before { content: attr(data-label); display: block; font-size: 0.72rem; font-weight: 700;
+  table.mobile-cards thead { display: none; }
+  table.mobile-cards, table.mobile-cards tbody, table.mobile-cards tr, table.mobile-cards td { display: block; width: 100%; }
+  table.mobile-cards tr { padding: 0.75rem 1rem; border-bottom: 1px solid var(--line); }
+  table.mobile-cards tr:last-child { border-bottom: 0; }
+  table.mobile-cards td { border: 0; padding: 0.12rem 0; text-align: left; white-space: normal; }
+  table.mobile-cards td[data-label]::before { content: attr(data-label); display: block; font-size: 0.72rem; font-weight: 700;
     letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); margin-top: 0.45rem; }
-  table.stack td:first-child { font-size: 1rem; }
+  table.mobile-cards td:first-child { font-size: 1rem; }
 }
 .empty { text-align: center; color: var(--muted); padding: 2rem 1rem; }
 
@@ -431,3 +431,44 @@ details.panel summary { cursor: pointer; font-weight: 600; }
   .page-hero { padding: 3rem 0 2rem; }
   .compare-table td.check, .compare-table th.check { width: 5.5rem; }
 }
+
+/* The free check */
+.callout.info { background: var(--accent-soft); }
+.callout.warn { background: var(--warn-soft); color: var(--warn); }
+.check-trust { margin-bottom: 1.4rem; }
+.check-inputs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.dropzone { display: grid; place-items: center; min-height: 5.5rem; margin: 0.8rem 0 0.4rem; padding: 1rem; text-align: center;
+  border: 2px dashed var(--line); border-radius: 12px; background: var(--surface-2); color: var(--ink-2); cursor: pointer; }
+.dropzone.over, .dropzone:hover { border-color: var(--accent); color: var(--accent); }
+.dropzone input { max-width: 100%; margin-bottom: 0.4rem; }
+.check-map { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem 1rem; margin-top: 0.6rem; }
+.check-field { display: grid; gap: 0.2rem; font-size: 0.85rem; color: var(--ink-2); }
+.check-options { margin: 1.2rem 0 0.4rem; }
+.check-options summary { cursor: pointer; font-weight: 600; }
+.check-results { margin-top: 2rem; }
+.check-results h3 { margin-top: 1.8rem; }
+.check-results .headline { font-size: 1.08rem; background: var(--surface); border: 1px solid var(--line);
+  border-left: 4px solid var(--accent); border-radius: 10px; padding: 1rem 1.2rem; }
+.check-notes { margin-top: 1.2rem; }
+@media (max-width: 720px) { .check-inputs, .check-map { grid-template-columns: 1fr; } }
+
+/* Founder */
+.founder { display: flex; gap: 1.4rem; align-items: flex-start; }
+.founder-photo { flex: none; border-radius: 50%; object-fit: cover; }
+.founder h3 { margin: 0.2rem 0 0.4rem; }
+
+/* A clean one-page summary when a page is printed or saved as PDF */
+@media print {
+  .site-header, .site-footer, .page-hero, .check-inputs, .check-options, .check-trust, #check-run, .check-actions,
+  .band, .cta-band, .faq-list { display: none !important; }
+  body { background: #fff; color: #000; }
+  .check-results { margin: 0; }
+  .table-wrap { border-color: #ccc; }
+}
+
+/* Grid items may shrink below their content's width, so a wide table scrolls inside its card
+   instead of pushing the page wider than the screen. */
+.hero-grid > *, .split > *, .cols > *, .features > *, .plans > * { min-width: 0; }
+th.nowrap, td.nowrap { white-space: nowrap; }
+
+th.n.wrap, td.n.wrap { white-space: normal; }

@@ -1,6 +1,6 @@
 # Methodology
 
-Probative Labs checks what AI delivered, independently of the vendor. It answers two questions. **What changed?** It estimates the *counterfactual*, what would have happened to the same work without the AI, using the strongest comparison the data allows, and states the uncertainty, the diagnostics and an evidence grade with every number. **Did the AI's claims hold?** The resolution audit checks the resolutions an AI reports against what happened next. This document describes exactly what v0.2 of the open engine does. The code is the reference implementation; where this text and the code disagree, the code is a bug or this document is, and we want to know.
+Probative Labs checks what AI delivered, independently of the vendor. It answers two questions. **What changed?** It estimates the *counterfactual*, what would have happened to the same work without the AI, using the strongest comparison the data allows, and states the uncertainty, the diagnostics and an evidence grade with every number. **Did the AI's claims hold?** The resolution audit checks the resolutions an AI reports against what happened next. This document describes exactly what the open engine does. The code is the reference implementation; where this text and the code disagree, the code is a bug or this document is: please open an issue.
 
 ## The five steps
 
@@ -16,7 +16,7 @@ Results are computed on **team-by-week cells**: for example, the mean agent hour
 
 A team's **rollout week** is the first full week after its exposure start date. If the start falls mid-week, that week is dropped for the team (it is partly exposed). Teams that had the AI before the window starts are excluded, since they have no before period. Exposure is treated as absorbing. If an exposure ends (`end_date`), the team's later weeks are dropped rather than treated as untreated.
 
-## Comparison designs in v0.2
+## Comparison designs
 
 | Design | When Probative Labs uses it | Evidence grade |
 | --- | --- | --- |

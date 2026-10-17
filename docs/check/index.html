@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Free resolution check · Probative Labs</title>
+<meta name="description" content="Drop two ServiceNow exports and see, in your browser, how many conversations your virtual agent counted as resolved came back as a ticket. Nothing is uploaded: this page cannot send data anywhere.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Probative Labs">
+<meta property="og:title" content="Free resolution check · Probative Labs">
+<meta property="og:description" content="Drop two ServiceNow exports and see, in your browser, how many conversations your virtual agent counted as resolved came back as a ticket. Nothing is uploaded: this page cannot send data anywhere.">
+<meta property="og:image" content="https://vivekreddygaddam.github.io/probative-labs/static/img/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="627">
+<meta property="og:image:alt" content="Probative Labs: independent proof of what your AI delivered.">
+<meta property="og:url" content="https://vivekreddygaddam.github.io/probative-labs/check/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/probative-labs/static/img/logo.svg?v=0818421d7d" type="image/svg+xml">
+<link rel="stylesheet" href="/probative-labs/static/css/main.css?v=5359e17646">
+<script src="/probative-labs/static/js/app.js?v=0384b69a37" defer></script>
+
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'none'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'">
+<script src="/probative-labs/static/js/check.js?v=b68b5c045a" defer></script>
+
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="/probative-labs/"><img src="/probative-labs/static/img/logo.svg?v=0818421d7d" alt="" width="28" height="28">Probative Labs</a>
+    <button class="btn btn-ghost btn-sm nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <nav class="site-nav" id="site-nav" data-nav aria-label="Main">
+      <a href="/probative-labs/check/" aria-current="page">Free check</a>
+      <a href="/probative-labs/resolution-audit/" >How it works</a>
+      <a href="/probative-labs/method/" >Method</a>
+      <a href="/probative-labs/pricing/" >Pricing</a>
+      <a href="/probative-labs/open-source/" >Open source</a>
+      <a href="/probative-labs/about/" >About</a>
+      
+      <a class="btn btn-primary btn-sm" href="/probative-labs/pilot/">Book a call</a>
+    </nav>
+  </div>
+</header>
+<main id="content">
+
+
+<section class="page-hero">
+  <div class="wrap">
+    <div class="eyebrow">Free check · runs in your browser</div>
+    <h1>Did your virtual agent's "resolved" conversations hold?</h1>
+    <p class="lead">Drop two ServiceNow exports. In about a minute you'll see how many conversations counted as resolved came back as a ticket within a week, next to your agents' own resolutions. Nothing is uploaded.</p>
+  </div>
+</section>
+
+<section class="tight" id="free-check">
+  <div class="wrap">
+    <div class="callout info check-trust"><b>Nothing leaves your machine.</b> This page's security policy (<span class="mono">connect-src 'none'</span>) blocks every network connection, so it cannot send your data anywhere. To see for yourself, open your browser's developer tools on the Network tab before you run the check: no requests appear. The code is open: <a href="https://github.com/VivekReddyGaddam/probative-labs">read it</a>.</div>
+
+    <div class="cols check-inputs">
+      <div class="card">
+        <h3>1. Virtual Agent conversations</h3>
+        <p class="small muted">In ServiceNow, open <span class="mono">interaction.list</span>, filter to Virtual agent = true for the months you want, and export as CSV with: Number, Opened for, Opened, State, State reason, Agent chat, Type.</p>
+        <label class="dropzone" id="conv-zone"><input id="conv-file" type="file" accept=".csv,.txt"><span>Drop the CSV here, or choose a file</span></label>
+        <p class="small" id="conv-status" role="status"></p>
+        <div id="conv-map"></div>
+      </div>
+      <div class="card">
+        <h3>2. Incidents for the same months, plus a week</h3>
+        <p class="small muted">Export <span class="mono">incident.list</span> as CSV with: Number, Caller, Opened, Resolved, and Category for the fix list. Use the same kind of person field as the conversations: both names, or both Sys IDs.</p>
+        <label class="dropzone" id="tickets-zone"><input id="tickets-file" type="file" accept=".csv,.txt"><span>Drop the CSV here, or choose a file</span></label>
+        <p class="small" id="tickets-status" role="status"></p>
+        <div id="tickets-map"></div>
+      </div>
+    </div>
+    <details class="check-options">
+      <summary>Options</summary>
+      <div class="grid-2">
+        <label class="field"><span>Return window, in days</span><input id="check-window" type="number" min="1" max="60" value="7"></label>
+        <label class="field"><span>For other platforms: outcome values that mean resolved, comma-separated</span><input id="check-resolved" type="text" value="resolved"></label>
+      </div>
+    </details>
+    <div class="cta-row"><button class="btn btn-primary" id="check-run" type="button" disabled>Run the check</button></div>
+    <p class="callout warn" id="check-error" hidden></p>
+    <div id="check-results" class="check-results" hidden></div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap narrow">
+    <div class="section-head"><h2>What to export, and what to leave out</h2></div>
+    <div class="table-wrap"><table class="mobile-cards">
+      <thead><tr><th>File</th><th>Columns</th><th>Leave out</th></tr></thead>
+      <tbody>
+        <tr><td><b>Conversations</b><br><span class="small muted">interaction.list, Virtual agent = true</span></td><td data-label="Columns">Number, Opened for, Opened, State, State reason, Agent chat, Type</td><td data-label="Leave out">Short description, transcripts, work notes</td></tr>
+        <tr><td><b>Incidents</b><br><span class="small muted">incident.list</span></td><td data-label="Columns">Number, Caller, Opened, Resolved; Category (optional)</td><td data-label="Leave out">Short description, description, comments, work notes, assigned to</td></tr>
+      </tbody>
+    </table></div>
+    <p class="small muted" style="margin-top:1rem">To keep names out of the exports, use the person's Sys ID instead of the name: in the list layout, expand Opened for (or Caller) and choose Sys ID. Do the same in both files so the people match.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap narrow">
+    <div class="section-head"><h2>Questions</h2></div>
+    <div class="faq-list">
+      <details><summary>Is this the full audit?</summary><div><p>It uses the same definitions as the open engine's resolution audit and gives the same headline figures on the same files. The full audit also matches the type of issue, runs sensitivity checks and widens the range with a month-by-month check. Run it with <code>pip install probative-labs</code>, or book a call and I'll run it with you.</p></div></details>
+      <details><summary>What counts as "came back"?</summary><div><p>The same person opened an incident within the window after the conversation started. Some people come back after any help, so the same check runs on incidents your agents resolved in the same months, and only the excess counts as "did not hold".</p></div></details>
+      <details><summary>Can I share the result?</summary><div><p>Download the summary: rates and counts only, with no names, IDs or ticket contents. Send that, not the exports, if you'd like a second opinion.</p></div></details>
+      <details><summary>Our virtual agent isn't ServiceNow.</summary><div><p>Any export with a person, a start time and an outcome works: pick the columns after you drop the file, and set the outcome values that mean resolved under Options.</p></div></details>
+    </div>
+  </div>
+</section>
+
+</main>
+<footer class="site-footer">
+  <div class="wrap footer-grid">
+    <div>
+      <a class="brand" href="/probative-labs/"><img src="/probative-labs/static/img/logo.svg?v=0818421d7d" alt="" width="28" height="28">Probative Labs</a>
+      <p class="muted small" style="margin-top:0.8rem;max-width:20rem">Independent proof of what your AI delivered. Probative Labs sells no AI and takes no money from AI vendors.</p>
+    </div>
+    <div>
+      <h4>Product</h4>
+      <ul>
+        <li><a href="/probative-labs/check/">Free check</a></li>
+        <li><a href="/probative-labs/resolution-audit/">Resolution audit</a></li>
+        <li><a href="/probative-labs/ai-billing/">AI billing</a></li>
+        <li><a href="/probative-labs/method/">Method</a></li>
+        <li><a href="/probative-labs/benchmarks/">Benchmarks</a></li>
+        <li><a href="/probative-labs/pricing/">Pricing</a></li>
+        <li><a href="/probative-labs/pilot/">Book a call</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Samples</h4>
+      <ul>
+        <li><a href="/probative-labs/sample/evidence-pack.html">Evidence pack</a></li>
+        <li><a href="/probative-labs/sample/resolution-audit.html">Resolution audit</a></li>
+        <li><a href="/probative-labs/sample/dispute-pack.html">Dispute pack</a></li>
+        <li><a href="/probative-labs/sample/regression-watch.html">Regression watch</a></li>
+        <li><a href="/probative-labs/ai-billing/#samples">Every billing model</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Open source</h4>
+      <ul>
+        <li><a href="https://github.com/VivekReddyGaddam/probative-labs">GitHub</a></li>
+        <li><a href="https://github.com/VivekReddyGaddam/probative-labs/blob/main/docs/methodology.md">Methodology</a></li>
+        <li><a href="/probative-labs/validation/">Validation on real data</a></li>
+        <li><a href="/probative-labs/open-source/">Open source and Cloud</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Company</h4>
+      <ul>
+        <li><a href="/probative-labs/about/">About</a></li>
+        <li><a href="/probative-labs/independence/">Independence</a></li>
+        <li><a href="/probative-labs/security/">Security and privacy</a></li>
+        <li><a href="/probative-labs/privacy/">Privacy notice</a></li>
+        
+      </ul>
+    </div>
+  </div>
+  <div class="wrap"><p class="muted small" style="margin-top:2.5rem">© 2026 Probative Labs · The engine is open source under the Apache License 2.0.</p></div>
+</footer>
+</body>
+</html>

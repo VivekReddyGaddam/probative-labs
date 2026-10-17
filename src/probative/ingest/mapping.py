@@ -234,11 +234,36 @@ _DURATION_RE = re.compile(
 _DATE_FORMATS = ("%d/%b/%y %I:%M %p", "%d/%b/%Y %I:%M %p", "%d/%b/%y %H:%M", "mixed")
 
 
-def _to_datetime(s: pd.Series) -> pd.Series:
+_NUMERIC_DATE = re.compile(r"^\s*(\d{1,2})[/.-](\d{1,2})[/.-]\d{2,4}\b")
+
+
+def _day_first(s: pd.Series) -> bool | None:
+    """Whether numeric dates such as 5/3/2016 put the day first, judged from the unambiguous ones.
+
+    A first number above 12 can only be a day, a second number above 12 only a day too. Exports
+    follow the user's date preference, so one file is consistent: the first clear case decides.
+    """
+    parts = s.dropna().astype(str).str.extract(_NUMERIC_DATE).dropna().astype(int)
+    if parts.empty:
+        return None
+    day_first, month_first = int((parts[0] > 12).sum()), int((parts[1] > 12).sum())
+    if day_first and not month_first:
+        return True
+    if month_first and not day_first:
+        return False
+    return None
+
+
+def _to_datetime(s: pd.Series, day_first: bool | None = None) -> pd.Series:
+    """Parse dates. ``day_first`` is the file's date order when known; otherwise this column decides."""
     present = s.notna().sum()
+    order = day_first if day_first is not None else _day_first(s)
     with warnings.catch_warnings():  # unknown formats are handled by the fallbacks below
         warnings.simplefilter("ignore", UserWarning)
-        best = pd.to_datetime(s, errors="coerce", utc=True)
+        if order is None:
+            best = pd.to_datetime(s, errors="coerce", utc=True)
+        else:  # dates like 5/3/2016: parse each value with the order the file's clear cases show
+            best = pd.to_datetime(s, errors="coerce", utc=True, dayfirst=order, format="mixed")
     for fmt in _DATE_FORMATS:
         if best.notna().sum() >= present * 0.9:
             break
@@ -304,10 +329,10 @@ def _satisfaction_good_bad(s: pd.Series) -> pd.Series:
     return t.map({"good": 1.0, "bad": 0.0}).astype(float)
 
 
-def _apply_transform(s: pd.Series, transform: str | None, kind: str) -> pd.Series:
+def _apply_transform(s: pd.Series, transform: str | None, kind: str, day_first: bool | None = None) -> pd.Series:
     transform = transform or {"datetime": "datetime", "number": "number", "bool": "bool"}.get(kind, "string")
     if transform == "datetime":
-        return _to_datetime(s)
+        return _to_datetime(s, day_first)
     if transform == "number":
         return pd.to_numeric(s, errors="coerce").astype(float)
     if transform == "bool":
@@ -352,13 +377,17 @@ def apply_mapping(
 
     out = pd.DataFrame(index=df.index)
     used_sources: set[str] = set()
+    # One export uses one date order: judge it from every date column together, so a column whose dates
+    # are all ambiguous (5/3/2016) follows the file's clear cases (29/2/2016).
+    date_sources = [found[c] for c, kind in columns.items() if kind == "datetime" and found.get(c) is not None]
+    day_first = _day_first(pd.concat([df[c] for c in date_sources], ignore_index=True)) if date_sources else None
     for canon, kind in columns.items():
         entry, src_col = mapping.get(canon), found.get(canon)
         if entry is None or src_col is None:
             report.missing_optional.append(canon)
             continue
         src = df[src_col]
-        converted = _apply_transform(src, entry.transform, kind)
+        converted = _apply_transform(src, entry.transform, kind, day_first)
         failures = int((src.notna() & converted.isna()).sum())
         if failures and entry.transform != "satisfaction_good_bad":
             report.coercion_failures[canon] = failures

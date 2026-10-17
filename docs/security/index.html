@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Security and privacy · Probative Labs</title>
-<meta name="description" content="Probative Labs plans AI rollouts that can be proven, measures what changed against teams without the AI, audits the resolutions AI vendors claim, and benchmarks results across companies. Independent: we sell no AI.">
+<meta name="description" content="Did your virtual agent's resolutions hold? A free check that runs in your browser on two ServiceNow exports, and an independent audit for your renewal. Probative Labs sells no AI and takes no money from AI vendors.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Probative Labs">
 <meta property="og:title" content="Security and privacy · Probative Labs">
-<meta property="og:description" content="Probative Labs plans AI rollouts that can be proven, measures what changed against teams without the AI, audits the resolutions AI vendors claim, and benchmarks results across companies. Independent: we sell no AI.">
+<meta property="og:description" content="Did your virtual agent's resolutions hold? A free check that runs in your browser on two ServiceNow exports, and an independent audit for your renewal. Probative Labs sells no AI and takes no money from AI vendors.">
 <meta property="og:image" content="https://vivekreddygaddam.github.io/probative-labs/static/img/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="627">
@@ -16,8 +16,9 @@
 <meta property="og:url" content="https://vivekreddygaddam.github.io/probative-labs/security/">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/probative-labs/static/img/logo.svg?v=0818421d7d" type="image/svg+xml">
-<link rel="stylesheet" href="/probative-labs/static/css/main.css?v=6d9b880e8b">
+<link rel="stylesheet" href="/probative-labs/static/css/main.css?v=5359e17646">
 <script src="/probative-labs/static/js/app.js?v=0384b69a37" defer></script>
+
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
@@ -26,14 +27,14 @@
     <a class="brand" href="/probative-labs/"><img src="/probative-labs/static/img/logo.svg?v=0818421d7d" alt="" width="28" height="28">Probative Labs</a>
     <button class="btn btn-ghost btn-sm nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-controls="site-nav">Menu</button>
     <nav class="site-nav" id="site-nav" data-nav aria-label="Main">
-      <a href="/probative-labs/resolution-audit/" >Resolution audit</a>
-      <a href="/probative-labs/ai-billing/" >AI billing</a>
+      <a href="/probative-labs/check/" >Free check</a>
+      <a href="/probative-labs/resolution-audit/" >How it works</a>
       <a href="/probative-labs/method/" >Method</a>
       <a href="/probative-labs/pricing/" >Pricing</a>
-      <a href="/probative-labs/independence/" >Independence</a>
       <a href="/probative-labs/open-source/" >Open source</a>
+      <a href="/probative-labs/about/" >About</a>
       
-      <a class="btn btn-primary btn-sm" href="/probative-labs/pilot/">Book a pilot</a>
+      <a class="btn btn-primary btn-sm" href="/probative-labs/pilot/">Book a call</a>
     </nav>
   </div>
 </header>
@@ -44,20 +45,20 @@
   <div class="wrap">
     <div class="eyebrow">Security and privacy</div>
     <h1>Built to need as little of your data as possible.</h1>
-    <p class="lead">We read operational data such as tickets and conversations: only what the analysis needs, where your data lives when required, and never to judge individuals.</p>
+    <p class="lead">The default way to start needs none of it: you run the check on your own machine and share only the summary. When data does move, it is only what the analysis needs, and never used to judge individuals.</p>
   </div>
 </section>
 
 <section class="tight">
   <div class="wrap">
     <div class="section-head"><h2>Where it runs</h2></div>
-    <div class="table-wrap"><table>
-      <thead><tr><th>Option</th><th>For</th><th>Where the data lives</th></tr></thead>
+    <div class="table-wrap"><table class="mobile-cards">
+      <thead><tr><th>Option</th><th>Status</th><th>Where the data lives</th></tr></thead>
       <tbody>
-        <tr><td><b>Your own machine</b></td><td>Pilots with the open-source engine</td><td>Nowhere else: nothing leaves your computer</td></tr>
-        <tr><td><b>Multi-tenant cloud</b></td><td>Mid-size and less regulated companies</td><td>Probative Labs' cloud, in a US or EU region you choose</td></tr>
-        <tr><td><b>Single-tenant cloud</b></td><td>Large enterprises</td><td>A dedicated, isolated environment</td></tr>
-        <tr><td><b>Customer-hosted</b></td><td>Banks, healthcare, government</td><td>Your own AWS, Azure or Google Cloud account</td></tr>
+        <tr><td><b>The free check, in your browser</b></td><td data-label="Status">Available now</td><td data-label="Where the data lives">Your browser: the page cannot send data anywhere</td></tr>
+        <tr><td><b>The open-source engine, on your computer</b></td><td data-label="Status">Available now</td><td data-label="Where the data lives">Your computer</td></tr>
+        <tr><td><b>Probative Labs Cloud, in your own cloud</b></td><td data-label="Status">Available as a Docker package; not yet run by a customer</td><td data-label="Where the data lives">Your AWS, Azure or Google Cloud account</td></tr>
+        <tr><td><b>Probative Labs Cloud, hosted for you</b></td><td data-label="Status">Planned</td><td data-label="Where the data lives">A US or EU region you choose</td></tr>
       </tbody>
     </table></div>
   </div>
@@ -69,7 +70,7 @@
       <div class="card">
         <h3>Data minimization</h3>
         <ul>
-          <li>Read-only connectors, limited to the fields we need. We never write back.</li>
+          <li>Only the fields the analysis needs; the <a href="/probative-labs/check/">field list</a> is public. Connectors are read-only and never write back.</li>
           <li>Timestamps, categories, teams and outcomes. Free text is read to type work, then dropped.</li>
           <li>Names and user IDs are replaced with keyed hashes before anything is stored; raw uploads are not kept.</li>
           <li>Team-level results only, with a minimum group size.</li>
@@ -79,22 +80,22 @@
         <h3>People and regulation</h3>
         <ul>
           <li>Evaluates AI programs, not people: no scoring, ranking or monitoring of individual workers.</li>
-          <li>A standard description of the team-level design for works council consultations.</li>
-          <li>Data processing agreement, an EU hosting option and configurable retention.</li>
-          <li>Any AI we use runs on endpoints you approve. Your data never trains models.</li>
+          <li>In the default pilot I never receive personal data. If you choose to send exports, a data processing agreement comes first.</li>
+          <li>No language model sees your data: the analysis is statistics.</li>
+          <li>Retention in Cloud is configurable.</li>
         </ul>
       </div>
       <div class="card">
         <h3>Security program</h3>
         <ul>
-          <li>TLS in transit, encrypted storage, and secrets encrypted in the database.</li>
-          <li>Single sign-on, role-based access and a complete audit log.</li>
+          <li>Secrets encrypted in the database; TLS wherever Cloud is hosted.</li>
+          <li>Single sign-on (OpenID Connect), five roles and an append-only audit log.</li>
           <li>Strict browser security headers; no third-party scripts or trackers.</li>
-          <li>Penetration testing before general availability; SOC 2 Type II, ISO 27001 and ISO 42001 planned, in that order.</li>
+          <li>A penetration test before general availability; SOC 2 Type II, ISO 27001 and ISO 42001 planned, in that order.</li>
         </ul>
       </div>
     </div>
-    <p class="muted small" style="text-align:center;margin-top:2rem">To report a vulnerability, use the private reporting channel on our <a href="https://github.com/VivekReddyGaddam/probative-labs/security">GitHub repository</a>.</p>
+    <p class="muted small" style="text-align:center;margin-top:2rem">On request: a mutual NDA, a one-page security note and the exact field list. To report a vulnerability, use the private reporting channel on the <a href="https://github.com/VivekReddyGaddam/probative-labs/security">GitHub repository</a>.</p>
   </div>
 </section>
 
@@ -103,17 +104,18 @@
   <div class="wrap footer-grid">
     <div>
       <a class="brand" href="/probative-labs/"><img src="/probative-labs/static/img/logo.svg?v=0818421d7d" alt="" width="28" height="28">Probative Labs</a>
-      <p class="muted small" style="margin-top:0.8rem;max-width:20rem">Independent proof of what each AI investment delivered. We sell no AI and take no money from AI vendors.</p>
+      <p class="muted small" style="margin-top:0.8rem;max-width:20rem">Independent proof of what your AI delivered. Probative Labs sells no AI and takes no money from AI vendors.</p>
     </div>
     <div>
       <h4>Product</h4>
       <ul>
+        <li><a href="/probative-labs/check/">Free check</a></li>
         <li><a href="/probative-labs/resolution-audit/">Resolution audit</a></li>
         <li><a href="/probative-labs/ai-billing/">AI billing</a></li>
         <li><a href="/probative-labs/method/">Method</a></li>
         <li><a href="/probative-labs/benchmarks/">Benchmarks</a></li>
         <li><a href="/probative-labs/pricing/">Pricing</a></li>
-        <li><a href="/probative-labs/pilot/">Book a pilot</a></li>
+        <li><a href="/probative-labs/pilot/">Book a call</a></li>
       </ul>
     </div>
     <div>
@@ -131,13 +133,14 @@
       <ul>
         <li><a href="https://github.com/VivekReddyGaddam/probative-labs">GitHub</a></li>
         <li><a href="https://github.com/VivekReddyGaddam/probative-labs/blob/main/docs/methodology.md">Methodology</a></li>
-        <li><a href="https://github.com/VivekReddyGaddam/probative-labs/blob/main/docs/validation.md">Validation</a></li>
+        <li><a href="/probative-labs/validation/">Validation on real data</a></li>
         <li><a href="/probative-labs/open-source/">Open source and Cloud</a></li>
       </ul>
     </div>
     <div>
       <h4>Company</h4>
       <ul>
+        <li><a href="/probative-labs/about/">About</a></li>
         <li><a href="/probative-labs/independence/">Independence</a></li>
         <li><a href="/probative-labs/security/">Security and privacy</a></li>
         <li><a href="/probative-labs/privacy/">Privacy notice</a></li>

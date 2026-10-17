@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Validation on real ServiceNow data · Probative Labs</title>
+<meta name="description" content="The resolution audit, tested on a public log from a real ServiceNow instance: it reads the real export, shows real return rates, and finds failures planted in real data.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Probative Labs">
+<meta property="og:title" content="Validation on real ServiceNow data · Probative Labs">
+<meta property="og:description" content="The resolution audit, tested on a public log from a real ServiceNow instance: it reads the real export, shows real return rates, and finds failures planted in real data.">
+<meta property="og:image" content="https://vivekreddygaddam.github.io/probative-labs/static/img/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="627">
+<meta property="og:image:alt" content="Probative Labs: independent proof of what your AI delivered.">
+<meta property="og:url" content="https://vivekreddygaddam.github.io/probative-labs/validation/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/probative-labs/static/img/logo.svg?v=0818421d7d" type="image/svg+xml">
+<link rel="stylesheet" href="/probative-labs/static/css/main.css?v=5359e17646">
+<script src="/probative-labs/static/js/app.js?v=0384b69a37" defer></script>
+
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="/probative-labs/"><img src="/probative-labs/static/img/logo.svg?v=0818421d7d" alt="" width="28" height="28">Probative Labs</a>
+    <button class="btn btn-ghost btn-sm nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <nav class="site-nav" id="site-nav" data-nav aria-label="Main">
+      <a href="/probative-labs/check/" >Free check</a>
+      <a href="/probative-labs/resolution-audit/" >How it works</a>
+      <a href="/probative-labs/method/" >Method</a>
+      <a href="/probative-labs/pricing/" >Pricing</a>
+      <a href="/probative-labs/open-source/" >Open source</a>
+      <a href="/probative-labs/about/" >About</a>
+      
+      <a class="btn btn-primary btn-sm" href="/probative-labs/pilot/">Book a call</a>
+    </nav>
+  </div>
+</header>
+<main id="content">
+
+
+
+<section class="page-hero">
+  <div class="wrap">
+    <div class="eyebrow">Validation</div>
+    <h1>Tested on real ServiceNow data.</h1>
+    <p class="lead">Simulated data shows a method finds what was planted in it. Real data shows it copes with a real export. This page does both: a public log from a real ServiceNow instance, with known failures planted in it.</p>
+  </div>
+</section>
+
+
+
+<section class="tight">
+  <div class="wrap narrow prose">
+    <div class="tiles">
+      <div class="tile"><div class="k">Real export read</div><div class="v">24,918</div><div class="s">incidents from 141,712 events</div></div>
+      <div class="tile"><div class="k">Came back after a person's resolution</div><div class="v">10.1%</div><div class="s">same type of issue, within 7 days</div></div>
+      <div class="tile"><div class="k">Made to fail: 10%</div><div class="v">9.8%</div><div class="s">found on average, over 50 runs</div></div>
+    </div>
+
+    <h2>1. The engine read the real export</h2>
+    <p>The log is the audit trail of an IT company's ServiceNow instance, from 2016-02-29 to 2017-02-16: every update to every incident, from 5,244 callers. The engine kept each incident's last state (141,712 events became 24,918 incidents), mapped it with its ServiceNow preset, and read its day-first dates. Its health check flagged:</p>
+    <ul><li>3 week(s) with no records at all, e.g. 2016-06-13; check the extract is complete</li></ul>
+    <p>The log has no time worked or survey scores, so the effort and satisfaction measures cannot run on it; the resolution audit needs neither.</p>
+
+    <h2>2. Real return rates after people's resolutions</h2>
+    <p>How often the same caller opened another incident within 7 days after one was resolved. These are the normal rates an AI's resolutions are compared with, and they vary a lot by category, which is why the audit compares like with like.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Incidents</th><th class="n">Resolved</th><th class="n">Came back, any issue</th><th class="n">Came back, same type</th></tr></thead>
+      <tbody>
+        <tr><td><b>All</b></td><td class="n">23,336</td><td class="n">41.3%</td><td class="n">10.1%</td></tr>
+        <tr><td>Category 42</td><td class="n">3,124</td><td class="n">43.2%</td><td class="n">16.5%</td></tr><tr><td>Category 26</td><td class="n">3,045</td><td class="n">37.7%</td><td class="n">7.4%</td></tr><tr><td>Category 53</td><td class="n">2,587</td><td class="n">36.4%</td><td class="n">7.0%</td></tr><tr><td>Category 46</td><td class="n">2,356</td><td class="n">47.3%</td><td class="n">8.8%</td></tr><tr><td>Category 32</td><td class="n">1,268</td><td class="n">43.0%</td><td class="n">9.7%</td></tr><tr><td>Category 9</td><td class="n">1,121</td><td class="n">38.7%</td><td class="n">3.3%</td></tr><tr><td>Category 37</td><td class="n">1,098</td><td class="n">36.1%</td><td class="n">5.7%</td></tr><tr><td>Category 23</td><td class="n">1,055</td><td class="n">41.0%</td><td class="n">6.9%</td></tr>
+      </tbody>
+    </table></div>
+    <p class="meta">Categories are anonymized codes in the published log. Many callers in it open incidents often, so the rate for any issue is high; the same-type rate is the one the audit uses.</p>
+
+    <h2>3. The audit finds failures planted in real data</h2>
+    <p>In each run, 2,000 real resolved incidents, chosen at random, were relabelled as an AI's claimed resolutions, so they carry real callers, categories and timing. Before planting, they are the same kind of resolution as the rest, so the true share that did not hold is zero. For a planted share, a return incident about the same type of issue was added within 7 days for that share of the claims that did not come back. 50 runs at each level.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th class="nowrap">Made to fail</th><th class="n">Found, on average</th><th class="n">Average error</th><th class="n wrap">Range held the truth</th><th class="n">Flagged</th></tr></thead>
+      <tbody><tr><td>0%</td><td class="n">−0.2%</td><td class="n">0.7 pts</td><td class="n">94% of runs</td><td class="n">0% of runs</td></tr><tr><td>10%</td><td class="n">9.8%</td><td class="n">0.6 pts</td><td class="n">100% of runs</td><td class="n">100% of runs</td></tr><tr><td>20%</td><td class="n">19.7%</td><td class="n">0.4 pts</td><td class="n">100% of runs</td><td class="n">100% of runs</td></tr></tbody>
+    </table></div>
+    <p>With nothing planted, the audit should rarely flag a problem; with failures planted, it should flag them every time, and its 95% range should hold the truth about 95% of the time.</p>
+
+    <h2>4. What this does not show</h2>
+    <ul>
+      <li>An AI's effect. The log predates AI agents. Results on real AI come from design partners, and are published only with their permission.</li>
+      <li>How real failures cluster. The planted returns are spread at random; real ones may bunch by topic or week, which the audit's month-by-month check is there for.</li>
+    </ul>
+
+    <h2>5. Run it yourself</h2>
+    <pre><code>pip install probative-labs
+probative validate --real incident_event_log.csv --runs 50 --report real-validation.json</code></pre>
+    <p class="meta">Data: Amaral, C., Fantinato, M., &amp; Peres, S. (2018). Incident management process enriched event log [Dataset]. UCI Machine Learning Repository. https://doi.org/10.24432/C57S4H Licensed CC BY 4.0; <a href="https://archive.ics.uci.edu/dataset/498/incident+management+process+enriched+event+log">dataset page</a>. Engine 0.4.0. Validation on simulated desks, including the evidence pack: <a href="https://github.com/VivekReddyGaddam/probative-labs/blob/main/docs/validation.md">docs/validation.md</a>.</p>
+  </div>
+</section>
+
+
+</main>
+<footer class="site-footer">
+  <div class="wrap footer-grid">
+    <div>
+      <a class="brand" href="/probative-labs/"><img src="/probative-labs/static/img/logo.svg?v=0818421d7d" alt="" width="28" height="28">Probative Labs</a>
+      <p class="muted small" style="margin-top:0.8rem;max-width:20rem">Independent proof of what your AI delivered. Probative Labs sells no AI and takes no money from AI vendors.</p>
+    </div>
+    <div>
+      <h4>Product</h4>
+      <ul>
+        <li><a href="/probative-labs/check/">Free check</a></li>
+        <li><a href="/probative-labs/resolution-audit/">Resolution audit</a></li>
+        <li><a href="/probative-labs/ai-billing/">AI billing</a></li>
+        <li><a href="/probative-labs/method/">Method</a></li>
+        <li><a href="/probative-labs/benchmarks/">Benchmarks</a></li>
+        <li><a href="/probative-labs/pricing/">Pricing</a></li>
+        <li><a href="/probative-labs/pilot/">Book a call</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Samples</h4>
+      <ul>
+        <li><a href="/probative-labs/sample/evidence-pack.html">Evidence pack</a></li>
+        <li><a href="/probative-labs/sample/resolution-audit.html">Resolution audit</a></li>
+        <li><a href="/probative-labs/sample/dispute-pack.html">Dispute pack</a></li>
+        <li><a href="/probative-labs/sample/regression-watch.html">Regression watch</a></li>
+        <li><a href="/probative-labs/ai-billing/#samples">Every billing model</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Open source</h4>
+      <ul>
+        <li><a href="https://github.com/VivekReddyGaddam/probative-labs">GitHub</a></li>
+        <li><a href="https://github.com/VivekReddyGaddam/probative-labs/blob/main/docs/methodology.md">Methodology</a></li>
+        <li><a href="/probative-labs/validation/">Validation on real data</a></li>
+        <li><a href="/probative-labs/open-source/">Open source and Cloud</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Company</h4>
+      <ul>
+        <li><a href="/probative-labs/about/">About</a></li>
+        <li><a href="/probative-labs/independence/">Independence</a></li>
+        <li><a href="/probative-labs/security/">Security and privacy</a></li>
+        <li><a href="/probative-labs/privacy/">Privacy notice</a></li>
+        
+      </ul>
+    </div>
+  </div>
+  <div class="wrap"><p class="muted small" style="margin-top:2.5rem">© 2026 Probative Labs · The engine is open source under the Apache License 2.0.</p></div>
+</footer>
+</body>
+</html>

@@ -6,4 +6,4 @@ claims (resolutions, bills, its own ticket closures), a regression watch, anonym
 benchmark contributions and re-performable reports.
 """
 
-__version__ = "0.4.0"
+__version__ = "0.4.1"

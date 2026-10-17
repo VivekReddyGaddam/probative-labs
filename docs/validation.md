@@ -111,6 +111,10 @@ Validation changed the method before release:
 3. **Small-sample ranges.** Percentile intervals from resampling about 7 teams per wave were too narrow. Ranges now use a t critical value, the per-wave n/(n − 1) correction, and the larger of the bootstrap and delete-one-team jackknife spread.
 4. **The simulator itself.** An early version moved returning tickets to random times of day. The placebo-outcome diagnostic flagged this correctly as a real change in when work arrived, and it was fixed in the simulator.
 
+## Real ServiceNow data
+
+The resolution audit is also validated on a public log from a real ServiceNow instance, with failures planted in real incidents: [validation-real-data.md](validation-real-data.md).
+
 ## Unit tests
 
 `tests/test_engine.py` includes deterministic checks:

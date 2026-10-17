@@ -149,6 +149,9 @@ def next_ticket(
     for c in by:
         lt[c] = lt[c].astype("string")
         rt[c] = rt[c].astype("string")
+    # Exports and Parquet files can store times at different precisions; compare them at one.
+    lt[time_col] = lt[time_col].astype("datetime64[ns]")
+    rt[S.OPENED] = rt[S.OPENED].astype("datetime64[ns]")
     rt = rt.rename(columns={S.OPENED: "_next"}).sort_values("_next")
     m = pd.merge_asof(
         lt.sort_values(time_col),
