@@ -92,13 +92,21 @@ const ProbativeCheck = (() => {
     type: ["type"],
     outcome: ["outcome", "resolution state", "deflection outcome", "fin ai agent resolution state"],
   };
+  // Column names from the engine's export presets: ServiceNow, Jira Service Management, Zendesk, Freshservice,
+  // BMC Helix and Ivanti. The first name found wins; anything else is matched by hand on the page.
   const TICKET_FIELDS = {
-    id: ["number", "issue key", "ticket id", "id", "sys_id"],
+    id: ["number", "issue key", "ticket id", "id", "sys_id", "incident number", "incident id", "incident id*+",
+      "incidentnumber", "incident #"],
     person: ["caller_id.sys_id", "caller_id", "caller", "opened_for.sys_id", "opened_for", "requester_id", "requester",
-      "requester email", "reporter"],
-    opened: ["opened_at", "opened", "sys_created_on", "created", "created at"],
-    resolved: ["resolved_at", "resolved", "resolution date", "resolved at"],
-    category: ["category", "u_category", "request type", "custom field (request type)"],
+      "requester email", "reporter", "requester name", "email", "person id", "customer login id",
+      "direct contact login id", "profilelink_recid", "profilelink", "profilefullname", "customer"],
+    opened: ["opened_at", "opened", "sys_created_on", "created", "created at", "created date", "created time",
+      "reported date", "reported date+", "submit date", "createddatetime", "created date time", "created on"],
+    resolved: ["resolved_at", "resolved", "resolution date", "resolved at", "solved at", "resolved date", "resolved time",
+      "last resolved date", "resolveddatetime", "resolved date time", "resolved on"],
+    category: ["category", "u_category", "request type", "custom field (request type)",
+      "custom field (customer request type)", "issue type", "ticket type", "operational categorization tier 1",
+      "categorization tier 1", "operational categorization tier 1+", "actualcategory", "type"],
   };
 
   function detect(header, fields) {
