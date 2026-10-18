@@ -108,7 +108,9 @@ def _servicenow_va(raw: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
             "conversation. Filter the Interactions list to Virtual agent = true before exporting."
         )
     kind = find_column(df.columns, ["type", "Type"])
-    if kind is not None:
+    # With the Virtual agent flag, it alone says which interactions were the bot's, whatever their type (a
+    # conversation in Teams or Slack may not be typed "chat"). Without it, keep the chats.
+    if kind is not None and va is None:
         chat = _norm(df[kind]).isin({"chat", ""})
         if (~chat).sum():
             notes.append(f"{int((~chat).sum()):,} interactions that were not chats were left out.")

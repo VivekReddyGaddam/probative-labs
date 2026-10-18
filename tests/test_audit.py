@@ -314,3 +314,24 @@ def test_a_servicenow_export_without_agent_chat_is_refused():
     raw["Agent chat"] = ["true", "false"]
     out, notes = map_conversations(raw.drop(columns=["Virtual agent"]), "servicenow_va")
     assert any("no Virtual agent column" in n for n in notes)
+
+
+def test_with_the_virtual_agent_flag_every_bot_conversation_counts_whatever_its_type():
+    from probative.ingest.conversations import map_conversations
+
+    raw = pd.DataFrame(
+        {
+            "Number": ["IMS1", "IMS2", "IMS3"],
+            "Opened for": ["a", "b", "c"],
+            "Opened": ["2026-03-02 09:00:00"] * 3,
+            "Type": ["chat", "messaging", "phone"],
+            "Virtual agent": ["true", "true", "false"],
+            "Agent chat": ["false", "false", "false"],
+            "State": ["Closed Complete"] * 3,
+            "State reason": ["Topic Complete"] * 3,
+        }
+    )
+    out, _ = map_conversations(raw, "servicenow_va")
+    assert out[S.REQUESTER].tolist() == ["a", "b"]  # a Teams conversation typed "messaging" is still the bot's
+    out, _ = map_conversations(raw.drop(columns=["Virtual agent"]), "servicenow_va")
+    assert out[S.REQUESTER].tolist() == ["a"]  # without the flag, only chats

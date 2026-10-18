@@ -55,6 +55,7 @@
         <a class="btn btn-primary" href="/check/">Run the free check</a>
         <a class="btn" href="/pilot/">Book a 20-minute call</a>
       </div>
+      <p class="small" style="margin:0.9rem 0 0"><a href="/check/#example">Or see an example result first</a>: one click, no export.</p>
       <div class="trust"><span>Runs in your browser</span><span>Open-source method</span><span>No money from AI vendors</span></div>
     </div>
     
@@ -100,9 +101,42 @@
 <section>
   <div class="wrap">
     <div class="section-head center">
+      <div class="eyebrow">Your instance, not a generic one</div>
+      <h2>Built for how ServiceNow actually works.</h2>
+      <p>Generic logic would flag your bot for doing its job. The check doesn't.</p>
+    </div>
+    <div class="features">
+      <div class="card"><h3>Incidents the bot opens itself</h3><p>A topic that ends by opening an incident (Contact type: Virtual Agent) is a handoff, not a failure. Those conversations are left out and counted separately.</p></div>
+      <div class="card"><h3>Live agent handoffs</h3><p>A chat a live agent took over isn't the bot's resolution. The check reads the Agent chat field, and won't run without it.</p></div>
+      <div class="card"><h3>Phone, walk-up and Teams</h3><p>Anyone who comes back counts when your team logs an incident, whatever the channel. Contacts nobody logs can't be seen, after the bot or after your agents.</p></div>
+      <div class="card"><h3>Catalog requests</h3><p>A topic that submits a request isn't a failure, and a request opened after a chat isn't counted as a return.</p></div>
+      <div class="card"><h3>Your data, checked first</h3><p>Exports in different time zones, a test account with hundreds of chats, or files that don't share person IDs are flagged before you see a number.</p></div>
+      <div class="card"><h3>Every choice shown</h3><p>The result shows what changes with a baseline from the same people, with reopened tickets counted, or with every ticket counted.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap narrow">
+    <div class="founder card">
+      
+      <div>
+        <div class="eyebrow">Who you would work with</div>
+        <h3>Vivek Reddy Gaddam</h3>
+        <p><b>Six years working on the ServiceNow platform, helping service desks run on it every day. I know what its reports count as resolved, and what they leave out.</b></p>
+        <p>AI vendors report their own results, and the people who pay for the AI have no independent way to check them. I built Probative Labs to give them one: an open method anyone can rerun, and a check that runs on their own data. I write the engine and run every check myself.</p>
+        <p class="small">Probative Labs is one person today. <a href="/about/">About</a> · <a href="https://github.com/VivekReddyGaddam">GitHub</a></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head center">
       <div class="eyebrow">For whoever owns the bot</div>
       <h2>Proof your finance team will believe, good or bad.</h2>
-      <p>This is not a gotcha. It is the evidence you need either way.</p>
+      <p>This is not a gotcha. If the result differs from your dashboard, that isn't a mistake you made: the dashboard counts what it was built to count. Finding the difference first makes you the person who caught it.</p>
     </div>
     <div class="features">
       <div class="card"><h3>If it holds up</h3><p>Independent evidence for the next budget request or expansion, from a method finance and the vendor can both rerun.</p></div>
@@ -126,25 +160,10 @@
   </div>
 </section>
 
-<section>
-  <div class="wrap narrow">
-    <div class="founder card">
-      
-      <div>
-        <div class="eyebrow">Who you would work with</div>
-        <h3>Vivek Reddy Gaddam</h3>
-        <p><b>Six years working on the ServiceNow platform, helping service desks run on it every day. I know what its reports count as resolved, and what they leave out.</b></p>
-        <p>AI vendors report their own results, and the people who pay for the AI have no independent way to check them. I built Probative Labs to give them one: an open method anyone can rerun, and a check that runs on their own data. I write the engine and run every check myself.</p>
-        <p class="small">Probative Labs is one person today. <a href="/about/">About</a> · <a href="https://github.com/VivekReddyGaddam">GitHub</a></p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="band cta-band">
+<section class="cta-band">
   <div class="wrap narrow">
     <h2>Check your virtual agent this week.</h2>
-    <p class="lead" style="margin:0 auto">Two exports, one browser tab, nothing uploaded. If you'd like a second pair of eyes, share your screen and I'll walk through it with you.</p>
+    <p class="lead" style="margin:0 auto">Two exports, one browser tab, nothing uploaded. If you'd like a second opinion, send me the summary: rates and counts only, no names or IDs.</p>
     <div class="cta-row"><a class="btn btn-primary" href="/check/">Run the free check</a><a class="btn" href="/pilot/">Book a 20-minute call</a></div>
     <p class="cta-note">Design partnerships are free: you get the check and a readout; I ask for feedback, an anonymized case study and a reference call if it helped.</p>
   </div>

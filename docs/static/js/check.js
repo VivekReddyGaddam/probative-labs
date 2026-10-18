@@ -249,7 +249,9 @@ const ProbativeCheck = (() => {
         skipped++;
         continue;
       }
-      if (serviceNow && cols.type >= 0 && !["chat", ""].includes(norm(r[cols.type]))) {
+      // With the Virtual agent flag, it alone says which rows were the bot's (Teams or Slack may not be typed
+      // "chat"); without it, keep the chats. As in the engine.
+      if (serviceNow && cols.virtualAgent < 0 && cols.type >= 0 && !["chat", ""].includes(norm(r[cols.type]))) {
         skipped++;
         continue;
       }
@@ -978,6 +980,8 @@ if (typeof module === "object" && module.exports) {
         };
         document.head.append(tag);
       });
+      // "See an example result" on the home page lands here and runs it.
+      if (window.location.hash === "#example") sample.click();
     }
     $("check-run").addEventListener("click", () => {
       const error = $("check-error");

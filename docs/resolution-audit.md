@@ -40,7 +40,7 @@ The same settings can live in `probative.yaml` under `audit:` (see [configuratio
 - the outcome (`outcome`), if the file also contains escalated or abandoned conversations. If there is no outcome column, every row counts as a claimed resolution;
 - ideally the issue's category and subcategory, using the same values as your tickets.
 
-Common column names (`Requester`, `User Email`, `Created`, `Topic` and so on) are recognized automatically. See [data-model.md](data-model.md). A ServiceNow Interactions export (`--claims-preset servicenow_va`) must include Agent chat: without it, chats a live agent took over would count as resolved, and the incidents those agents opened as returns, so the audit refuses to run.
+Common column names (`Requester`, `User Email`, `Created`, `Topic` and so on) are recognized automatically. See [data-model.md](data-model.md). A ServiceNow Interactions export (`--claims-preset servicenow_va`) must include Agent chat: without it, chats a live agent took over would count as resolved, and the incidents those agents opened as returns, so the audit refuses to run. With the Virtual agent flag, every flagged interaction counts whatever its type (a conversation in Teams or Slack may not be typed chat); without it, only chats are kept.
 
 **Your ticket export:** covering the same dates plus at least a week, with the person who raised each ticket, opened and resolved times, category, the channel each ticket came through (Contact type in ServiceNow) and, if you have it, the reopen count. Any built-in preset works (`probative presets`).
 

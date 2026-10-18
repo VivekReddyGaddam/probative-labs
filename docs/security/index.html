@@ -58,10 +58,25 @@
     <div class="table-wrap"><table class="mobile-cards">
       <thead><tr><th>Option</th><th>Status</th><th>Where the data lives</th></tr></thead>
       <tbody>
-        <tr><td><b>The free check, in your browser</b></td><td data-label="Status">Available now</td><td data-label="Where the data lives">Your browser: the page cannot send data anywhere</td></tr>
+        <tr><td><b>The free check, in your browser</b></td><td data-label="Status">Available now</td><td data-label="Where the data lives">Your browser: nothing is uploaded, and the page's policy blocks sending data elsewhere</td></tr>
         <tr><td><b>The open-source engine, on your computer</b></td><td data-label="Status">Available now</td><td data-label="Where the data lives">Your computer</td></tr>
         <tr><td><b>Probative Labs Cloud, in your own cloud</b></td><td data-label="Status">Available as a Docker package; not yet run by a customer</td><td data-label="Where the data lives">Your AWS, Azure or Google Cloud account</td></tr>
         <tr><td><b>Probative Labs Cloud, hosted for you</b></td><td data-label="Status">Planned</td><td data-label="Where the data lives">A US or EU region you choose</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<section class="tight" id="free-check">
+  <div class="wrap narrow">
+    <div class="section-head"><h2>For your security team: the free check</h2></div>
+    <div class="table-wrap"><table class="mobile-cards">
+      <tbody>
+        <tr><td><b>What it reads</b></td><td>Two CSV files the user chooses: Virtual Agent conversations and incidents, with the <a href="/check/">columns listed on the check page</a>. Sys IDs can replace names, and no free text is needed.</td></tr>
+        <tr><td><b>Where it runs</b></td><td>In the browser tab. Nothing is uploaded: the page's security policy blocks the ways a script sends data and stops it loading anything from another site. There is no account, no cookie and no tracking.</td></tr>
+        <tr><td><b>What it keeps</b></td><td>Nothing. Closing the tab clears it. The optional summary download holds rates and counts only: no names, IDs or ticket contents.</td></tr>
+        <tr><td><b>How to verify</b></td><td>Run it with Wi-Fi off once the page has loaded, or use the <a href="/check/offline/" download="probative-check.html">one-file offline copy</a>, which can run only the code inside it. The code is open source.</td></tr>
+        <tr><td><b>With a design partner</b></td><td>No data changes hands: you run the check and send only the summary.</td></tr>
       </tbody>
     </table></div>
   </div>

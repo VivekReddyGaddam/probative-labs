@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-44n9VYis+rUUSPhRCZY1yJKd2lxHErVfn1DPeGRoxeE='; style-src 'unsafe-inline'; img-src data:; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-nhGiHcIIUi4umFSkQX4CSZ2vN6z1jUEJYroOWGD0Kg0='; style-src 'unsafe-inline'; img-src data:; form-action 'none'; base-uri 'none'">
 <title>Free resolution check, offline copy · Probative Labs</title>
 <style>/* Probative Labs: one stylesheet for the website and the product. Tokens first; components after. */
 :root {
@@ -829,7 +829,9 @@ const ProbativeCheck = (() => {
         skipped++;
         continue;
       }
-      if (serviceNow && cols.type >= 0 && !["chat", ""].includes(norm(r[cols.type]))) {
+      // With the Virtual agent flag, it alone says which rows were the bot's (Teams or Slack may not be typed
+      // "chat"); without it, keep the chats. As in the engine.
+      if (serviceNow && cols.virtualAgent < 0 && cols.type >= 0 && !["chat", ""].includes(norm(r[cols.type]))) {
         skipped++;
         continue;
       }
@@ -1558,6 +1560,8 @@ if (typeof module === "object" && module.exports) {
         };
         document.head.append(tag);
       });
+      // "See an example result" on the home page lands here and runs it.
+      if (window.location.hash === "#example") sample.click();
     }
     $("check-run").addEventListener("click", () => {
       const error = $("check-error");
