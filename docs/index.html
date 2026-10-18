@@ -82,7 +82,8 @@
       <div class="eyebrow">The question nobody checks</div>
       <h2>“Resolved” includes the people who just stopped answering.</h2>
       <p>ServiceNow's own guides describe self-solve analytics that mark a conversation <a href="https://www.servicenow.com/community/servicenow-ai-platform-blog/assistant-analytics-self-solve-performance/ba-p/3516188">resolved when at least one AI asset ran</a>, and a resolution rate that <a href="https://www.servicenow.com/community/servicenow-otto-articles/tracking-now-assist-usage-measuring-roi-and-adoption-xanadu-and/ta-p/3460892">counts no response as positive</a>. A chat the person walked away from closes as "Closed Complete, No User Response".</p>
-      <p>Nothing in the dashboard checks whether that person opened an incident an hour later. The free check does, with your own two exports.</p>
+      <p>It isn't only ServiceNow. Intercom bills its Fin agent at $0.99 a resolution and <a href="https://www.intercom.com/help/en/articles/8205718-fin-ai-agent-outcomes">counts one</a> when the customer "exits the conversation without requesting further assistance". It deducts the charge if the customer returns to the same conversation. What about the ones who come back in a new conversation, or by phone?</p>
+      <p>Nothing in the dashboard checks whether that person came back an hour later. The free check does, with your own two exports.</p>
     </div>
     <div class="card">
       <h3>What the free check shows</h3>
@@ -124,7 +125,7 @@
         <div class="eyebrow">Who you would work with</div>
         <h3>Vivek Reddy Gaddam</h3>
         <p><b>Six years working on the ServiceNow platform, helping service desks run on it every day. I know what its reports count as resolved, and what they leave out.</b></p>
-        <p>AI vendors report their own results, and the people who pay for the AI have no independent way to check them. I built Probative Labs to give them one: an open method anyone can rerun, and a check that runs on their own data. I write the engine and run every check myself.</p>
+        <p>AI vendors report their own results, and the people who pay for the AI have no independent way to check them. I&#39;m building Probative Labs to give them one: an open method anyone can rerun, a free check that runs on their own data, and software that checks every month&#39;s resolutions and bills by itself.</p>
         <p class="small">Probative Labs is one person today. <a href="/about/">About</a> · <a href="https://github.com/VivekReddyGaddam">GitHub</a></p>
       </div>
     </div>
@@ -149,6 +150,21 @@
 <section class="band">
   <div class="wrap">
     <div class="section-head center">
+      <div class="eyebrow">After the free check</div>
+      <h2>From one check to an independent meter.</h2>
+      <p>The free check answers the question once. The rest keeps answering it, every month, without anyone exporting anything.</p>
+    </div>
+    <div class="features">
+      <div class="card"><h3>1. The free check</h3><p>Today, in your browser, on two exports. A screening estimate, and the place to start.</p><p><a href="/check/">Run it</a></p></div>
+      <div class="card"><h3>2. The audit</h3><p>A fixed-fee finding for your renewal: issue types matched, every check run, and a readout for IT and finance.</p><p><a href="/resolution-audit/">How it works</a></p></div>
+      <div class="card"><h3>3. Cloud: the meter</h3><p>Connect once. Every month's resolutions and every bill are checked against your own systems, however the AI is billed: per resolution, conversation, assist or seat. An alert when it slips. Early access; connectors in beta.</p><p><a href="/open-source/">What Cloud adds</a></p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head center">
       <h2>You don't have to take my word for it.</h2>
     </div>
     <div class="features">
@@ -160,7 +176,7 @@
   </div>
 </section>
 
-<section class="cta-band">
+<section class="band cta-band">
   <div class="wrap narrow">
     <h2>Check your virtual agent this week.</h2>
     <p class="lead" style="margin:0 auto">Two exports, one browser tab, nothing uploaded. If you'd like a second opinion, send me the summary: rates and counts only, no names or IDs.</p>
