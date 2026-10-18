@@ -131,8 +131,7 @@ The engine is free under Apache-2.0, and every analysis is in it: use it to see,
 
 - **Proof for the renewal.** An independent finding the vendor can't dismiss as your own numbers.
 - **An early warning when the AI slips.** Checks on fresh data every month, and an alert when something changes.
-- **Money back on your AI bill.** Every bill or usage export checked as it arrives, however the AI is billed.
-- **Answers for your CFO and board.** Every AI program's cost and return in one view, in numbers finance signed off.
+- **A bill you can check.** Every bill or usage export checked as it arrives, and your number for the negotiation.
 - **Nothing for your team to run.** Connect once: the data arrives and the checks run by themselves.
 
 See [OPEN_CORE.md](OPEN_CORE.md) for the comparison, side by side.

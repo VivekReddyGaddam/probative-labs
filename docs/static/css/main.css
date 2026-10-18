@@ -498,3 +498,9 @@ details.panel summary { cursor: pointer; font-weight: 600; }
 th.nowrap, td.nowrap { white-space: nowrap; }
 
 th.n.wrap, td.n.wrap { white-space: normal; }
+
+/* Numbers from simulated data say so where they appear. */
+.sim-badge { display: inline-block; vertical-align: middle; margin-left: 0.6rem; padding: 0.28rem 0.55rem; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface-2); color: var(--muted); font: 700 0.68rem/1 var(--sans);
+  letter-spacing: 0.06em; text-transform: uppercase; }
+.proof-wide { max-width: 44rem; margin: 2.2rem auto 0; }

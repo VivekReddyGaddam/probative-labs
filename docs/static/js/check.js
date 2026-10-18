@@ -919,7 +919,28 @@ if (typeof module === "object" && module.exports) {
       });
       const print = el("button", { class: "btn", type: "button" }, "Print or save as PDF");
       print.addEventListener("click", () => window.print());
-      blocks.push(el("div", { class: "cta-row check-actions" }, print, save));
+      // An opt-in way to share the result: it opens the visitor's own email with the rates and counts, and nothing
+      // is sent unless they send it. Not offered for the example.
+      const contact = root.dataset.contact;
+      const actions = [print, save];
+      if (contact && !state.sample) {
+        const lines = [
+          headline,
+          "",
+          ...r.checks.map((c) => `${c.check}: ${pct(c.didNotHold, 1)} did not hold`),
+          ...(r.byDetail.length
+            ? ["", "By close reason:", ...r.byDetail.slice(0, 6).map((d) => `${d.detail}: ${num(d.claims)} counted resolved, ${pct(d.cameBack, 1)} came back`)]
+            : []),
+          "",
+          "From the free check at probativelabs.com/check: rates and counts only, no names, IDs or ticket text.",
+        ];
+        const href = `mailto:${contact}?subject=${encodeURIComponent("Free check result")}&body=${encodeURIComponent(lines.join("\n"))}`;
+        actions.push(el("a", { class: "btn", href }, `Email the summary to ${root.dataset.contactName || "me"}`));
+      }
+      blocks.push(el("div", { class: "cta-row check-actions" }, ...actions));
+      if (contact && !state.sample) {
+        blocks.push(el("p", { class: "small muted" }, "Email opens with only the rates and counts above, for a second opinion. Nothing is sent unless you send it."));
+      }
       blocks.push(el("p", { class: "small muted" }, "The summary holds rates and counts only: no names, IDs or ticket contents. It is what you would share."));
       out.replaceChildren(...blocks);
       out.hidden = false;

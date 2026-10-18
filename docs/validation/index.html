@@ -19,7 +19,7 @@
 <meta property="og:url" content="https://probativelabs.com/validation/">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/static/img/logo.svg?v=0818421d7d" type="image/svg+xml">
-<link rel="stylesheet" href="/static/css/main.css?v=9e260e4913">
+<link rel="stylesheet" href="/static/css/main.css?v=baefa37b1d">
 <script src="/static/js/app.js?v=0384b69a37" defer></script>
 
 </head>
@@ -91,6 +91,8 @@
     <ul>
       <li>An AI's effect. The log predates AI agents. Results on real AI come from design partners, and are published only with their permission.</li>
       <li>How real failures cluster. The planted returns are spread at random; real ones may bunch by topic or week, which the audit's month-by-month check is there for.</li>
+      <li>Whether "came back within 7 days" matches what really happened. People who give up quietly, or switch to a channel nobody logs, look like successes; someone with a new, unrelated issue looks like a failure. The tests here show the statistics find a planted answer, not that the measure is the right one. Planned: a study comparing the check with human-labelled transcripts at a design partner.</li>
+      <li>Who chooses the bot. People who use it may differ from people who go straight to a person. The baseline from the same people, and matching by issue type, narrow the gap but don't close it.</li>
     </ul>
 
     <h2>5. Run it yourself</h2>
@@ -123,7 +125,6 @@ probative validate --real incident_event_log.csv --runs 50 --report real-validat
     <div>
       <h4>Samples</h4>
       <ul>
-        <li><a href="/sample/evidence-pack.html">Evidence pack</a></li>
         <li><a href="/sample/resolution-audit.html">Resolution audit</a></li>
         <li><a href="/sample/dispute-pack.html">Dispute pack</a></li>
         <li><a href="/sample/regression-watch.html">Regression watch</a></li>

@@ -19,7 +19,7 @@
 <meta property="og:url" content="https://probativelabs.com/ai-billing/">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/static/img/logo.svg?v=0818421d7d" type="image/svg+xml">
-<link rel="stylesheet" href="/static/css/main.css?v=9e260e4913">
+<link rel="stylesheet" href="/static/css/main.css?v=baefa37b1d">
 <script src="/static/js/app.js?v=0384b69a37" defer></script>
 
 </head>
@@ -74,7 +74,7 @@
 <section class="band" id="samples">
   <div class="wrap">
     <div class="section-head center">
-      <h2>The same desk, billed five ways</h2>
+      <h2>The same desk, billed five ways <span class="sim-badge">Simulated data</span></h2>
       <p>One simulated month (2026-05) of a 40-team service desk, checked under each model. Prices are illustrative, not any vendor's.</p>
     </div>
     <div class="table-wrap"><table class="mobile-cards">
@@ -82,6 +82,7 @@
       <tbody><tr><td><b>Per resolution</b></td><td data-label="Price (illustrative)">$1.00 per claimed resolution</td><td class="n" data-label="Paid">$650</td><td class="n" data-label="Per resolution that held"><b>$1.19</b></td><td data-label="What the check found">110 billed resolutions disputable, and 14% of claimed resolutions did not hold</td><td><a href="/sample/dispute-pack.html">Report</a></td></tr><tr><td><b>Per conversation</b></td><td data-label="Price (illustrative)">$2.00 per conversation</td><td class="n" data-label="Paid">$1,742</td><td class="n" data-label="Per resolution that held"><b>$3.18</b></td><td data-label="What the check found">37% of the conversations paid for were handed to a person, abandoned, or came back as a ticket</td><td><a href="/sample/bill-per-conversation.html">Report</a></td></tr><tr><td><b>Per session</b></td><td data-label="Price (illustrative)">$0.90 per 24-hour session</td><td class="n" data-label="Paid">$786</td><td class="n" data-label="Per resolution that held"><b>$1.43</b></td><td data-label="What the check found">19 more sessions billed than the desk&#39;s records hold</td><td><a href="/sample/bill-per-session.html">Report</a></td></tr><tr><td><b>Usage units</b></td><td data-label="Price (illustrative)">$0.50 per assist, from a 45,000-assist pool</td><td class="n" data-label="Paid">$3,262</td><td class="n" data-label="Per resolution that held"><b>$2.57</b></td><td data-label="What the check found">14% of assists ran outside production, and the pool runs out on 2026-08-05</td><td><a href="/sample/usage-check.html">Report</a></td></tr><tr><td><b>Per seat or employee</b></td><td data-label="Price (illustrative)">$2 per employee a month, 6,000 employees</td><td class="n" data-label="Paid">$12,230</td><td class="n" data-label="Per resolution that held"><b>$22.30</b></td><td data-label="What the check found">809 of 6,000 employees used it (13%)</td><td><a href="/sample/seat-check.html">Report</a></td></tr></tbody>
     </table></div>
     <p class="small muted" style="margin-top:0.8rem">Per resolution that held: what the month cost, divided by the AI's claimed resolutions that held beyond the normal return rate after your agents' own resolutions. It is the number to compare across vendors and billing models.</p>
+    <p class="small muted">This desk is small, so the amounts are too. For scale, as plain arithmetic: at 30,000 resolutions a month and $0.99 each, if 15% didn't hold, about $53,000 a year went to resolutions that didn't hold. Whether you can claim it back depends on what your contract counts as a resolution; the <a href="https://github.com/VivekReddyGaddam/probative-labs/blob/main/docs/outcome-terms.md">model terms</a> make it your definition that's billed.</p>
   </div>
 </section>
 
@@ -97,7 +98,7 @@
     </div>
     
     <div class="card">
-      <h3 style="font-size:1.05rem">Came back within 7 days, by how ServiceNow closed the chat</h3>
+      <h3 style="font-size:1.05rem">Came back within 7 days, by how ServiceNow closed the chat <span class="sim-badge">Simulated data</span></h3>
       <p class="small muted">Simulated desk. After your agents' own resolutions: 13.9%.</p>
       <div class="table-wrap"><table><thead><tr><th>State reason</th><th class="n">Counted resolved</th><th class="n">Came back</th></tr></thead>
       <tbody><tr><td>Topic Complete</td><td class="n">1,335</td><td class="n">20%</td></tr><tr><td>Auto Closed</td><td class="n">887</td><td class="n">16%</td></tr><tr><td>No User Response</td><td class="n">797</td><td class="n">56%</td></tr><tr><td>User Ended</td><td class="n">455</td><td class="n">29%</td></tr><tr><td>Left for search</td><td class="n">122</td><td class="n">38%</td></tr></tbody></table></div>
@@ -147,7 +148,6 @@
     <div>
       <h4>Samples</h4>
       <ul>
-        <li><a href="/sample/evidence-pack.html">Evidence pack</a></li>
         <li><a href="/sample/resolution-audit.html">Resolution audit</a></li>
         <li><a href="/sample/dispute-pack.html">Dispute pack</a></li>
         <li><a href="/sample/regression-watch.html">Regression watch</a></li>

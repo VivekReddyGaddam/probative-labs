@@ -19,7 +19,7 @@
 <meta property="og:url" content="https://probativelabs.com/">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/static/img/logo.svg?v=0818421d7d" type="image/svg+xml">
-<link rel="stylesheet" href="/static/css/main.css?v=9e260e4913">
+<link rel="stylesheet" href="/static/css/main.css?v=baefa37b1d">
 <script src="/static/js/app.js?v=0384b69a37" defer></script>
 
 </head>
@@ -55,20 +55,20 @@
         <a class="btn btn-primary" href="/check/">Run the free check</a>
         <a class="btn" href="/pilot/">Book a 20-minute call</a>
       </div>
-      <p class="small" style="margin:0.9rem 0 0"><a href="/check/#example">Or see an example result first</a>: one click, no export.</p>
       <div class="trust"><span>Runs in your browser</span><span>Open-source method</span><span>No money from AI vendors</span></div>
     </div>
-    
-    <aside class="proof" aria-labelledby="proof-title">
-      <h3 id="proof-title">Tested on real service desk data</h3>
-      <p class="muted small">24,918 real incidents from an IT company's ServiceNow instance. A known share of resolutions was made to fail; the audit had to find it.</p>
-      <div class="table-wrap"><table>
-        <thead><tr><th class="nowrap">Made to fail</th><th class="n">Found</th><th class="n wrap">Range held the truth</th></tr></thead>
-        <tbody><tr><td>0%</td><td class="n">−0.2%</td><td class="n">94%</td></tr><tr><td>10%</td><td class="n">9.8%</td><td class="n">100%</td></tr><tr><td>20%</td><td class="n">19.7%</td><td class="n">100%</td></tr></tbody>
-      </table></div>
-      <p class="foot">Over 50 runs at each level: the average found, and how often the 95% range held the planted share. With nothing planted it found about zero, as it should; a little below zero is normal noise. <a href="/validation/">How it was tested</a></p>
+    <aside class="proof" aria-labelledby="see-title">
+      <h3 id="see-title">What you'll see, in about a minute</h3>
+      <ul class="checklist">
+        <li>How many “resolved” conversations came back as a ticket within 7 days</li>
+        <li>The same rate after your agents' own resolutions</li>
+        <li>Each close reason on its own: Topic Complete, No User Response and the rest</li>
+        <li>What people came back about: the bot's fix list</li>
+        <li>A one-page summary to save as a PDF and forward</li>
+      </ul>
+      <div class="cta-row"><a class="btn btn-primary" href="/check/#example">See an example result</a></div>
+      <p class="foot">The example runs on made-up data: nothing to export, nothing uploaded.</p>
     </aside>
-    
   </div>
   <div class="wrap"><div class="works-with">
     <span>Works with exports from</span>
@@ -77,24 +77,13 @@
 </section>
 
 <section class="band">
-  <div class="wrap split">
+  <div class="wrap narrow">
     <div>
       <div class="eyebrow">The question nobody checks</div>
       <h2>“Resolved” includes the people who just stopped answering.</h2>
       <p>ServiceNow's own guides describe self-solve analytics that mark a conversation <a href="https://www.servicenow.com/community/servicenow-ai-platform-blog/assistant-analytics-self-solve-performance/ba-p/3516188">resolved when at least one AI asset ran</a>, and a resolution rate that <a href="https://www.servicenow.com/community/servicenow-otto-articles/tracking-now-assist-usage-measuring-roi-and-adoption-xanadu-and/ta-p/3460892">counts no response as positive</a>. A chat the person walked away from closes as "Closed Complete, No User Response".</p>
       <p>It isn't only ServiceNow. Intercom bills its Fin agent at $0.99 a resolution and <a href="https://www.intercom.com/help/en/articles/8205718-fin-ai-agent-outcomes">counts one</a> when the customer "exits the conversation without requesting further assistance". It deducts the charge if the customer returns to the same conversation. What about the ones who come back in a new conversation, or by phone?</p>
       <p>Nothing in the dashboard checks whether that person came back an hour later. The free check does, with your own two exports.</p>
-    </div>
-    <div class="card">
-      <h3>What the free check shows</h3>
-      <ul class="checklist">
-        <li>How many “resolved” conversations came back as a ticket within 7 days</li>
-        <li>The same rate after your agents' own resolutions, for comparison</li>
-        <li>Each close reason on its own: Topic Complete, No User Response and the rest</li>
-        <li>What people came back about: where the bot is failing</li>
-        <li>A one-page summary to save as a PDF and forward</li>
-      </ul>
-      <a class="btn btn-primary" href="/check/">Run the free check</a>
     </div>
   </div>
 </section>
@@ -152,13 +141,14 @@
     <div class="section-head center">
       <div class="eyebrow">After the free check</div>
       <h2>From one check to an independent meter.</h2>
-      <p>The free check answers the question once. The rest keeps answering it, every month, without anyone exporting anything.</p>
+      <p>When online ad networks counted their own impressions, buyers turned to independent verifiers. AI priced by the outcome needs the same. The free check answers the question once; the rest keeps answering it, every month, without anyone exporting anything.</p>
     </div>
     <div class="features">
       <div class="card"><h3>1. The free check</h3><p>Today, in your browser, on two exports. A screening estimate, and the place to start.</p><p><a href="/check/">Run it</a></p></div>
       <div class="card"><h3>2. The audit</h3><p>A fixed-fee finding for your renewal: issue types matched, every check run, and a readout for IT and finance.</p><p><a href="/resolution-audit/">How it works</a></p></div>
       <div class="card"><h3>3. Cloud: the meter</h3><p>Connect once. Every month's resolutions and every bill are checked against your own systems, however the AI is billed: per resolution, conversation, assist or seat. An alert when it slips. Early access; connectors in beta.</p><p><a href="/open-source/">What Cloud adds</a></p></div>
     </div>
+    <p class="small muted" style="text-align:center;margin-top:1.5rem">And for the contract: <a href="https://github.com/VivekReddyGaddam/probative-labs/blob/main/docs/outcome-terms.md">model terms</a> that define a verified resolution, so the bill counts what held.</p>
   </div>
 </section>
 
@@ -172,7 +162,18 @@
       <div class="card"><h3>Tested on real data</h3><p>On a real ServiceNow log with failures planted in it, the audit found them, and found none when none were planted.</p><p><a href="/validation/">The validation</a></p></div>
       <div class="card"><h3>Independent</h3><p>Probative Labs sells no AI and takes no money from AI vendors. Vendors cannot pay for, preview or suppress a result.</p><p><a href="/independence/">The rules</a></p></div>
     </div>
-    <p class="small muted" style="text-align:center;margin-top:1.5rem">Team-level results only, nothing about individual agents. Beyond the free check: the full audit with issue-type matching, checks for every <a href="/ai-billing/">billing model</a>, a regression watch and vendor bake-offs. <a href="/method/">The method</a>.</p>
+  
+  <div class="proof proof-wide" aria-labelledby="proof-title">
+    <h3 id="proof-title">Tested on real service desk data</h3>
+    <p class="muted small">24,918 real incidents from an IT company's ServiceNow instance. A known share of resolutions was made to fail; the audit had to find it.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th class="nowrap">Made to fail</th><th class="n">Found</th><th class="n wrap">Range held the truth</th></tr></thead>
+      <tbody><tr><td>0%</td><td class="n">−0.2%</td><td class="n">94%</td></tr><tr><td>10%</td><td class="n">9.8%</td><td class="n">100%</td></tr><tr><td>20%</td><td class="n">19.7%</td><td class="n">100%</td></tr></tbody>
+    </table></div>
+    <p class="foot">Over 50 runs at each level: the average found, and how often the 95% range held the planted share. With nothing planted it found about zero, as it should; a little below zero is normal noise. <a href="/validation/">How it was tested</a></p>
+  </div>
+  
+    <p class="small muted" style="text-align:center;margin-top:1.5rem">Team-level results only, nothing about individual agents. Beyond the free check: the full audit with issue-type matching, and checks for every <a href="/ai-billing/">billing model</a>. <a href="/method/">The method</a>.</p>
   </div>
 </section>
 
@@ -207,7 +208,6 @@
     <div>
       <h4>Samples</h4>
       <ul>
-        <li><a href="/sample/evidence-pack.html">Evidence pack</a></li>
         <li><a href="/sample/resolution-audit.html">Resolution audit</a></li>
         <li><a href="/sample/dispute-pack.html">Dispute pack</a></li>
         <li><a href="/sample/regression-watch.html">Regression watch</a></li>
